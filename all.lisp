@@ -37,7 +37,7 @@
   ("return" (return (values '%return 'return)))
   ("-?0|[1-9][0-9]*(\\.[0-9]*)?([e|E][+-]?[0-9]+)?"
    (return (values '%number (read-from-string $@))))
-  ("[a-zA-Z0-9_]+" (return (values '%identifier (read-from-string $@))))
+  ("[a-zA-Z0-9_]+" (return (values '%identifier $@)))
   (";" (return (values '|%;| '|;|)))
   )
 
@@ -57,16 +57,16 @@
 
 (define-parser *sol-parser*
   (:start-symbol %source-unit)
-  (:terminals (%pragma %number %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %uint %memory %storage %calldata))
+  (:terminals (%pragma %number %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
 
   (%source-unit
-   (%source-unit-contents)
-   (%source-unit-contents %source-unit)
+   (%source-unit-contents #'(lambda (x) `(:src-last ,x)))
+   (%source-unit-contents %source-unit #'(lambda (a b) `(:src-head ,a :src-rest, b)))
    )
 
   (%source-unit-contents
-   (%pragma-definition)
-   (%contract-definition)
+   (%pragma-definition #'(lambda (x) `(:pragma-def ,x)))
+   (%contract-definition #'(lambda (x) `(:contract-def ,x)))
    )
 
   (%pragma-definition
@@ -100,11 +100,20 @@
 
   (%parameter
    (%type-name #'(lambda (x) `(:par-type ,x)))
+   (%type-name %data-location #'(lambda (a b) `(,@a ,@b)))
+   (%type-name %data-location %identifier #'(lambda (a b c) `(,@a ,@b :name ,c)))
    )
 
   (%type-name
    (%uint #'(lambda (x) `(:type-name :uint)))
-   ;; (%int)
+   (%int #'(lambda (x) `(:type-name :int)))
+   ;; ...
+   )
+
+  (%data-location
+   (%memory #'(lambda (x) `(:data-location :memory)))
+   (%storage #'(lambda (x) `(:data-location :storage)))
+   (%calldata #'(lambda (x) `(:data-location :calldata)))
    )
 
   (%block

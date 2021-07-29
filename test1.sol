@@ -9,15 +9,14 @@ contract two {
     function beta (uint) { return 1; }
     function gamma (uint, uint) { return 2; }
     function delta (uint, uint, uint) { return 3; }
+    function epsilon (uint memory) { return 3; }
+    function zeta (uint memory, uint storage) { return 4; }
+    function eta (uint memory, uint storage, uint calldata) { return 5; }
 }
 
------------------------
-
-function delta (uint memory) { return 3; }
-function gamma (uint256, string) { return 1; }
-function delta (uint256 storage) { return 1; }
-function delta (uint256 storage, string) { return 1; }
-function epsilon (uint256 storage, string memory) { return 1; }
-function epsilon (uint memory, int storage) { return 4; }
-function beta (a) { return 1; }
-function gamma (a, b) { return 1; }
+contract three {
+    function theta (int) { return 6; }
+    function theta (int calldata, uint storage) { return 7; }
+    function iota (uint storage foo) { return 8; }
+    function kappa (uint storage foo, uint memory bar) { return 9; }
+}
