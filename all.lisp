@@ -34,6 +34,7 @@
   ("{" (return (values '|%{| '{)))
   ("}" (return (values '|%}| '})))
   ("," (return (values '|%,| '|,|)))
+  ("returns" (return (values '%returns 'returns)))
   ("return" (return (values '%return 'return)))
   ("-?0|[1-9][0-9]*(\\.[0-9]*)?([e|E][+-]?[0-9]+)?"
    (return (values '%number (read-from-string $@))))
@@ -54,10 +55,9 @@
    'fin)
 
 
-
 (define-parser *sol-parser*
   (:start-symbol %source-unit)
-  (:terminals (%pragma %number %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
+  (:terminals (%pragma %number %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
 
   (%source-unit
    (%source-unit-contents #'(lambda (x) `(:src-last ,x)))
@@ -91,6 +91,15 @@
    (%func %identifier |%(| |%)| %block
           #'(lambda (fun id l-brak r-brak blk)
               `(:fun ,id :params '() :blk ,blk)))
+   (%func %identifier |%(| |%)| %retlist %block
+          #'(lambda (fun id l-brak r-brak retlist blk)
+              `(:fun ,id :params '() :retlist ,retlist :blk ,blk)))
+   )
+
+  (%retlist
+   (%returns |%(| |%)| #'(lambda (ret l-brak r-brak) `(:retlist nil)))
+   (%returns |%(| %parameter-list |%)| #'(lambda (ret l-brak ret-lst r-brak)
+                                           `(:retlist ,ret-lst)))
    )
 
   (%parameter-list
@@ -131,7 +140,7 @@
    )
 
   (%term
-   %pragma %number %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
+   %pragma %number %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
 
 (progn
   (defparameter *clj* (sol-lexer (read-file-into-string "test1.sol")))
