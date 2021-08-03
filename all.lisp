@@ -22,6 +22,10 @@
   ("true" (return (values '%true 'true)))
   ("false" (return (values '%false 'false)))
   ("contract" (return (values '%contract 'contract)))
+  ("internal" (return (values '%visibility 'internal)))
+  ("external" (return (values '%visibility 'external)))
+  ("private" (return (values '%visibility 'private)))
+  ("public" (return (values '%visibility 'public)))
   ("function" (return (values '%func 'func)))
   ("uint" (return (values '%uint 'uint)))
   ("int" (return (values '%int 'int)))
@@ -57,7 +61,7 @@
 
 (define-parser *sol-parser*
   (:start-symbol %source-unit)
-  (:terminals (%pragma %number %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
+  (:terminals (%pragma %number %visibility %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
 
   (%source-unit
    (%source-unit-contents #'(lambda (x) `(:src-last ,x)))
@@ -85,21 +89,26 @@
    )
 
   (%func-definition
-   (%func %identifier |%(| %parameter-list |%)| %block ;; #'func_def_with_params
-          #'(lambda (fun id l-brak par-lst r-brak blk)
-              `(:fun ,id :params ,par-lst :blk ,blk)))
-   (%func %identifier |%(| |%)| %block
-          #'(lambda (fun id l-brak r-brak blk)
-              `(:fun ,id :params '() :blk ,blk)))
-   (%func %identifier |%(| |%)| %retlist %block
-          #'(lambda (fun id l-brak r-brak retlist blk)
-              `(:fun ,id :params '() :retlist ,retlist :blk ,blk)))
+   (%func %identifier %parlist %visibility %retlist %block
+          #'(lambda (fun id parlist vis retlist blk)
+              `(:fun ,id :parlist ,parlist :visibility ,vis :retlist ,retlist :blk ,blk)))
+   (%func %identifier %parlist %block
+          #'(lambda (fun id parlist blk)
+              `(:fun ,id :parlist ,parlist :blk ,blk)))
+   (%func %identifier %parlist %retlist %block
+          #'(lambda (fun id parlist retlist blk)
+              `(:fun ,id :parlist ,parlist :retlist ,retlist :blk ,blk)))
+   )
+
+  (%parlist
+   (|%(| |%)| #'(lambda (l-brak r-brak) `(:parlist nil)))
+   (|%(| %parameter-list |%)| #'(lambda (l-brak parlist r-brak) `(:parlist ,parlist)))
    )
 
   (%retlist
    (%returns |%(| |%)| #'(lambda (ret l-brak r-brak) `(:retlist nil)))
-   (%returns |%(| %parameter-list |%)| #'(lambda (ret l-brak ret-lst r-brak)
-                                           `(:retlist ,ret-lst)))
+   (%returns |%(| %parameter-list |%)| #'(lambda (ret l-brak retlist r-brak)
+                                           `(:retlist ,retlist)))
    )
 
   (%parameter-list
@@ -140,7 +149,7 @@
    )
 
   (%term
-   %pragma %number %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
+   %pragma %number %visibility %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
 
 (progn
   (defparameter *clj* (sol-lexer (read-file-into-string "test1.sol")))

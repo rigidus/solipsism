@@ -21,4 +21,5 @@ contract four {
     function lambda () returns () { return; }
     function mu () returns (int)  { return 10; }
     function nu () returns (int, int)  { return 11; }
+    function xi () internal returns (int, int)  { return 11; }
 }
