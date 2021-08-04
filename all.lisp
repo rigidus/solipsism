@@ -37,6 +37,10 @@
   ("storage" (return (values '%data-location 'storage)))
   ("calldata" (return (values '%data-location 'calldata)))
 
+  ("pure" (return (values '%state-mutability 'pure)))
+  ("view" (return (values '%state-mutability 'view)))
+  ("payable" (return (values '%state-mutability 'payable)))
+
   ("pragma\\s+([^;]|\\.)*;" (return (values '%pragma (subseq $@ 7))))
   ("\\(" (return (values '|%(| '|(|)))
   ("\\)" (return (values '|%)| '|)|)))
