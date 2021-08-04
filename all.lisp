@@ -22,16 +22,21 @@
   ("true" (return (values '%true 'true)))
   ("false" (return (values '%false 'false)))
   ("contract" (return (values '%contract 'contract)))
+
   ("internal" (return (values '%visibility 'internal)))
   ("external" (return (values '%visibility 'external)))
   ("private" (return (values '%visibility 'private)))
   ("public" (return (values '%visibility 'public)))
+
+  ("uint" (return (values '%type 'uint)))
+  ("int" (return (values '%type 'int)))
+
   ("function" (return (values '%func 'func)))
-  ("uint" (return (values '%uint 'uint)))
-  ("int" (return (values '%int 'int)))
-  ("memory" (return (values '%memory 'memory)))
-  ("storage" (return (values '%storage 'storage)))
-  ("calldata" (return (values '%calldata 'calldata)))
+
+  ("memory" (return (values '%data-location 'memory)))
+  ("storage" (return (values '%data-location 'storage)))
+  ("calldata" (return (values '%data-location 'calldata)))
+
   ("pragma\\s+([^;]|\\.)*;" (return (values '%pragma (subseq $@ 7))))
   ("\\(" (return (values '|%(| '|(|)))
   ("\\)" (return (values '|%)| '|)|)))
@@ -61,7 +66,7 @@
 
 (define-parser *sol-parser*
   (:start-symbol %source-unit)
-  (:terminals (%pragma %number %visibility %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
+  (:terminals (%pragma %number %visibility %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %type %data-location))
 
   (%source-unit
    (%source-unit-contents #'(lambda (x) `(:src-last ,x)))
@@ -117,15 +122,10 @@
    )
 
   (%parameter
-   (%type-name #'(lambda (x) `(:par-type ,x)))
-   (%type-name %data-location #'(lambda (a b) `(,@a ,@b)))
-   (%type-name %data-location %identifier #'(lambda (a b c) `(,@a ,@b :name ,c)))
-   )
-
-  (%type-name
-   (%uint #'(lambda (x) `(:type-name :uint)))
-   (%int #'(lambda (x) `(:type-name :int)))
-   ;; ...
+   (%type #'(lambda (x) `(:par-type ,x)))
+   (%type %data-location #'(lambda (a b) `(:par-type ,a :data-location ,b)))
+   (%type %data-location %identifier
+          #'(lambda (a b c) `(:par-type ,a :data-location ,b :name ,c)))
    )
 
   (%data-location
@@ -149,7 +149,7 @@
    )
 
   (%term
-   %pragma %number %visibility %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %uint %int %memory %storage %calldata))
+   %pragma %number %visibility %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %type %data-location))
 
 (progn
   (defparameter *clj* (sol-lexer (read-file-into-string "test1.sol")))
