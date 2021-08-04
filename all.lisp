@@ -128,12 +128,6 @@
           #'(lambda (a b c) `(:par-type ,a :data-location ,b :name ,c)))
    )
 
-  (%data-location
-   (%memory #'(lambda (x) `(:data-location :memory)))
-   (%storage #'(lambda (x) `(:data-location :storage)))
-   (%calldata #'(lambda (x) `(:data-location :calldata)))
-   )
-
   (%block
    (|%{| |%}| #'(lambda (a b) `(:block-empty ,b)))
    (|%{| %statement |%}| #'(lambda (a b c) `(:block ,b)))
