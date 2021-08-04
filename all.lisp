@@ -70,7 +70,7 @@
 
 (define-parser *sol-parser*
   (:start-symbol %source-unit)
-  (:terminals (%pragma %number %visibility %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %type %data-location))
+  (:terminals (%pragma %number %visibility %state-mutability %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %type %data-location))
 
   (%source-unit
    (%source-unit-contents #'(lambda (x) `(:src-last ,x)))
@@ -98,6 +98,13 @@
    )
 
   (%func-definition
+
+   (%func %identifier %parlist %visibility %state-mutability %retlist %block
+          #'(lambda (fun id parlist vis mutab retlist blk)
+              `(:fun ,id :parlist ,parlist :visibility ,vis
+                :state-mutability ,mutab
+                :retlist ,retlist :blk ,blk)))
+
    (%func %identifier %parlist %visibility %retlist %block
           #'(lambda (fun id parlist vis retlist blk)
               `(:fun ,id :parlist ,parlist :visibility ,vis :retlist ,retlist :blk ,blk)))
@@ -147,7 +154,7 @@
    )
 
   (%term
-   %pragma %number %visibility %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %type %data-location))
+   %pragma %number %visibility %state-mutability %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %type %data-location))
 
 (progn
   (defparameter *clj* (sol-lexer (read-file-into-string "test1.sol")))
