@@ -23,4 +23,5 @@ contract four {
     function nu () returns (int, int)  { return 11; }
     function xi () internal returns (int, int)  { return 12; }
     function omicron () internal pure returns (int, int)  { return 13; }
+    function omicron () pure returns (int, int)  { return 13; }
 }

@@ -15,44 +15,56 @@
       (cons (car par) (lddr (cadr par)))
       par))
 
-(define-string-lexer sol-lexer
+(defmacro def-lex (var-name &body body)
+  (let ((res))
+    (dolist (item body)
+      (push `(,(car item) (return (values ,@(cdr item)))) res))
+    `(define-string-lexer ,var-name
+       ,@(reverse res))))
+
+;; (print
+;;  (macroexpand-1 '(def-lex sol-lexer
+;;                   ("\"([^\\\"]|\\.)*?\"" '%string (string-trim "\"" $@))
+;;                   ("true" '%true 'true)
+;;                   ("false" '%false 'false)
+
+(def-lex sol-lexer
   ;; ("//(.*)" (return (values '%comment $@)))
   ;; ("(?s)/\\*(.*)\\*/" (values 'multiline-comment $@)) ;; TODO
-  ("\"([^\\\"]|\\.)*?\"" (return (values '%string (string-trim "\"" $@))))
-  ("true" (return (values '%true 'true)))
-  ("false" (return (values '%false 'false)))
-  ("contract" (return (values '%contract 'contract)))
+  ("\"([^\\\"]|\\.)*?\"" '%string (string-trim "\"" $@))
+  ("true" '%true 'true)
+  ("false" '%false 'false)
+  ("contract" '%contract 'contract)
 
-  ("internal" (return (values '%visibility 'internal)))
-  ("external" (return (values '%visibility 'external)))
-  ("private" (return (values '%visibility 'private)))
-  ("public" (return (values '%visibility 'public)))
+  ("internal" '%visibility 'internal)
+  ("external" '%visibility 'external)
+  ("private" '%visibility 'private)
+  ("public" '%visibility 'public)
 
-  ("uint" (return (values '%type 'uint)))
-  ("int" (return (values '%type 'int)))
+  ("uint" '%type 'uint)
+  ("int" '%type 'int)
 
-  ("function" (return (values '%func 'func)))
+  ("function" '%func 'func)
 
-  ("memory" (return (values '%data-location 'memory)))
-  ("storage" (return (values '%data-location 'storage)))
-  ("calldata" (return (values '%data-location 'calldata)))
+  ("memory" '%data-location 'memory)
+  ("storage" '%data-location 'storage)
+  ("calldata" '%data-location 'calldata)
 
-  ("pure" (return (values '%state-mutability 'pure)))
-  ("view" (return (values '%state-mutability 'view)))
-  ("payable" (return (values '%state-mutability 'payable)))
+  ("pure" '%state-mutability 'pure)
+  ("view" '%state-mutability 'view)
+  ("payable" '%state-mutability 'payable)
 
-  ("pragma\\s+([^;]|\\.)*;" (return (values '%pragma (subseq $@ 7))))
-  ("\\(" (return (values '|%(| '|(|)))
-  ("\\)" (return (values '|%)| '|)|)))
-  ("{" (return (values '|%{| '{)))
-  ("}" (return (values '|%}| '})))
-  ("," (return (values '|%,| '|,|)))
-  ("returns" (return (values '%returns 'returns)))
-  ("return" (return (values '%return 'return)))
-  ("-?0|[1-9][0-9]*(\\.[0-9]*)?([e|E][+-]?[0-9]+)?"
-   (return (values '%number (read-from-string $@))))
-  ("[a-zA-Z0-9_]+" (return (values '%identifier $@)))
-  (";" (return (values '|%;| '|;|)))
+  ("pragma\\s+([^;]|\\.)*;" '%pragma (subseq $@ 7))
+  ("\\(" '|%(| '|(|)
+  ("\\)" '|%)| '|)|)
+  ("{" '|%{| '{)
+  ("}" '|%}| '})
+  ("," '|%,| '|,|)
+  ("returns" '%returns 'returns)
+  ("return" '%return 'return)
+  ("-?0|[1-9][0-9]*(\\.[0-9]*)?([e|E][+-]?[0-9]+)?" '%number (read-from-string $@))
+  ("[a-zA-Z0-9_]+" '%identifier $@)
+  (";" '|%;| '|;|)
   )
 
 (defparameter *clj* (sol-lexer (read-file-into-string "test1.sol")))
@@ -99,12 +111,16 @@
 
   (%func-definition
 
+   (%func %identifier %parlist %state-mutability %retlist %block
+          #'(lambda (fun id parlist  mutab retlist blk)
+              `(:fun ,id :parlist ,parlist
+                :state-mutability ,mutab
+                :retlist ,retlist :blk ,blk)))
    (%func %identifier %parlist %visibility %state-mutability %retlist %block
           #'(lambda (fun id parlist vis mutab retlist blk)
               `(:fun ,id :parlist ,parlist :visibility ,vis
                 :state-mutability ,mutab
                 :retlist ,retlist :blk ,blk)))
-
    (%func %identifier %parlist %visibility %retlist %block
           #'(lambda (fun id parlist vis retlist blk)
               `(:fun ,id :parlist ,parlist :visibility ,vis :retlist ,retlist :blk ,blk)))
