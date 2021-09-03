@@ -1,0 +1,641 @@
+#+STARTUP: showall indent hidestars
+
+* Stages
+
+- Разбор контракта в AST
+- В контракте есть функции, каждая из них - тоже AST
+- В каждом statement могут быть имена, по ним мы можем вычислить какие
+  statement зависят от каких (но надо отслеживать область видимости). Но
+  эти имена могут быть любыми, смысл от этого не поменяется.
+- Поэтому мы можем заменить эти имена на номера, смысл кода от этого не
+  поменяется.
+- Теперь мы можем делать вектора для каждого блока кода
+  (функции). Вектор - это хэш блока, в котором имена не
+  хэшируются. Считаем, что если у двух блоков хэш совпадает, то и
+  семантика этих двух блоков идентична (хотя названия переменных и могут
+  быть разными)
+- Когда у нас есть набор аудированных хэшей, мы можем к каждому хэшу
+  привязать аннотацию. Теперь если хэш есть в базе - то этот блок нет
+  смысла проверять по второму разу.
+- Существуют особые места, которые при аудите надо внимательно смотреть -
+  например, где переводятся токены. Для анализа таких мест мы можем
+  составлять правила.
+* Chat
+
+
+Rigidus Rigidus, [15.06.21 16:10]
+можешь ли ты дать все либы (лучше линками) которые мы хотим проверять? опен-зеппелин, еще что-то?
+
+Gleb Zykov HashEx, [15.06.21 16:11]
+нам нужен только ОЗ, так как он в 99% случаях используется
+но нюанс в том, что у ОЗ много разных версий, они достаточно часто выпускают обновления
+https://github.com/OpenZeppelin/openzeppelin-contracts/tree/release-v4.0
+
+
+Rigidus Rigidus, [15.06.21 16:15]
+я решил попробовать сопоставлять идентификаторы, отделяя их от
+типов. Получается типа статический аналайзер, который не зависит от
+имен. Нечеткую логику сложно туда, поэтому сейчас втупую матчу правилами
+
+Пока он умеет определять границы функций и используемые
+переменные. Технически еще нужны все остальные конструкты - реквайр,
+сравнения, ифы, присваивания. По результатам я пока формирую вектор, так
+сравнивать проще - это просто хэш от узлов AST где идентификаторы
+обнулены.
+
+Считаю что если вектор похож (идентичным он бывает редко), то вероятно
+это та же функция с точностью до нюансов.
+
+Есть неидентичности, которые на самом деле не влияют, но для них нужно
+анализировать внешний скоуп - например переменные контракта, или
+модификаторы
+
+Или обратная фигня - когда из-за изменения модификатора функция та же, но смысл ее другой
+
+Gleb Zykov HashEx, [15.06.21 16:18]
+так вот смотри, у нас контракт импортирует какой-то контракт из ОЗ
+допустим, мы знаем контректную версию даже
+нам по идее достаточно будет алерта, что хоть какие-то изменения вносились
+потому что никто нормальный не вносит изменения в ОЗ
+а вот если что-то внесли - это сразу красный флаг, чтобы смотреть вручную
+
+
+Rigidus Rigidus, [15.06.21 16:20]
+ты имеешь виду импортом?
+я анализирую уже флаттенед контракт
+
+Gleb Zykov HashEx, [15.06.21 16:21]
+да, флэттенед хорошо - как раз в таких чаще всего модифицируют
+
+Rigidus Rigidus, [15.06.21 16:21]
+просто импорт ты можешь и по хэшу проверить
+
+Gleb Zykov HashEx, [15.06.21 16:22]
+но флеттенед контракт точно так же по сути импортирует опензеппелиновский контракт
+
+Rigidus Rigidus, [15.06.21 16:22]
+а даже если они там отступы поменяли, и хэш поехал - все равно мое решение покрывает
+по сути? я считаю что весь код внутри одного файла. Это не так?
+
+Gleb Zykov HashEx, [15.06.21 16:22]
+да, плюс еще комменты могут добавляться в контракт разные
+
+Rigidus Rigidus, [15.06.21 16:23]
+Комменты я выкидываю из АСТ. Могу оставлять но это гемор при сравнении
+
+Gleb Zykov HashEx, [15.06.21 16:23]
+немного другое имел ввиду. Что импорт контракта из файла и этот же контракт во флеттенед-файле - по сути одно и то же
+
+Gleb Zykov HashEx, [15.06.21 16:23]
+да, комменты не нужны
+там в них пускай пишут что хотят)
+
+Rigidus Rigidus, [15.06.21 16:24]
+я еще думал попробовать алгоритм Кнута-Мориса-Пратта чтобы находить автоматически все инклюды, но пока не стал, отлаживать лень
+но это хорошее расширение на потом
+
+Gleb Zykov HashEx, [15.06.21 16:25]
+да, нам пока не нужно усложнять, лучше побыстрее получить мвп
+
+Rigidus Rigidus, [15.06.21 16:25]
+пока возможно будет проще типовые конструкты собирать снизу вверх - тогда
+узлы можно будет помечать и ставить на них теги - что вот этот вот - это
+ОЗ. Но эта идея пришла мне только сегодня под утро (((
+
+
+Gleb Zykov HashEx, [16.06.21 21:37]
+Ага. Давай только проговорим, что в прототипе будет
+
+Rigidus Rigidus, [16.06.21 21:39]
+я думаю что должно быть:
+- определение включенных файлов типа опен-зеппелиновских ERC-20
+- возможность добавить любые другие файлы
+- поиск модификаций если они есть
+
+Есть еще пара идей, но их не факт что успею
+
+Rigidus Rigidus, [16.06.21 21:52]
+в крайнем случае можно еще чуть продлить испыталку, на пару недель, если что-то не доделаю
+
+Gleb Zykov HashEx, [16.06.21 21:52]
+[In reply to Rigidus Rigidus]
+да, как вариант
+
+Gleb Zykov HashEx, [16.06.21 21:53]
+[In reply to Rigidus Rigidus]
+это по сути получается функционал для ускорения проведения аудитов. Я вот думаю, можем ли мы что-то получить, чтобы уже попробовать тулзу с автоаудитами
+
+Gleb Zykov HashEx, [16.06.21 21:53]
+а ты, кстати, не смотрел slither?
+
+Rigidus Rigidus, [16.06.21 21:53]
+не, пока ничего не успел посмотреть, все время занят своим. По сути это получает стат анализатор - не думаю что кто-то писал его за месяц ))
+
+Gleb Zykov HashEx, [16.06.21 21:55]
+[In reply to Rigidus Rigidus]
+я к немного другому) не проще ли нам пойти по пути написания к нему плагинов
+
+Gleb Zykov HashEx, [16.06.21 21:55]
+если там нормальный расширяемый код
+
+Rigidus Rigidus, [16.06.21 21:55]
+В этом и весь план
+
+Rigidus Rigidus, [16.06.21 21:56]
+Я думаю что цель в том чтобы не аудитить один и тот же шаблон кода дважды
+
+Gleb Zykov HashEx, [16.06.21 21:58]
+то есть мы сможем давать сразу полный аудит на те токены, у которых код не отличается от аудированных
+
+Gleb Zykov HashEx, [16.06.21 21:58]
+и давать ответ, что необходим полный аудит, если есть существенные
+отличия
+
+Gleb Zykov HashEx, [18.06.21 16:32]
+вот еще типичный пример пропущенного бага
+
+Gleb Zykov HashEx, [18.06.21 16:32]
+там взяли форк сейфмуна и почему-то одна функция вместо приватной стала
+публичной
+
+Gleb Zykov HashEx, [18.06.21 16:32]
+когда аудируешь, это легко пропустить
+
+Gleb Zykov HashEx, [18.06.21 16:33]
+после того как 100 раз эти форки уже видел
+
+
+Gleb Zykov HashEx, [05.07.21 11:15]
+а, гуд) А что уже есть на текущий момент?
+
+Rigidus Rigidus, [05.07.21 11:15]
+разбор основных конструкций солидити, получение векторов функций, сравнение их по расстоянию левенштейна
+
+Rigidus Rigidus, [05.07.21 11:15]
+по данным еще ничего не сделано, но там по аналогии
+
+Rigidus Rigidus, [05.07.21 11:17]
+я не стал делать сложные сопоставления  данных с фунциями, надеясь, что если код отличается - то это само по себе указывает на изменения
+
+Rigidus Rigidus, [05.07.21 11:23]
+вообще, у меня тут родилась немного парадоксальная идея, что все что я делаю можно сделать проще, если просто взять два контракта, построить по ним AST, сериализовать это AST и вычислить diff :)
+
+Rigidus Rigidus, [05.07.21 11:24]
+это еще и визуализацию даст. Но дифф не всегда справляется
+
+Gleb Zykov HashEx, [05.07.21 11:26]
+а в каком виде AST представлен?
+
+Rigidus Rigidus, [05.07.21 11:26]
+просто как связанные узлы с типами
+
+Rigidus Rigidus, [05.07.21 11:27]
+можешь считать что связанные по указателям, хоть это и неявно
+* Intro
+
+Я делаю статический анализатор для солидити - это язык смарт-контрактов в
+Etherium. Цель в том чтобы искать уязвимости в криво написанных
+контрактах.
+
+* Frame
+
+Я буду делать этот проект как композицию компонентов, главными из которых
+являются лексер и парсер.
+
+В качестве тестирования я буду подавать на вход файл с валидными
+solidity-конструкциями и ожидаю получить дерево разбора на выходе.
+
+#+BEGIN_SRC lisp :tangle result.lisp :noweb tangle :padline no
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    (ql:quickload '(:yacc :cl-lex :alexandria :anaphora)))
+
+  (defpackage :sol-parser
+    (:use :cl :yacc :cl-lex :alexandria :anaphora))
+
+  (in-package :sol-parser)
+
+  (defmacro bprint (var)
+    `(subseq (with-output-to-string (*standard-output*)
+               (pprint ,var)) 1))
+
+  (defun lddr (par)
+    (if (equal 2 (length par))
+        (cons (car par) (lddr (cadr par)))
+        par))
+
+  <<lexer>>
+
+  (defparameter *clj* (sol-lexer (read-file-into-string "result_test.sol")))
+
+  ;; main
+  (tagbody
+   repeat
+     (multiple-value-bind (one two)
+         (funcall *clj*)
+       (format t "~%~A : ~A" one (bprint two))
+       (when one
+         (go repeat)))
+     'fin)
+
+
+  <<parser>>
+
+  (progn
+    (defparameter *clj* (sol-lexer (read-file-into-string "result_test.sol")))
+    (let ((result (parse-with-lexer *clj* *sol-parser*)))
+      ;; (format t "~{~%~A~}" result)
+      ;; (lddr result)
+      (print result)
+      ))
+#+END_SRC
+
+Для тестирования будем собирать файл с Solidity-кодом:
+
+#+BEGIN_SRC solidity :tangle result_test.sol :noweb tangle :padline no
+  pragma solidity ^0.8.0;
+  pragma solidity ^0.8.1;
+  contract one {
+      function alfa () { return; }
+  }
+  contract two {
+      function beta (uint) { return 1; }
+      function gamma (uint, uint) { return 2; }
+      function delta (uint, uint, uint) { return 3; }
+      function epsilon (uint memory) { return 3; }
+      function zeta (uint memory, uint storage) { return 4; }
+      function eta (uint memory, uint storage, uint calldata) { return 5; }
+  }
+  contract three {
+      function theta (int) { return 6; }
+      function theta (int calldata, uint storage) { return 7; }
+      function iota (uint storage foo) { return 8; }
+      function kappa (uint storage foo, uint memory bar) { return 9; }
+  }
+  contract four {
+      function lambda () returns () { return; }
+      function mu () returns (int)  { return 10; }
+      function nu () returns (int, int)  { return 11; }
+      function xi () internal returns (int, int)  { return 12; }
+      function omicron () internal pure returns (int, int)  { return 13; }
+      function omicron () pure returns (int, int)  { return 13; }
+  }
+#+END_SRC
+
+* Lexer
+
+Минимальный лексер - это просто функция, которая возвращает замыкание. А
+парсер уже вызывает это замыкание каждый раз когда хочет получить
+следующий токен. Замыкание при каждом вызове возвращает пару значений -
+тип токена и его значение.
+
+** DefLex macro
+
+Написание лексера в этом стиле приводит к необходимости писать множество
+повторяющихся конструкций, например:
+
+#+BEGIN_EXAMPLE lisp
+  (define-string-lexer sol-lexer
+    ("\"([^\\\"]|\\.)*?\"" (return (values '%string (string-trim "\"" $@))))
+    ("true" (return (values '%true 'true)))
+    ("false" (return (values '%false 'false)))
+    ...)
+#+END_EXAMPLE
+
+Поэтому более лаконично написать макрос, чтобы не повторяться:
+
+#+NAME: def_lex
+#+BEGIN_SRC lisp
+  (defmacro def-lex (var-name &body body)
+    (let ((res))
+      (dolist (item body)
+        (push `(,(car item) (return (values ,@(cdr item)))) res))
+      `(define-string-lexer ,var-name
+         ,@(reverse res))))
+
+  ;; (print
+  ;;  (macroexpand-1 '(def-lex sol-lexer
+  ;;                   ("\"([^\\\"]|\\.)*?\"" '%string (string-trim "\"" $@))
+  ;;                   ("true" '%true 'true)
+  ;;                   ("false" '%false 'false))))
+
+  ;; =>
+  ;; (DEFINE-STRING-LEXER SOL-LEXER
+  ;;   ("\"([^\\\"]|\\.)*?\"" (RETURN (VALUES '%STRING (STRING-TRIM "\"" $@))))
+  ;;   ("true" (RETURN (VALUES '%TRUE 'TRUE)))
+  ;;   ("false" (RETURN (VALUES '%FALSE 'FALSE))))
+#+END_SRC
+
+** Lexer tangle
+
+Теперь можно сформировать шаблон в который можно добавлять токены
+лексера:
+
+#+NAME: lexer
+#+BEGIN_SRC lisp :noweb yes
+  <<def_lex>>
+
+  (def-lex sol-lexer
+    ;; ("//(.*)" (return (values '%comment $@)))
+    ;; ("(?s)/\\*(.*)\\*/" (values 'multiline-comment $@)) ;; TODO
+
+    ;; lexer_tokens here
+    <<lexer_tokens>>
+    )
+#+END_SRC
+
+Эти токены я буду добавлять по мере разбора конструкции языка.
+
+[TODO:gmm] - Временно добавим все токены отсюда:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\"([^\\\"]|\\.)*?\"" '%string (string-trim "\"" $@))
+  ("true" '%true 'true)
+  ("false" '%false 'false)
+  ("contract" '%contract 'contract)
+
+  ("internal" '%visibility 'internal)
+  ("external" '%visibility 'external)
+  ("private" '%visibility 'private)
+  ("public" '%visibility 'public)
+
+  ("uint" '%type 'uint)
+  ("int" '%type 'int)
+
+  ("function" '%func 'func)
+
+  ("memory" '%data-location 'memory)
+  ("storage" '%data-location 'storage)
+  ("calldata" '%data-location 'calldata)
+
+  ("pure" '%state-mutability 'pure)
+  ("view" '%state-mutability 'view)
+  ("payable" '%state-mutability 'payable)
+
+  ("pragma\\s+([^;]|\\.)*;" '%pragma (subseq $@ 7))
+  ("\\(" '|%(| '|(|)
+  ("\\)" '|%)| '|)|)
+  ("{" '|%{| '{)
+  ("}" '|%}| '})
+  ("," '|%,| '|,|)
+  ("returns" '%returns 'returns)
+  ("return" '%return 'return)
+  ("-?0|[1-9][0-9]*(\\.[0-9]*)?([e|E][+-]?[0-9]+)?" '%number (read-from-string $@))
+  ("[a-zA-Z0-9_]+" '%identifier $@)
+  (";" '|%;| '|;|)
+#+END_SRC
+
+* Parser
+
+Определяя парсер нужно задать грамматику и продукционные
+правила. Грамматика большая, поэтому я буду разбивать ее на отдельные
+компоненты в направлении сверху-вниз, следуя по конструкциям языка.
+
+При разборе потребуется заполнять компоненты этой функции: терминалы,
+правила грамматики и термы.
+
+#+NAME: parser
+#+BEGIN_SRC lisp :noweb yes
+  (define-parser *sol-parser*
+    (:start-symbol %source-unit)
+    (:terminals (
+                 <<grammar_terminals>>
+                 ))
+
+    <<grammar_rules>>
+
+    (%term
+     <<grammar_terminals>>
+     ))
+#+END_SRC
+
+* Language Constructions
+
+В этомя разделе будут перечислены все грамматические конструкции Solidity
+которые я хочу разбирать.
+
+** SourceUnit
+
+Начнем с source unit, которым в общем случае выступает sol-файл.
+
+Здесь необходимо применить трюк, который позволяет рекурсивно включать в
+грамматическое правило само это правило. Мы будем использовать это неоднократно
+далее. Source-unit содержит source-unit-contents, который в свою очередь
+может содержать source-unit.
+
+А source-unit-contents в свою очередь может содержать pragma и/или
+определение контракта
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%source-unit
+   (%source-unit-contents #'(lambda (x) `(:src-last ,x)))
+   (%source-unit-contents %source-unit #'(lambda (a b) `(:src-head ,a :src-rest, b)))
+   )
+  (%source-unit-contents
+   (%pragma-definition #'(lambda (x) `(:pragma-def ,x)))
+   (%contract-definition #'(lambda (x) `(:contract-def ,x)))
+   )
+#+END_SRC
+
+** PragmaDefinition
+
+Очень простое правило для распознавание прагмы:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%pragma-definition
+   (%pragma #'(lambda (x) `(:pragma ,x))))
+#+END_SRC
+
+Так как прагма - это терминал, нужно добавить ее в список терминалов
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %pragma
+#+END_SRC
+
+** ContractDefinition
+
+В одном файле может быть много определений контракта, особенно если мы
+получили source unit из нескольких слитых вместе контрактов. Поэтому
+здесь мы опять применяем трюк с включением самого правила.
+
+[TODO:gmm] - Пока контракты включают только определения функций, без
+переменных контракта.
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%contract-definition
+   (%contract %identifier |%{| %contract-definition-contents |%}|
+              #'(lambda (ctract id l-brak contents r-brak)
+                  `(:contract ,id :contents ,contents)))
+   )
+  (%contract-definition-contents
+   (%func-definition #'(lambda (x) `(:func-last ,x)))
+   (%func-definition %contract-definition-contents
+                     #'(lambda (a b) `(:func-head ,a :func-rest ,b)))
+   )
+#+END_SRC
+
+Добавим терминалы
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %contract %identifier
+#+END_SRC
+
+** FuncDefinition
+
+Я использую Виртовскую диаграмму, описывающую фунцию отсюда:
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionDefinition
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%func-definition
+   (%func %identifier %parlist %state-mutability %retlist %block
+          #'(lambda (fun id parlist  mutab retlist blk)
+              `(:fun ,id :parlist ,parlist
+                :state-mutability ,mutab
+                :retlist ,retlist :blk ,blk)))
+   (%func %identifier %parlist %visibility %state-mutability %retlist %block
+          #'(lambda (fun id parlist vis mutab retlist blk)
+              `(:fun ,id :parlist ,parlist :visibility ,vis
+                :state-mutability ,mutab
+                :retlist ,retlist :blk ,blk)))
+   (%func %identifier %parlist %visibility %retlist %block
+          #'(lambda (fun id parlist vis retlist blk)
+              `(:fun ,id :parlist ,parlist :visibility ,vis :retlist ,retlist :blk ,blk)))
+   (%func %identifier %parlist %block
+          #'(lambda (fun id parlist blk)
+              `(:fun ,id :parlist ,parlist :blk ,blk)))
+   (%func %identifier %parlist %retlist %block
+          #'(lambda (fun id parlist retlist blk)
+              `(:fun ,id :parlist ,parlist :retlist ,retlist :blk ,blk)))
+   )
+#+END_SRC
+
+Она тянет за собой вспомогательные правила для суб-конструкций:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%parlist
+   (|%(| |%)| #'(lambda (l-brak r-brak) `(:parlist nil)))
+   (|%(| %parameter-list |%)| #'(lambda (l-brak parlist r-brak) `(:parlist ,parlist)))
+   )
+  (%retlist
+   (%returns |%(| |%)| #'(lambda (ret l-brak r-brak) `(:retlist nil)))
+   (%returns |%(| %parameter-list |%)| #'(lambda (ret l-brak retlist r-brak)
+                                           `(:retlist ,retlist)))
+   )
+  (%parameter-list
+   (%parameter #'(lambda (x) `(:par-last ,x)))
+   (%parameter |%,| %parameter-list #'(lambda (a b c) `(:par-head ,a :par-rest ,c)))
+   )
+  (%parameter
+   (%type #'(lambda (x) `(:par-type ,x)))
+   (%type %data-location #'(lambda (a b) `(:par-type ,a :data-location ,b)))
+   (%type %data-location %identifier
+          #'(lambda (a b c) `(:par-type ,a :data-location ,b :name ,c)))
+   )
+  (%block
+   (|%{| |%}| #'(lambda (a b) `(:block-empty ,b)))
+   (|%{| %statement |%}| #'(lambda (a b c) `(:block ,b)))
+   )
+  (%statement
+   (%return-statement #'(lambda (x) `(:ret-stmt ,x)))
+   )
+  (%return-statement
+   (%return %number |%;| #'(lambda (a b c) `(:ret ,b)))
+   (%return |%;| #'(lambda (a b) `(:ret-empty)))
+   )
+#+END_SRC
+
+Добавим терминалы:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %number %visibility %state-mutability %returns %return |%;| |%{| |%}| %func |%(| |%)| |%,| %type %data-location
+#+END_SRC
+
+** TODO Functions
+
+#+NAME: function_definition
+#+BEGIN_SRC lisp
+#+END_SRC
+
+#+NAME: function_definition_rule
+#+BEGIN_SRC lisp :noweb-ref rules
+  (defun function_definition_rule (fun id l-brak par-lst r-brak blk)
+    (declare (ignore fun l-brak r-brak))
+    (let ((res))
+      (block ppp
+        (labels ((tst (lst)
+                   (if (null lst)
+                       (return-from ppp)
+                       (progn
+                         (push (car lst) res)
+                         (tst (caddr lst))))))
+          (tst par-lst)))
+      `(:fun ,id ,(reverse res) ,blk)))
+#+END_SRC
+
+* Макросы для корректного вывода ошибок
+
+#+NAME: macro_bprint
+#+BEGIN_SRC lisp
+  (defmacro bprint (var)
+    `(subseq (with-output-to-string (*standard-output*)  (pprint ,var)) 1))
+#+END_SRC
+
+#+NAME: macro_err
+#+BEGIN_SRC lisp
+  (defmacro err (var)
+    `(error (format nil "ERR:[~A]" (bprint ,var))))
+#+END_SRC
+
+* Отладочный вывод
+
+#+NAME: dbgout
+#+BEGIN_SRC lisp
+  (defparameter *dbg-enable* t)
+  (defparameter *dbg-indent* 1)
+
+  (defun dbgout (out)
+    (when *dbg-enable*
+      (format t (format nil "~~%~~~AT~~A" *dbg-indent*) out)))
+
+  (defmacro dbg (frmt &rest params)
+    `(dbgout (format nil ,frmt ,@params)))
+#+END_SRC
+
+* Макросы для преобразования порядка аргументов
+
+#+NAME: macro_clj
+#+BEGIN_SRC lisp
+  (defmacro -> (x &optional form &rest more)
+    "Thread the expr through the forms. Insert X as the second item
+  in the first form, making a list of it if it is not a list
+  already. If there are more forms, insert the first form as the
+  second item in second form, etc."
+    (cond
+      ((null form) x)
+      ((null more) (if (listp form)
+                       `(,(car form) ,x ,@(cdr form))
+                       (list form x)))
+      (:else `(-> (-> ,x ,form) ,@more))))
+
+  ;; (-> 5 1- ODDP)
+  ;; => (-> (-> 5 1-) ODDP)
+  ;; => (ODDP (-> 5 1-))
+  ;; => (ODDP (1- 5))
+
+  ;; (sb-cltl2:macroexpand-all '(-> 'first (cons 'second) (cons 'third)))
+  ;; => (CONS (CONS 'FIRST 'SECOND) 'THIRD)
+
+  (defmacro ->> (x &optional form &rest more)
+    "Thread the expr through the forms. Insert X as the last item
+  in the first form, making a list of it if it is not a list
+  already. If there are more forms, insert the first form as the
+  last item in second form, etc."
+    (cond
+      ((null form) x)
+      ((null more) (if (listp form)
+                       `(,@form ,x)
+                       (list form x)))
+      (:else `(->> (->> ,x ,form) ,@more))))
+
+  ;; (sb-cltl2:macroexpand-all '(->> 'first (cons 'second) (cons 'third)))
+  ;; => (CONS 'THIRD (CONS 'SECOND 'FIRST))
+#+END_SRC

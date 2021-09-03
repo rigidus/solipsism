@@ -37,6 +37,8 @@
 (def-lex sol-lexer
   ;; ("//(.*)" (return (values '%comment $@)))
   ;; ("(?s)/\\*(.*)\\*/" (values 'multiline-comment $@)) ;; TODO
+
+  ;; lexer_tokens here
   ("\"([^\\\"]|\\.)*?\"" '%string (string-trim "\"" $@))
   ("true" '%true 'true)
   ("false" '%false 'false)
