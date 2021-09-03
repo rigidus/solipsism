@@ -26,7 +26,13 @@
 ;;  (macroexpand-1 '(def-lex sol-lexer
 ;;                   ("\"([^\\\"]|\\.)*?\"" '%string (string-trim "\"" $@))
 ;;                   ("true" '%true 'true)
-;;                   ("false" '%false 'false)
+;;                   ("false" '%false 'false))))
+
+;; =>
+;; (DEFINE-STRING-LEXER SOL-LEXER
+;;   ("\"([^\\\"]|\\.)*?\"" (RETURN (VALUES '%STRING (STRING-TRIM "\"" $@))))
+;;   ("true" (RETURN (VALUES '%TRUE 'TRUE)))
+;;   ("false" (RETURN (VALUES '%FALSE 'FALSE))))
 
 (def-lex sol-lexer
   ;; ("//(.*)" (return (values '%comment $@)))
@@ -88,29 +94,23 @@
    (%source-unit-contents #'(lambda (x) `(:src-last ,x)))
    (%source-unit-contents %source-unit #'(lambda (a b) `(:src-head ,a :src-rest, b)))
    )
-
   (%source-unit-contents
    (%pragma-definition #'(lambda (x) `(:pragma-def ,x)))
    (%contract-definition #'(lambda (x) `(:contract-def ,x)))
    )
-
   (%pragma-definition
    (%pragma #'(lambda (x) `(:pragma ,x))))
-
   (%contract-definition
    (%contract %identifier |%{| %contract-definition-contents |%}|
               #'(lambda (ctract id l-brak contents r-brak)
                   `(:contract ,id :contents ,contents)))
    )
-
   (%contract-definition-contents
    (%func-definition #'(lambda (x) `(:func-last ,x)))
    (%func-definition %contract-definition-contents
                      #'(lambda (a b) `(:func-head ,a :func-rest ,b)))
    )
-
   (%func-definition
-
    (%func %identifier %parlist %state-mutability %retlist %block
           #'(lambda (fun id parlist  mutab retlist blk)
               `(:fun ,id :parlist ,parlist
@@ -131,44 +131,36 @@
           #'(lambda (fun id parlist retlist blk)
               `(:fun ,id :parlist ,parlist :retlist ,retlist :blk ,blk)))
    )
-
   (%parlist
    (|%(| |%)| #'(lambda (l-brak r-brak) `(:parlist nil)))
    (|%(| %parameter-list |%)| #'(lambda (l-brak parlist r-brak) `(:parlist ,parlist)))
    )
-
   (%retlist
    (%returns |%(| |%)| #'(lambda (ret l-brak r-brak) `(:retlist nil)))
    (%returns |%(| %parameter-list |%)| #'(lambda (ret l-brak retlist r-brak)
                                            `(:retlist ,retlist)))
    )
-
   (%parameter-list
    (%parameter #'(lambda (x) `(:par-last ,x)))
    (%parameter |%,| %parameter-list #'(lambda (a b c) `(:par-head ,a :par-rest ,c)))
    )
-
   (%parameter
    (%type #'(lambda (x) `(:par-type ,x)))
    (%type %data-location #'(lambda (a b) `(:par-type ,a :data-location ,b)))
    (%type %data-location %identifier
           #'(lambda (a b c) `(:par-type ,a :data-location ,b :name ,c)))
    )
-
   (%block
    (|%{| |%}| #'(lambda (a b) `(:block-empty ,b)))
    (|%{| %statement |%}| #'(lambda (a b c) `(:block ,b)))
    )
-
   (%statement
    (%return-statement #'(lambda (x) `(:ret-stmt ,x)))
    )
-
   (%return-statement
    (%return %number |%;| #'(lambda (a b c) `(:ret ,b)))
    (%return |%;| #'(lambda (a b) `(:ret-empty)))
    )
-
   (%term
    %pragma %number %visibility %state-mutability %returns %return |%;| |%{| |%}| %contract %func |%(| |%)| %identifier |%,| %type %data-location))
 
