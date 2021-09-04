@@ -205,7 +205,7 @@ Etherium. Цель в том чтобы искать уязвимости в к�
 В качестве тестирования я буду подавать на вход файл с валидными
 solidity-конструкциями и ожидаю получить дерево разбора на выходе.
 
-#+BEGIN_SRC lisp :tangle result.lisp :noweb tangle :padline no
+#+BEGIN_SRC lisp :tangle result.lisp :noweb tangle :comments noweb
   (eval-when (:compile-toplevel :load-toplevel :execute)
     (ql:quickload '(:yacc :cl-lex :alexandria :anaphora)))
 
@@ -225,28 +225,27 @@ solidity-конструкциями и ожидаю получить дерев�
 
   <<lexer>>
 
-  (defparameter *clj* (sol-lexer (read-file-into-string "result_test.sol")))
+  ;; (defparameter *clj* (sol-lexer (read-file-into-string "result_test.sol")))
 
-  ;; main
-  (tagbody
-   repeat
-     (multiple-value-bind (one two)
-         (funcall *clj*)
-       (format t "~%~A : ~A" one (bprint two))
-       (when one
-         (go repeat)))
-     'fin)
-
+  ;; ;; main
+  ;; (tagbody
+  ;;  repeat
+  ;;    (multiple-value-bind (one two)
+  ;;        (funcall *clj*)
+  ;;      (format t "~%~A : ~A" one (bprint two))
+  ;;      (when one
+  ;;        (go repeat)))
+  ;;    'fin)
 
   <<parser>>
 
-  (progn
-    (defparameter *clj* (sol-lexer (read-file-into-string "result_test.sol")))
-    (let ((result (parse-with-lexer *clj* *sol-parser*)))
-      ;; (format t "~{~%~A~}" result)
-      ;; (lddr result)
-      (print result)
-      ))
+  ;; (progn
+  ;;   (defparameter *clj* (sol-lexer (read-file-into-string "result_test.sol")))
+  ;;   (let ((result (parse-with-lexer *clj* *sol-parser*)))
+  ;;     ;; (format t "~{~%~A~}" result)
+  ;;     ;; (lddr result)
+  ;;     (print result)
+  ;;     ))
 
   <<tests>>
 #+END_SRC
@@ -256,8 +255,9 @@ solidity-конструкциями и ожидаю получить дерев�
 Для тестирования будем генерировать файлы с Solidity-кодом в подпапках
 папки ~./tests~.
 
-Процедура тестирования будет пробегаться по каждому из них и передавать в
-парсер:
+При тестировании мы будем пробегаться по каждому из них и передавать в
+парсер. Если возникнет какая-то ошибка - процесс тестирования остановится
+и мы увидим, что произошло.
 
 #+NAME: tests
 #+BEGIN_SRC lisp
@@ -289,13 +289,14 @@ solidity-конструкциями и ожидаю получить дерев�
    #'(lambda (file)
        (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file)))
               (results (parse-with-lexer clj-lex *sol-parser*)))
+         (print file)
          (print results))))
 #+END_SRC
 
 [TODO:gmm] - Временные тесты, после переноса в тестовые файлы их можно
 будет удалить.
 
-#+BEGIN_SRC solidity :tangle result_test.sol :noweb tangle :padline no
+#+BEGIN_SRC solidity :tangle no :aa result_test.sol :noweb tangle :padline no
   pragma solidity ^0.8.0;
   pragma solidity ^0.8.1;
   contract one {
@@ -391,11 +392,11 @@ solidity-конструкциями и ожидаю получить дерев�
 
 [TODO:gmm] - Временно добавим все токены отсюда:
 
-#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens-
   ("\"([^\\\"]|\\.)*?\"" '%string (string-trim "\"" $@))
   ("true" '%true 'true)
   ("false" '%false 'false)
-  ("contract" '%contract 'contract)
+  ;; ("contract" '%contract 'contract)
 
   ("internal" '%visibility 'internal)
   ("external" '%visibility 'external)
@@ -415,7 +416,7 @@ solidity-конструкциями и ожидаю получить дерев�
   ("view" '%state-mutability 'view)
   ("payable" '%state-mutability 'payable)
 
-  ("pragma\\s+([^;]|\\.)*;" '%pragma (subseq $@ 7))
+  ;; ("pragma\\s+([^;]|\\.)*;" '%pragma (subseq $@ 7))
   ("\\(" '|%(| '|(|)
   ("\\)" '|%)| '|)|)
   ("{" '|%{| '{)
@@ -495,15 +496,18 @@ solidity-конструкциями и ожидаю получить дерев�
   %pragma
 #+END_SRC
 
+И нам понадобится добавить этот терминал к лексеру:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("pragma\\s+([^;]|\\.)*;" '%pragma (subseq $@ 7))
+#+END_SRC
+
 Теперь мы можем написать первый тест:
 
 #+NAME: test_pragma
-#+BEGIN_SRC solidity :tangle tests/pragma.sol :noweb tangle :padline no
+#+BEGIN_SRC solidity :tangle tests/pragma.sol :mkdirp yes
   pragma solidity ^0.8.0;
 #+END_SRC
-
-
-
 
 ** ContractDefinition
 
@@ -513,6 +517,14 @@ solidity-конструкциями и ожидаю получить дерев�
 
 [TODO:gmm] - Пока контракты включают только определения функций, без
 переменных контракта.
+
+Здесь есть проблема опережающих объявлений: мы уже хотим тестировать
+парсинг контракта, но еще не умеем определять функции. Можно выйти из
+этого, определив токен %func-definition-stub, который будет заменять
+определение функции для целей тестирования.
+
+[TODO:gmm] - Ради производительности %func-definition-stub можно удалять
+автоматически но я пока не стал это реализовывать.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%contract-definition
@@ -524,21 +536,42 @@ solidity-конструкциями и ожидаю получить дерев�
    (%func-definition #'(lambda (x) `(:func-last ,x)))
    (%func-definition %contract-definition-contents
                      #'(lambda (a b) `(:func-head ,a :func-rest ,b)))
+   (%func-definition-stub  #'(lambda (x) `(:func-definition-stub ,x)))
    )
 #+END_SRC
 
 Добавим терминалы
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %contract %identifier
+  %contract %identifier |%{| |%}| %func-definition-stub
 #+END_SRC
 
-** FuncDefinition
+и их распознавание в лексер:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("contract" '%contract 'contract)
+  ("[a-zA-Z0-9_]+" '%identifier $@)
+  ("{" '|%{| '{)
+  ("}" '|%}| '})
+  ("%%FUNC_DEFINITION_STUB%%" '%func-definition-stub $@)
+#+END_SRC
+
+Тест проверяет общую рамочную конструкцию контракта
+
+#+BEGIN_SRC solidity :tangle tests/contract_definition.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract one
+  {
+      %%FUNC_DEFINITION_STUB%%
+  }
+#+END_SRC
+
+** TODO FuncDefinition
 
 Я использую Виртовскую диаграмму, описывающую фунцию отсюда:
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionDefinition
 
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
+#+BEGIN_SRC lisp :noweb-ref grammar_rules-
   (%func-definition
    (%func %identifier %parlist %state-mutability %retlist %block
           #'(lambda (fun id parlist  mutab retlist blk)
@@ -564,7 +597,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 
 Она тянет за собой вспомогательные правила для суб-конструкций:
 
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
+#+BEGIN_SRC lisp :noweb-ref grammar_rules-
   (%parlist
    (|%(| |%)| #'(lambda (l-brak r-brak) `(:parlist nil)))
    (|%(| %parameter-list |%)| #'(lambda (l-brak parlist r-brak) `(:parlist ,parlist)))
@@ -599,7 +632,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 
 Добавим терминалы:
 
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals-
   %number %visibility %state-mutability %returns %return |%;| |%{| |%}| %func |%(| |%)| |%,| %type %data-location
 #+END_SRC
 
