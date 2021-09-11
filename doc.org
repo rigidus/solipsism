@@ -20,6 +20,7 @@
 - Существуют особые места, которые при аудите надо внимательно смотреть -
   например, где переводятся токены. Для анализа таких мест мы можем
   составлять правила.
+
 * Intro
 
 Я делаю статический анализатор для солидити - это язык смарт-контрактов в
@@ -435,11 +436,11 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 
 Здесь следует начать с тестирования простейшего варианта функции:
 
-#+BEGIN_SRC solidity :tangle tests/func_definition.sol :mkdirp yes :noweb yes
+#+BEGIN_SRC solidity :tangle tests/test_simple_func_def.sol :mkdirp yes :noweb yes
   <<test_pragma>>
-  contract test_function_definition_001
+  contract test_simple_func_def
   {
-      function fun_001 () ;
+      function simple_func () ;
   }
 #+END_SRC
 
@@ -452,17 +453,106 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
              `(:fun ,id :parlist ,parlist)))
 #+END_SRC
 
-Но следует добавить грамматическое правило для %pairlist, которое
-разбирает пустой список параметров и [TODO:gmm] будет разбирать
-неопределенное кол-во параметров в скобках (non_empty_parameter_list).
+Добавим терминалы:
 
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %func |%(| |%)| |%;|
+#+END_SRC
+
+и их распознавание в лексер:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("function" '%func 'func)
+  ("\\(" '|%(| '|(|)
+  ("\\)" '|%)| '|)|)
+  (";" '|%;| '|;|)
+#+END_SRC
+
+Но следует добавить грамматическое правило для %pairlist, которое
+разбирает пустой список параметров и будет разбирать неопределенное
+кол-во параметров в скобках (non_empty_parameter_list).
+
+#+BEGIN_SRC lisp :noweb yes :noweb-ref grammar_rules
   (%parlist
    (|%(| |%)| #'(lambda (l-brak r-brak) `(:parlist nil)))
    <<non_empty_parameter_list>>
-   ;;  (|%(| %parameter-list |%)| #'(lambda (l-brak parlist r-brak) `(:parlist ,parlist)))
    )
 #+END_SRC
+
+Для разбора непустого списка параметров я использую ссылку на %parameter-list:
+
+#+BEGIN_SRC lisp :noweb-ref non_empty_parameter_list
+  (|%(| %parameter-list |%)| #'(lambda (l-brak parlist r-brak) `(:parlist ,parlist)))
+#+END_SRC
+
+который в свою очередь является рекурсивным правилом, ссылающимся само на
+себя:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%parameter-list
+   (%parameter #'(lambda (x) `(:par-last ,x)))
+   (%parameter |%,| %parameter-list #'(lambda (a b c) `(:par-head ,a :par-rest ,c)))
+   )
+#+END_SRC
+
+Для его работы необходимо правило %parameter:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%parameter
+   (%type #'(lambda (x) `(:par-type ,x)))
+   ;; (%type %data-location #'(lambda (a b) `(:par-type ,a :data-location ,b)))
+   ;; (%type %data-location %identifier
+   ;;        #'(lambda (a b c) `(:par-type ,a :data-location ,b :name ,c)))
+   )
+#+END_SRC
+
+В Solidity параметр может включать в себя три компонента, из которых ни
+один не является обязательным:
+- тип переменной
+- локация
+- идентификатор
+
+Начнем с типа, для него добавим в лексер соответствующие токены
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("uint" '%type 'uint)
+  ("int" '%type 'int)
+#+END_SRC
+
+Эти же токены надо добавить в grammar_terminals
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  |%,| %type
+#+END_SRC
+
+
+На этом этапе можно сделать тест, содержащий функцию с одним параметром
+
+#+BEGIN_SRC solidity :tangle tests/test_func_with_params.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_func_with_params
+  {
+      function func_with_param (uint) ;
+  }
+#+END_SRC
+
+и тест с несколькими параметрами [TODO:gmm] - отладить
+
+#+BEGIN_SRC solidity :tangle tests/test_func_with_params.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_func_with_params
+  {
+      function func_with_params (uint, int) ;
+  }
+#+END_SRC
+
+[TODO:gmm] - Оставшиеся токены:
+
+%number %visibility %state-mutability %returns %return |%;| |%{| |%}| %data-location
+
+
+Теперь можно сформировать тестовую функцию с непустым списком параметров:
+
 
 [TODO:gmm] - Оставшиеся неразобранными варианты разбора определения функции
 
@@ -499,16 +589,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
   ;;  (%returns |%(| %parameter-list |%)| #'(lambda (ret l-brak retlist r-brak)
   ;;                                          `(:retlist ,retlist)))
   ;;  )
-  ;; (%parameter-list
-  ;;  (%parameter #'(lambda (x) `(:par-last ,x)))
-  ;;  (%parameter |%,| %parameter-list #'(lambda (a b c) `(:par-head ,a :par-rest ,c)))
-  ;;  )
-  ;; (%parameter
-  ;;  (%type #'(lambda (x) `(:par-type ,x)))
-  ;;  (%type %data-location #'(lambda (a b) `(:par-type ,a :data-location ,b)))
-  ;;  (%type %data-location %identifier
-  ;;         #'(lambda (a b c) `(:par-type ,a :data-location ,b :name ,c)))
-  ;;  )
   ;; (%block
   ;;  (|%{| |%}| #'(lambda (a b) `(:block-empty ,b)))
   ;;  (|%{| %statement |%}| #'(lambda (a b c) `(:block ,b)))
@@ -522,22 +602,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
   ;;  )
 #+END_SRC
 
-Добавим терминалы:
-
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %func |%(| |%)| |%;|
-#+END_SRC
-
-  %number %visibility %state-mutability %returns %return |%;| |%{| |%}| %func |%(| |%)| |%,| %type %data-location
-
-и их распознавание в лексер:
-
-#+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("function" '%func 'func)
-  ("\\(" '|%(| '|(|)
-  ("\\)" '|%)| '|)|)
-  (";" '|%;| '|;|)
-#+END_SRC
 
 ** TODO Functions
 
