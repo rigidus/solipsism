@@ -114,12 +114,19 @@ solidity-конструкциями и ожидаю получить дерев�
               (reverse test-files))))
 
   ;; run-tests
-  (map-subdir-files
-   "./tests"
-   #'(lambda (file)
-       (print file)
-       (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
-         (print (parse-with-lexer clj-lex *sol-parser*)))))
+  ;; (map-subdir-files
+  ;;  "./tests"
+  ;;  #'(lambda (file)
+  ;;      (print file)
+  ;;      (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+  ;;        (print (parse-with-lexer clj-lex *sol-parser*)))))
+
+  (funcall #'(lambda (file)
+               (print file)
+               (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+                 (print (parse-with-lexer clj-lex *sol-parser*))))
+           ;; #P"~/src/solipsism/tests/test_simple_func_def.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_func_with_params.sol")
 #+END_SRC
 
 [TODO:gmm] - Временные тесты, после переноса в тестовые файлы их можно
@@ -506,6 +513,19 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
    )
 #+END_SRC
 
+В Solidity параметры разделяются запятыми, поэтому нужно добавить в
+лексер соответствующую лексему:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("," '|%,| '|,|)
+#+END_SRC
+
+И добавить ее в список терминалов
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  |%,|
+#+END_SRC
+
 В Solidity параметр может включать в себя три компонента, из которых ни
 один не является обязательным:
 - тип переменной
@@ -528,9 +548,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 
 На этом этапе можно сделать тест, содержащий функцию с одним параметром
 
-#+BEGIN_SRC solidity :tangle tests/test_func_with_params.sol :mkdirp yes :noweb yes
+#+BEGIN_SRC solidity :tangle tests/test_func_with_param.sol :mkdirp yes :noweb yes
   <<test_pragma>>
-  contract test_func_with_params
+  contract test_func_with_param
   {
       function func_with_param (uint) ;
   }
