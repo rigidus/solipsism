@@ -656,9 +656,57 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.parameter
 #+END_SRC
 
 
+С параметрами мы закончили, теперь перейдем к возвращаемым
+значениям. Согласно диаграмме
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionDefinition
+возвращаемые значения если наличествуют, то идут после ключевого слова
+returns, которое надо добавить в лексер:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("returns" '%returns 'returns)
+#+END_SRC
+
+и список токенов
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %returns
+#+END_SRC
+
+Теперь нам необходимо расширить func-definition с помощью retlist:
+
+#+BEGIN_SRC lisp :noweb-ref func_def_contents
+  (%func %identifier %parlist %retlist |%;|
+         #'(lambda (fun id parlist retlist semicolon)
+             `(:fun ,id :parlist ,parlist :retlist ,retlist)))
+#+END_SRC
+
+Retlist представляет из себя два возможных варианта - с пустым списком
+возвращаемых значений и непустым. Непустой список воззвращаемых значений
+по сути является уже знакомым parameter-list:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%retlist
+   (%returns |%(| |%)| #'(lambda (ret l-brak r-brak) `(:retlist nil)))
+   (%returns |%(| %parameter-list |%)| #'(lambda (ret l-brak retlist r-brak)
+                                           `(:retlist ,retlist)))
+   )
+#+END_SRC
+
+Переходим к тестам:
+
+#+BEGIN_SRC solidity :tangle tests/test_fn_rets.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_fn_returns
+  {
+      function fn_1 (uint storage p_one) returns (uint storage r_one, int memory r_two) ;
+      function fn_2 (uint storage p_one, int memory p_two) returns () ;
+      function fn_3 (uint p_one, int p_two) returns (uint r_one) ;
+  }
+#+END_SRC
+
 [TODO:gmm] - Оставшиеся токены:
 
-%number %visibility %state-mutability %returns %return
+%number %visibility %state-mutability %return
 
 [TODO:gmm] - Оставшиеся неразобранными варианты разбора определения функции
 
@@ -690,11 +738,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.parameter
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
 
-  ;; (%retlist
-  ;;  (%returns |%(| |%)| #'(lambda (ret l-brak r-brak) `(:retlist nil)))
-  ;;  (%returns |%(| %parameter-list |%)| #'(lambda (ret l-brak retlist r-brak)
-  ;;                                          `(:retlist ,retlist)))
-  ;;  )
   ;; (%block
   ;;  (|%{| |%}| #'(lambda (a b) `(:block-empty ,b)))
   ;;  (|%{| %statement |%}| #'(lambda (a b c) `(:block ,b)))
