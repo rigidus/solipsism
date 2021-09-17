@@ -704,9 +704,68 @@ Retlist представляет из себя два возможных вар�
   }
 #+END_SRC
 
-[TODO:gmm] - Оставшиеся токены:
+Следующая важная часть - это то, что в определении функции может
+находиться между параметрами функции и возвращаемыми значениями. Там
+может быть следующее:
+- visibility
+- state-mutability
+- modifier-invocation
+- virtual
+- verride-specifier
 
-%number %visibility %state-mutability %return
+Все эти вещи могут быть вместе или по-отдельности, и все они
+необязательны, поэтому лучше их вынести в отдельное мета-правило:
+
+#+BEGIN_SRC lisp :noweb-ref func_def_contents
+  (%func %identifier %parlist %fmeta %retlist |%;|
+         #'(lambda (fun id parlist fmeta retlist semicolon)
+             `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist)))
+#+END_SRC
+
+Эта мета правило является рамочным правилом для всех выше перечисленных
+пунктов во всех возможных комбинациях:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%fmeta
+   (%visibility #'(lambda (vis) `(:visibility ,vis)))
+   )
+#+END_SRC
+
+[TODO:gmm] - Определить остальные комбинации (лучше явно запрограммировав
+генерацию из на emacs-lisp)
+
+Начнем с visibility. Есть четыре варианта, которые мы должны добавить в
+лексер:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("^internal$" '%visibility 'internal) ;; Есть конфликт с int
+  ("external" '%visibility 'external)
+  ("private" '%visibility 'private)
+  ("public" '%visibility 'public)
+#+END_SRC
+
+%visibility - это терминал, его надо добавить в список терминалов:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %visibility
+#+END_SRC
+
+Попробуем написать тест:
+
+#+BEGIN_SRC solidity :tangle tests/test_fn_visibility.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_fn_visibility
+  {
+      function fn_1 (uint p_one, int p_two) external returns (uint r_one) ;
+  }
+#+END_SRC
+
+
+[TODO:gmm] - Оставшиеся токены:
+- %state-mutability
+- %return
+- %number
+- %block
 
 [TODO:gmm] - Оставшиеся неразобранными варианты разбора определения функции
 
