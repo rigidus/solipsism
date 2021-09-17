@@ -399,7 +399,7 @@ identifier, он может совпасть с практически любы�
 и их распознавание в лексер:
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("contract" '%contract 'contract)
+  ("\\bcontract\\b" '%contract 'contract)
   ("{" '|%{| '{)
   ("}" '|%}| '})
   ("%%FUNC_DEFINITION_STUB%%" '%func-definition-stub $@)
@@ -470,7 +470,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 и их распознавание в лексер:
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("function" '%func 'func)
+  ("\\bfunction\\b" '%func 'func)
   ("\\(" '|%(| '|(|)
   ("\\)" '|%)| '|)|)
   (";" '|%;| '|;|)
@@ -536,8 +536,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 Начнем с типа, для него добавим в лексер соответствующие токены
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("uint" '%type 'uint)
-  ("int" '%type 'int)
+  ("\\buint\\b" '%type 'uint)
+  ("\\bint\\b" '%type 'int)
 #+END_SRC
 
 Эти же токены надо добавить в grammar_terminals
@@ -615,9 +615,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.parameter
 Все его токены надо добавить в лексер:
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("memory" '%data-location 'memory)
-  ("storage" '%data-location 'storage)
-  ("calldata" '%data-location 'calldata)
+  ("\\bmemory\\b" '%data-location 'memory)
+  ("\\bstorage\\b" '%data-location 'storage)
+  ("\\bcalldata\\b" '%data-location 'calldata)
 #+END_SRC
 
 Теперь можно писать тесты:
@@ -738,10 +738,10 @@ Retlist представляет из себя два возможных вар�
 лексер:
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("^internal$" '%visibility 'internal) ;; Есть конфликт с int
-  ("external" '%visibility 'external)
-  ("private" '%visibility 'private)
-  ("public" '%visibility 'public)
+  ("\\binternal\\b" '%visibility 'internal) ;; Есть конфликт с int
+  ("\\bexternal\\b" '%visibility 'external)
+  ("\\bprivate\\b" '%visibility 'private)
+  ("\\bpublic\\b" '%visibility 'public)
 #+END_SRC
 
 %visibility - это терминал, его надо добавить в список терминалов:
@@ -757,6 +757,7 @@ Retlist представляет из себя два возможных вар�
   contract test_fn_visibility
   {
       function fn_1 (uint p_one, int p_two) external returns (uint r_one) ;
+      function fn_2 (uint p_one, int p_two) internal returns (uint r_one) ;
   }
 #+END_SRC
 
