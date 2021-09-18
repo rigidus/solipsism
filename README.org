@@ -1,0 +1,2 @@
+Static analyzer for the Soliditi programming language aimed at finding
+vulnerabilities in smart contracts
