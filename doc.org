@@ -732,39 +732,101 @@ Retlist представляет из себя два возможных вар�
    )
 #+END_SRC
 
-[TODO:gmm] - Определить остальные комбинации (лучше явно запрограммировав
-генерацию из на emacs-lisp)
+Все эти комбинации генерируются в tangle-time:
 
 #+NAME: fmeta-combination
-#+BEGIN_SRC elisp
+#+BEGIN_SRC elisp :results output
   (require 'cl)
 
-  (setf *in*
-    '(visibility
-      state-mutability
-      modifier-invocation
-      virtual
-      override-specifier))
-
-  (defun test (in)
+  (defun accommodations (in)
     (if (equal 1 (length in))
         (list in)
       (loop
        for item in in
        append (let* ((res)
                      (rest (remove item in))
-                     (rets (test rest)))
+                     (rets (accommodations rest)))
                 (loop for ret in rets do
                       (push ret res)
                       (push (append (list item) ret) res))
                 res))))
 
-  ;; (length (remove-duplicates (test *in*) :test #'equal))
-  (remove-duplicates (test *in*) :test #'equal)
+  (let* ((in '(
+              %visibility
+              %state-mutability
+              %modifier-invocation
+              %virtual
+              %override-specifier))
+         (res (remove-duplicates (accommodations in) :test #'equal)))
+    (loop for item in res do
+          (let ((short-list (mapcar #'(lambda (item)
+                                        (substring (symbol-name item) 2 4))
+                                    item)))
+            (princ (format "(%s\n  #'(lambda %s\n      %s\n"
+                           (mapconcat #'(lambda (it)
+                                          (symbol-name it))
+                                      item " ")
+                           short-list
+                           (concat "`("
+                            (mapconcat #'(lambda (item)
+                                           (concat
+                                            " :"
+                                            (substring (symbol-name item) 1)
+                                            " ,"
+                                            (substring (symbol-name item) 1 3)
+                                            " "))
+                                       item "")
+                            ")))"))))))
 #+END_SRC
 
 #+results: fmeta-combination
-| visibility | state-mutability | modifier-invocation | virtual | override-specifier |
+#+begin_example
+(%modifier-invocation %override-specifier %virtual
+  #'(lambda (od ve ir)
+      `( :modifier-invocation ,mo  :override-specifier ,ov  :virtual ,vi )))
+(%modifier-invocation %virtual %override-specifier
+  #'(lambda (od ir ve)
+      `( :modifier-invocation ,mo  :virtual ,vi  :override-specifier ,ov )))
+(%virtual %override-specifier %modifier-invocation
+  #'(lambda (ir ve od)
+      `( :virtual ,vi  :override-specifier ,ov  :modifier-invocation ,mo )))
+(%virtual %override-specifier
+  #'(lambda (ir ve)
+      `( :virtual ,vi  :override-specifier ,ov )))
+(%override-specifier
+  #'(lambda (ve)
+      `( :override-specifier ,ov )))
+(%virtual %modifier-invocation %override-specifier
+  #'(lambda (ir od ve)
+      `( :virtual ,vi  :modifier-invocation ,mo  :override-specifier ,ov )))
+(%modifier-invocation %override-specifier
+  #'(lambda (od ve)
+      `( :modifier-invocation ,mo  :override-specifier ,ov )))
+(%override-specifier %modifier-invocation
+  #'(lambda (ve od)
+      `( :override-specifier ,ov  :modifier-invocation ,mo )))
+(%modifier-invocation
+  #'(lambda (od)
+      `( :modifier-invocation ,mo )))
+(%override-specifier %virtual %modifier-invocation
+  #'(lambda (ve ir od)
+      `( :override-specifier ,ov  :virtual ,vi  :modifier-invocation ,mo )))
+(%virtual %modifier-invocation
+  #'(lambda (ir od)
+      `( :virtual ,vi  :modifier-invocation ,mo )))
+(%override-specifier %virtual
+  #'(lambda (ve ir)
+      `( :override-specifier ,ov  :virtual ,vi )))
+(%virtual
+  #'(lambda (ir)
+      `( :virtual ,vi )))
+(%override-specifier %modifier-invocation %virtual
+  #'(lambda (ve od ir)
+      `( :override-specifier ,ov  :modifier-invocation ,mo  :virtual ,vi )))
+(%modifier-invocation %virtual
+  #'(lambda (od ir)
+      `( :modifier-invocation ,mo  :virtual ,vi )))
+#+end_example
 
 Начнем с visibility. Есть четыре варианта, которые мы должны добавить в
 лексер:
