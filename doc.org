@@ -737,15 +737,34 @@ Retlist представляет из себя два возможных вар�
 
 #+NAME: fmeta-combination
 #+BEGIN_SRC elisp
-  (let ((variants '(visibility
-                    state-mutability
-                    modifier-invocation
-                    virtual
-                    override-specifier))
-        (results))
-    (setf results variants)
-    results)
+  (require 'cl)
+
+  (setf *in*
+    '(visibility
+      state-mutability
+      modifier-invocation
+      virtual
+      override-specifier))
+
+  (defun test (in)
+    (if (equal 1 (length in))
+        (list in)
+      (loop
+       for item in in
+       append (let* ((res)
+                     (rest (remove item in))
+                     (rets (test rest)))
+                (loop for ret in rets do
+                      (push ret res)
+                      (push (append (list item) ret) res))
+                res))))
+
+  ;; (length (remove-duplicates (test *in*) :test #'equal))
+  (remove-duplicates (test *in*) :test #'equal)
 #+END_SRC
+
+#+results: fmeta-combination
+| visibility | state-mutability | modifier-invocation | virtual | override-specifier |
 
 Начнем с visibility. Есть четыре варианта, которые мы должны добавить в
 лексер:
