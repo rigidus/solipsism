@@ -727,7 +727,6 @@ Retlist представляет из себя два возможных вар�
 
 #+BEGIN_SRC lisp :noweb yes :noweb-ref grammar_rules
   (%fmeta
-   (%visibility #'(lambda (vis) `(:visibility ,vis)))
    <<fmeta-combination()>>
    )
 #+END_SRC
@@ -754,13 +753,15 @@ Retlist представляет из себя два возможных вар�
   (let* ((in '(
               %visibility
               %state-mutability
-              %modifier-invocation
+              ;; %modifier-invocation
               %virtual
-              %override-specifier))
+              ;; %override-specifier
+              ))
          (res (remove-duplicates (accommodations in) :test #'equal)))
+    ;; (length res))
     (loop for item in res do
           (let ((short-list (mapcar #'(lambda (item)
-                                        (substring (symbol-name item) 2 4))
+                                        (substring (symbol-name item) 1 4))
                                     item)))
             (princ (format "(%s\n  #'(lambda %s\n      %s\n"
                            (mapconcat #'(lambda (it)
@@ -769,70 +770,18 @@ Retlist представляет из себя два возможных вар�
                            short-list
                            (concat "`("
                             (mapconcat #'(lambda (item)
-                                           (concat
-                                            " :"
-                                            (substring (symbol-name item) 1)
-                                            " ,"
-                                            (substring (symbol-name item) 1 3)
-                                            " "))
+                                           (concat " :"
+                                            (substring (symbol-name item) 1) " ,"
+                                            (substring (symbol-name item) 1 4) " "))
                                        item "")
                             ")))"))))))
 #+END_SRC
-
-#+results: fmeta-combination
-#+begin_example
-(%modifier-invocation %override-specifier %virtual
-  #'(lambda (od ve ir)
-      `( :modifier-invocation ,mo  :override-specifier ,ov  :virtual ,vi )))
-(%modifier-invocation %virtual %override-specifier
-  #'(lambda (od ir ve)
-      `( :modifier-invocation ,mo  :virtual ,vi  :override-specifier ,ov )))
-(%virtual %override-specifier %modifier-invocation
-  #'(lambda (ir ve od)
-      `( :virtual ,vi  :override-specifier ,ov  :modifier-invocation ,mo )))
-(%virtual %override-specifier
-  #'(lambda (ir ve)
-      `( :virtual ,vi  :override-specifier ,ov )))
-(%override-specifier
-  #'(lambda (ve)
-      `( :override-specifier ,ov )))
-(%virtual %modifier-invocation %override-specifier
-  #'(lambda (ir od ve)
-      `( :virtual ,vi  :modifier-invocation ,mo  :override-specifier ,ov )))
-(%modifier-invocation %override-specifier
-  #'(lambda (od ve)
-      `( :modifier-invocation ,mo  :override-specifier ,ov )))
-(%override-specifier %modifier-invocation
-  #'(lambda (ve od)
-      `( :override-specifier ,ov  :modifier-invocation ,mo )))
-(%modifier-invocation
-  #'(lambda (od)
-      `( :modifier-invocation ,mo )))
-(%override-specifier %virtual %modifier-invocation
-  #'(lambda (ve ir od)
-      `( :override-specifier ,ov  :virtual ,vi  :modifier-invocation ,mo )))
-(%virtual %modifier-invocation
-  #'(lambda (ir od)
-      `( :virtual ,vi  :modifier-invocation ,mo )))
-(%override-specifier %virtual
-  #'(lambda (ve ir)
-      `( :override-specifier ,ov  :virtual ,vi )))
-(%virtual
-  #'(lambda (ir)
-      `( :virtual ,vi )))
-(%override-specifier %modifier-invocation %virtual
-  #'(lambda (ve od ir)
-      `( :override-specifier ,ov  :modifier-invocation ,mo  :virtual ,vi )))
-(%modifier-invocation %virtual
-  #'(lambda (od ir)
-      `( :modifier-invocation ,mo  :virtual ,vi )))
-#+end_example
 
 Начнем с visibility. Есть четыре варианта, которые мы должны добавить в
 лексер:
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\binternal\\b" '%visibility 'internal) ;; Есть конфликт с int
+  ("\\binternal\\b" '%visibility 'internal)
   ("\\bexternal\\b" '%visibility 'external)
   ("\\bprivate\\b" '%visibility 'private)
   ("\\bpublic\\b" '%visibility 'public)
@@ -855,9 +804,63 @@ Retlist представляет из себя два возможных вар�
   }
 #+END_SRC
 
+Следующий модификатор - state-mutability. Добавляем в лексер:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bpure\\b" '%state-mutability 'pure)
+  ("\\bview\\b" '%state-mutability 'view)
+  ("\\bpayable\\b" '%state-mutability 'payable)
+#+END_SRC
+
+%state-mutability - это терминал, его надо добавить в список терминалов:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %state-mutability
+#+END_SRC
+
+Тест:
+
+#+BEGIN_SRC solidity :tangle tests/test_fn_state_mutability.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_fn_state_mutability
+  {
+      function fn_1 (uint p_one, int p_two) external view returns (uint r_one) ;
+      function fn_2 (uint p_one, int p_two) internal payable returns (uint r_one) ;
+      function fn_3 (uint p_one, int p_two) external view returns (uint r_one) ;
+      function fn_4 (uint p_one, int p_two) view private returns (uint r_one) ;
+  }
+#+END_SRC
+
+[TODO:gmm] - modifier-invocation тянет за собой call-agument-list
+
+Следующий модификатор - virtual. У него в лексере только один вариант:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bvirtual\\b" '%virtual 'virtual)
+#+END_SRC
+
+Добавляем в список терминалов:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %virtual
+#+END_SRC
+
+Тест:
+
+#+BEGIN_SRC solidity :tangle tests/test_fn_virtual.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_fn_virtual
+  {
+      function fn_1 (uint p_one, int p_two) virtual returns (uint r_one) ;
+      function fn_2 (uint p_one, int p_two) internal virtual returns (uint r_one) ;
+      function fn_3 (uint p_one, int p_two) virtual external view returns (uint r_one) ;
+      function fn_4 (uint p_one, int p_two) view private virtual returns (uint r_one) ;
+  }
+#+END_SRC
+
+[TODO:gmm] -  override-specifier тянет за собой identifier-path
 
 [TODO:gmm] - Оставшиеся токены:
-- %state-mutability
 - %return
 - %number
 - %block
