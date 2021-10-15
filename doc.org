@@ -55,18 +55,6 @@ solidity-конструкциями и ожидаю получить дерев�
 
   <<lexer>>
 
-  ;; (defparameter *clj* (sol-lexer (read-file-into-string "result_test.sol")))
-
-  ;; ;; main
-  ;; (tagbody
-  ;;  repeat
-  ;;    (multiple-value-bind (one two)
-  ;;        (funcall *clj*)
-  ;;      (format t "~%~A : ~A" one (bprint two))
-  ;;      (when one
-  ;;        (go repeat)))
-  ;;    'fin)
-
   <<parser>>
 
   ;; (progn
@@ -128,6 +116,20 @@ solidity-конструкциями и ожидаю получить дерев�
   ;;                (print (parse-with-lexer clj-lex *sol-parser*))))
   ;;          ;; #P"~/src/solipsism/tests/test_simple_func_def.sol")
   ;;          #P"/home/rigidus/src/solipsism/tests/test_func_with_params.sol")
+
+  ;;; Вариант для получения списка всех лексем конкретного файла
+  ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
+  ;;        (contents (read-file-into-string file))
+  ;;        (clj (sol-lexer contents)))
+  ;;   (print contents)
+  ;;   (tagbody
+  ;;    repeat
+  ;;      (multiple-value-bind (one two)
+  ;;          (funcall clj)
+  ;;        (format t "~%~A : ~A" one (bprint two))
+  ;;        (when one
+  ;;          (go repeat)))
+  ;;      'fin))
 #+END_SRC
 
 [TODO:gmm] - Временные тесты, после переноса в тестовые файлы их можно
@@ -408,7 +410,7 @@ identifier, он может совпасть с практически любы�
 Неспецифичный токен identifier:
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ("[a-zA-Z0-9_]+" '%identifier $@)
+  ("\\b[a-zA-Z0-9_]+\\b" '%identifier $@)
 #+END_SRC
 
 Тест проверяет общую рамочную конструкцию контракта
@@ -753,7 +755,7 @@ Retlist представляет из себя два возможных вар�
   (let* ((in '(
               %visibility
               %state-mutability
-              ;; %modifier-invocation
+              %modifier-invocation
               %virtual
               ;; %override-specifier
               ))
@@ -831,8 +833,6 @@ Retlist представляет из себя два возможных вар�
   }
 #+END_SRC
 
-[TODO:gmm] - modifier-invocation тянет за собой call-agument-list
-
 Следующий модификатор - virtual. У него в лексере только один вариант:
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
@@ -855,6 +855,55 @@ Retlist представляет из себя два возможных вар�
       function fn_2 (uint p_one, int p_two) internal virtual returns (uint r_one) ;
       function fn_3 (uint p_one, int p_two) virtual external view returns (uint r_one) ;
       function fn_4 (uint p_one, int p_two) view private virtual returns (uint r_one) ;
+  }
+#+END_SRC
+
+Следующий модификатор - modifier-invocation. Он тянет за собой
+call-agument-list, поэтому нам понадобится раскрывающее правило:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%modifier-invocation
+   (%identifier-path %parlist
+                      #'(lambda (idpath args) `(:id-path ,idpath :args ,args)))
+   )
+#+END_SRC
+
+[TODO:gmm] %call-agument-list это что-то сложное, поэтому пока представим
+его как %parlist
+
+%identifier-path может быть одним идентифактором илиз набором из идентификаторов,
+разделенных точками:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%identifier-path
+   (%identifier #'(lambda (id) `(:id ,id)))
+   (%identifier |%.| %identifier-path
+                #'(lambda (id-head dot id-rest)
+                    (declare (ignore dot))
+                    `(:id-head ,id-head :id-rest ,id-rest)))
+   )
+#+END_SRC
+
+Теперь надо добавить |%.| в список лексем
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\." '|%.| '|%.|)
+#+END_SRC
+
+и терминалов
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %|.|
+#+END_SRC
+
+Тест:
+
+#+BEGIN_SRC solidity :tangle tests/test_fn_mod_inv.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_fn_mod_inv
+  {
+      function fn_1 (uint p_one) isOk() returns (uint r_one) ;
+      function fn_1 (uint p_one) OkObj.isOk() returns (uint r_one) ;
   }
 #+END_SRC
 
