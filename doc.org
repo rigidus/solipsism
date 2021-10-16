@@ -757,7 +757,7 @@ Retlist представляет из себя два возможных вар�
               %state-mutability
               %modifier-invocation
               %virtual
-              ;; %override-specifier
+              %override-specifier
               ))
          (res (remove-duplicates (accommodations in) :test #'equal)))
     ;; (length res))
@@ -863,7 +863,7 @@ call-agument-list, поэтому нам понадобится раскрыва
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%modifier-invocation
-   (%identifier-path %parlist
+   (%identifier-path-with-dot %parlist
                       #'(lambda (idpath args) `(:id-path ,idpath :args ,args)))
    )
 #+END_SRC
@@ -871,13 +871,13 @@ call-agument-list, поэтому нам понадобится раскрыва
 [TODO:gmm] %call-agument-list это что-то сложное, поэтому пока представим
 его как %parlist
 
-%identifier-path может быть одним идентифактором илиз набором из идентификаторов,
-разделенных точками:
+%identifier-path-with-dot может быть одним идентифактором илиз набором из
+идентификаторов, разделенных точками:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%identifier-path
+  (%identifier-path-with-dot
    (%identifier #'(lambda (id) `(:id ,id)))
-   (%identifier |%.| %identifier-path
+   (%identifier |%.| %identifier-path-with-dot
                 #'(lambda (id-head dot id-rest)
                     (declare (ignore dot))
                     `(:id-head ,id-head :id-rest ,id-rest)))
@@ -903,44 +903,82 @@ call-agument-list, поэтому нам понадобится раскрыва
   contract test_fn_mod_inv
   {
       function fn_1 (uint p_one) isOk() returns (uint r_one) ;
-      function fn_1 (uint p_one) OkObj.isOk() returns (uint r_one) ;
+      function fn_1 (uint p_one) Obj.isOk() returns (uint r_one) ;
+      function fn_1 (uint p_one) One.Two.isOk() returns (uint r_one) ;
+
   }
 #+END_SRC
 
-[TODO:gmm] -  override-specifier тянет за собой identifier-path
+Следующий модификатор - override-specifier. Он тянет за собой
+identifier-path, поэтому нам понадобится раскрывающее правило:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%override-specifier
+   (%override #'(lambda (ovr)
+                  (declare (ignore ovr))
+                  `(:override nil)))
+   (%override |%(| %identifier-path-with-comma |%)|
+              #'(lambda (ovr lb id-path rb)
+                  (declare (ignore ovr) (ignore lb) (ignore rb))
+                  `(:override ,id-path)))
+   )
+#+END_SRC
+
+%identifier-path-with-comma может быть одним идентифактором илиз набором
+из идентификаторов, разделенных точками:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%identifier-path-with-comma
+   (%identifier #'(lambda (id) `(:id ,id)))
+   (%identifier |%,| %identifier-path-with-comma
+                #'(lambda (id-head dot id-rest)
+                    (declare (ignore dot))
+                    `(:id-head ,id-head :id-rest ,id-rest)))
+   )
+#+END_SRC
+
+Теперь надо добавить |%.| в список лексем
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\," '|%,| '|%,|)
+#+END_SRC
+
+и терминалов
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %|,|
+#+END_SRC
+
+Теперь надо добавить |%override| в список лексем
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\boverride" '%override '%override)
+#+END_SRC
+
+и терминалов
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %override
+#+END_SRC
+
+Тест:
+
+#+BEGIN_SRC solidity :tangle tests/test_fn_override.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_fn_override
+  {
+      function fn_1 (uint p_one) override returns (uint r_one) ;
+      function fn_1 (uint p_one) override(Base1, Base2) returns (uint r_one) ;
+  }
+#+END_SRC
+
 
 [TODO:gmm] - Оставшиеся токены:
 - %return
 - %number
 - %block
 
-[TODO:gmm] - Оставшиеся неразобранными варианты разбора определения функции
-
-#+BEGIN_SRC lisp :noweb-ref grammar_rules-
-  (%func-definition
-   ;; (%func %identifier %parlist %state-mutability %retlist %block
-   ;;        #'(lambda (fun id parlist mutab retlist blk)
-   ;;            `(:fun ,id :parlist ,parlist
-   ;;              :state-mutability ,mutab
-   ;;              :retlist ,retlist :blk ,blk)))
-   ;; (%func %identifier %parlist %visibility %state-mutability %retlist %block
-   ;;        #'(lambda (fun id parlist vis mutab retlist blk)
-   ;;            `(:fun ,id :parlist ,parlist :visibility ,vis
-   ;;              :state-mutability ,mutab
-   ;;              :retlist ,retlist :blk ,blk)))
-   ;; (%func %identifier %parlist %visibility %retlist %block
-   ;;        #'(lambda (fun id parlist vis retlist blk)
-   ;;            `(:fun ,id :parlist ,parlist :visibility ,vis :retlist ,retlist :blk ,blk)))
-   ;; (%func %identifier %parlist %block
-   ;;        #'(lambda (fun id parlist blk)
-   ;;            `(:fun ,id :parlist ,parlist :blk ,blk)))
-   ;; (%func %identifier %parlist %retlist %block
-   ;;        #'(lambda (fun id parlist retlist blk)
-   ;;            `(:fun ,id :parlist ,parlist :retlist ,retlist :blk ,blk)))
-   )
-#+END_SRC
-
-Она тянет за собой вспомогательные правила для суб-конструкций:
+[TODO:gmm] - Оставшиеся неразобранными варианты
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
 
