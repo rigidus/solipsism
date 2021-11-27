@@ -424,7 +424,7 @@ identifier, он может совпасть с практически любы�
   }
 #+END_SRC
 
-** TODO FuncDefinition
+** FuncDefinition
 
 Я использую Виртовскую диаграмму, описывающую фунцию отсюда:
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionDefinition
@@ -459,9 +459,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 простой вариант функции разбирается просто:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%func %identifier %parlist |%;|
-         #'(lambda (fun id parlist semicolon)
-             `(:fun ,id :parlist ,parlist)))
+  (%func %identifier %parlist %block
+         #'(lambda (fun id parlist blk)
+             `(:fun ,id :parlist ,parlist :block ,blk)))
 #+END_SRC
 
 Добавим терминалы:
@@ -678,9 +678,9 @@ returns, которое надо добавить в лексер:
 Теперь нам необходимо расширить func-definition с помощью retlist:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%func %identifier %parlist %retlist |%;|
-         #'(lambda (fun id parlist retlist semicolon)
-             `(:fun ,id :parlist ,parlist :retlist ,retlist)))
+  (%func %identifier %parlist %retlist %block
+         #'(lambda (fun id parlist retlist blk)
+             `(:fun ,id :parlist ,parlist :retlist ,retlist :block ,blk)))
 #+END_SRC
 
 Retlist представляет из себя два возможных варианта - с пустым списком
@@ -720,9 +720,10 @@ Retlist представляет из себя два возможных вар�
 необязательны, поэтому лучше их вынести в отдельное мета-правило:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%func %identifier %parlist %fmeta %retlist |%;|
-         #'(lambda (fun id parlist fmeta retlist semicolon)
-             `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist)))
+  (%func %identifier %parlist %fmeta %retlist %block
+         #'(lambda (fun id parlist fmeta retlist blk)
+             `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
+                    :block ,blk)))
 #+END_SRC
 
 Эта мета правило является рамочным правилом для всех выше перечисленных
@@ -973,50 +974,34 @@ identifier-path, поэтому нам понадобится раскрываю
   }
 #+END_SRC
 
+** TODO Block
+
+Переходим к содержимому функции. Внутри функции может быть "блок",
+который может быть просто точкой с запятой или какими-то выражениями
+внутри фигурных скобок.
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%block
+   (|%;| #'(lambda (sc) `(:semicolon ,sc)))
+   (|%{|  |%}| #'(lambda (l-brak r-brak)
+                   `(:block 'none)))
+   )
+#+END_SRC
+
+Тест:
+
+#+BEGIN_SRC solidity :tangle tests/test_fn_block.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_fn_override
+  {
+      function fn_block (uint p_one) returns (uint r_one) { }
+  }
+#+END_SRC
+
 
 [TODO:gmm] - Оставшиеся токены:
 - %return
 - %number
-- %block
-
-[TODO:gmm] - Оставшиеся неразобранными варианты
-
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
-
-  ;; (%block
-  ;;  (|%{| |%}| #'(lambda (a b) `(:block-empty ,b)))
-  ;;  (|%{| %statement |%}| #'(lambda (a b c) `(:block ,b)))
-  ;;  )
-  ;; (%statement
-  ;;  (%return-statement #'(lambda (x) `(:ret-stmt ,x)))
-  ;;  )
-  ;; (%return-statement
-  ;;  (%return %number |%;| #'(lambda (a b c) `(:ret ,b)))
-  ;;  (%return |%;| #'(lambda (a b) `(:ret-empty)))
-  ;;  )
-#+END_SRC
-
-** TODO Functions
-
-#+NAME: function_definition
-#+BEGIN_SRC lisp
-#+END_SRC
-
-#+NAME: function_definition_rule
-#+BEGIN_SRC lisp :noweb-ref rules
-  (defun function_definition_rule (fun id l-brak par-lst r-brak blk)
-    (declare (ignore fun l-brak r-brak))
-    (let ((res))
-      (block ppp
-        (labels ((tst (lst)
-                   (if (null lst)
-                       (return-from ppp)
-                       (progn
-                         (push (car lst) res)
-                         (tst (caddr lst))))))
-          (tst par-lst)))
-      `(:fun ,id ,(reverse res) ,blk)))
-#+END_SRC
 
 * Макросы для корректного вывода ошибок
 
