@@ -103,20 +103,20 @@ solidity-конструкциями и ожидаю получить дерев�
               (reverse test-files))))
 
   ;; run-tests
-  (map-subdir-files
-   "./tests"
-   #'(lambda (file)
-       (print file)
-       (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
-         (print (parse-with-lexer clj-lex *sol-parser*)))))
+  ;; (map-subdir-files
+  ;;  "./tests"
+  ;;  #'(lambda (file)
+  ;;      (print file)
+  ;;      (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+  ;;        (print (parse-with-lexer clj-lex *sol-parser*)))))
 
-  ;;; Вариант для тестирования конкретного файла
-  ;; (funcall #'(lambda (file)
-  ;;              (print file)
-  ;;              (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
-  ;;                (print (parse-with-lexer clj-lex *sol-parser*))))
-  ;;          ;; #P"~/src/solipsism/tests/test_simple_func_def.sol")
-  ;;          #P"/home/rigidus/src/solipsism/tests/test_func_with_params.sol")
+  ;; Вариант для тестирования конкретного файла
+  (funcall #'(lambda (file)
+               (print file)
+               (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+                 (print (parse-with-lexer clj-lex *sol-parser*))))
+           ;; #P"~/src/solipsism/tests/test_simple_func_def.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_var_decl.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -131,39 +131,6 @@ solidity-конструкциями и ожидаю получить дерев�
   ;;        (when one
   ;;          (go repeat)))
   ;;      'fin))
-#+END_SRC
-
-[TODO:gmm] - Временные тесты, после переноса в тестовые файлы их можно
-будет удалить.
-
-#+BEGIN_SRC solidity :tangle no :aa result_test.sol :noweb tangle :padline no
-  pragma solidity ^0.8.0;
-  pragma solidity ^0.8.1;
-  contract one {
-      function alfa () { return; }
-  }
-  contract two {
-      function beta (uint) { return 1; }
-      function gamma (uint, uint) { return 2; }
-      function delta (uint, uint, uint) { return 3; }
-      function epsilon (uint memory) { return 3; }
-      function zeta (uint memory, uint storage) { return 4; }
-      function eta (uint memory, uint storage, uint calldata) { return 5; }
-  }
-  contract three {
-      function theta (int) { return 6; }
-      function theta (int calldata, uint storage) { return 7; }
-      function iota (uint storage foo) { return 8; }
-      function kappa (uint storage foo, uint memory bar) { return 9; }
-  }
-  contract four {
-      function lambda () returns () { return; }
-      function mu () returns (int)  { return 10; }
-      function nu () returns (int, int)  { return 11; }
-      function xi () internal returns (int, int)  { return 12; }
-      function omicron () internal pure returns (int, int)  { return 13; }
-      function omicron () pure returns (int, int)  { return 13; }
-  }
 #+END_SRC
 
 * Lexer
@@ -285,7 +252,8 @@ identifier, он может совпасть с практически любы�
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%source-unit
    (%source-unit-contents #'(lambda (x) `(:src-last ,x)))
-   (%source-unit-contents %source-unit #'(lambda (a b) `(:src-head ,a :src-rest, b)))
+   (%source-unit-contents %source-unit
+                          #'(lambda (a b) `(:src-head ,a :src-rest, b)))
    )
   (%source-unit-contents
    (%pragma-definition #'(lambda (x) `(:pragma-def ,x)))
@@ -370,7 +338,7 @@ identifier, он может совпасть с практически любы�
 Неспецифичный токен identifier:
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ("\\b[a-zA-Z0-9_]+\\b" '%identifier $@)
+  ("\\b[a-zA-Z$_]+[a-zA-Z0-9$_]*\\b" '%identifier $@)
 #+END_SRC
 
 Тест проверяет общую рамочную конструкцию контракта
@@ -418,9 +386,12 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 простой вариант функции разбирается так:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%func %identifier %parlist %overblock
+  (%func %identifier %parlist |%;|
          #'(lambda (fun id parlist blk)
-             `(:fun ,id :parlist ,parlist :overblock ,blk)))
+             `(:fun ,id :parlist ,parlist)))
+  (%func %identifier %parlist %block
+         #'(lambda (fun id parlist blk)
+             `(:fun ,id :parlist ,parlist :block ,blk)))
 #+END_SRC
 
 Добавим терминалы:
@@ -639,9 +610,14 @@ returns, которое надо добавить в лексер:
 Теперь нам необходимо расширить func-definition с помощью retlist:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%func %identifier %parlist %retlist %overblock
+  (%func %identifier %parlist %retlist |%;|
          #'(lambda (fun id parlist retlist blk)
-             `(:fun ,id :parlist ,parlist :retlist ,retlist :overblock ,blk)))
+             (error "empty-block")
+             `(:fun ,id :parlist ,parlist :retlist ,retlist)))
+  (%func %identifier %parlist %retlist %block
+         #'(lambda (fun id parlist retlist blk)
+             (print "dbg: ok : func with parlist and retlist block")
+             `(:fun ,id :parlist ,parlist :retlist ,retlist :block ,blk)))
 #+END_SRC
 
 Retlist представляет из себя два возможных варианта - с пустым списком
@@ -681,10 +657,13 @@ Retlist представляет из себя два возможных вар�
 необязательны, поэтому лучше их вынести в отдельное мета-правило:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%func %identifier %parlist %fmeta %retlist %overblock
+  (%func %identifier %parlist %fmeta %retlist |%;|
+         #'(lambda (fun id parlist fmeta retlist blk)
+             `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist)))
+  (%func %identifier %parlist %fmeta %retlist %block
          #'(lambda (fun id parlist fmeta retlist blk)
              `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
-                    :overblock ,blk)))
+               :block ,blk)))
 #+END_SRC
 
 Эта мета правило является рамочным правилом для всех выше перечисленных
@@ -935,21 +914,7 @@ identifier-path, поэтому нам понадобится раскрываю
   }
 #+END_SRC
 
-** Block
-
-Переходим к содержимому функции. Внутри функции может быть "overblock"
-- название выбрано с учетом того что в грамматике используется
-нетерминал "block", который встречается в других контекстах. Этот
-"overblock" может быть:
-- просто точкой с запятой
-- нетерминалом "block"
-
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%overblock
-   (|%;| #'(lambda (sc) `(:semicolon ,sc)))
-   (%block #'(lambda (blk) `(:block blk)))
-   )
-#+END_SRC
+** START Block
 
 Block может быть:
 - пустыми фигурными скобками
@@ -959,16 +924,18 @@ Block может быть:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%block
-   (|%{| |%}| #'(lambda (l-brak r-brak) `(:empty-block 'empty)))
-   (|%{| %statement |%}| #'(lambda (l-brak stmnt r-brak) `(:block stmnt)))
-   (|%{| %unchecked-block-contents |%}|
-         #'(lambda (l-brak cont r-brak) `(:unchecked ,cont)))
+   (|%{| |%}| #'(lambda (l-brak r-brak)
+                  (print "dbg: empty-blk")
+                  `(:empty-blk 'empty)))
+   (|%{| %stmnt |%}| #'(lambda (l-brak stmnt r-brak) `(:stmnt ,stmnt)))
+   ;; (|%{| %unchecked-block-contents |%}|
+   ;;       #'(lambda (l-brak cont r-brak) `(:unchecked-blk-contents ,cont)))
    )
-  (%unchecked-block-contents
-   (%unchecked-block #'(lambda (x) `(:unchk-blk-last ,x)))
-   (%unchecked-block %unchecked-block-contents
-                     #'(lambda (a b) `(:unchk-blk-head ,a :unchk-blk-rest ,b)))
-   )
+  ;; (%unchecked-block-contents
+  ;;  (%unchecked-block #'(lambda (x) `(:unchk-blk-last ,x)))
+  ;;  (%unchecked-block %unchecked-block-contents
+  ;;                    #'(lambda (a b) `(:unchk-blk-head ,a :unchk-blk-rest ,b)))
+  ;;  )
 #+END_SRC
 
 В тесте мы проверим, что unchecked-block могут вкладываться друг в друга.
@@ -977,7 +944,7 @@ Block может быть:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%unchecked-block
-   (%unchecked %block #'(lambda (a b) `(:unchecked-bloc ,b)))
+   (%unchecked %block #'(lambda (a b) `(:unchecked-block ,b)))
    )
 #+END_SRC
 
@@ -1015,9 +982,9 @@ Block может быть:
 повторяющимися expression-statement или одним из подвидов statement, например условным оператором:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%statement
-   (%block #'(lambda (blk) `(:block blk)))
-   (%var-decl-stmnt-contents #'(lambda (a) `(:vars a)))
+  (%stmnt
+   ;; (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
+   (%var-decl-stmnt-contents #'(lambda (a) `(:decl-vars-contents ,a)))
    ;; (%expression-statement-contents)
    ;; (%if-statement)
    ;; (%for-statement)
@@ -1045,7 +1012,7 @@ Block может быть:
   }
 #+END_SRC
 
-*** VarDecl
+*** TODO VarDecl
 
 Декларация переменной может быть одним из следующих вариантов:
 - просто декларация, завершающаяся точкой с запятой
@@ -1056,26 +1023,39 @@ Block может быть:
   (%var-decl-stmnt-contents
    (%var-decl-stmnt #'(lambda (x) `(:var-decl-stmnt-last ,x)))
    (%var-decl-stmnt %var-decl-stmnt-contents
-                    #'(lambda (a b)
-                        `(:var-decl-stmnt-head ,a :var-decl-stmnt-rest ,b)))
+                    #'(lambda (hd rt)
+                        `(:var-decl-stmnt-head ,hd
+                          :var-decl-stmnt-rest ,rt)))
    )
   (%var-decl-stmnt
-   (%var-decl |%;| #'(lambda (vd sc) `(:var-decl ,vd)))
-   ;; (%var-decl |%=| %expression |%;|)
-   ;; (%var-decl-typle |%=| %expression |%;|)
+   (%var-decl |%;| #'(lambda (vd sc)
+                       `(:var-decl ,vd)))
+   (%var-decl |%=| %expr |%;| #'(lambda (vd eq ex sc)
+                                  `(:var-decl vd :init ,ex)))
+   ;; (%var-decl-tuple |%=| %expr |%;|)
    )
 #+END_SRC
 
-Собственно объявление переменной - это объявление ее type-name,
+Потребуется добавить в список лексем и терминалов "знак равно":
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("=" '|%=| '|%=|)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  |%=|
+#+END_SRC
+
+%var-decl (объявление переменной) - это объявление ее type-name,
 опционально data-location, и идентификатора:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%var-decl
    (%type-name %identifier #'(lambda (vt vn)
                                `(:var-type ,vt :name ,vn)))
-   ;; (%type-name %data-location %identifier |%;|
-   ;;             #'(lambda (a b c)
-   ;;                 `(:var-type ,a :data-location ,b :name ,c)))
+   (%type-name %data-location %identifier
+               #'(lambda (vt dl vn)
+                   `(:var-type ,vt :data-location ,dl :name ,vn)))
    )
 #+END_SRC
 
@@ -1086,12 +1066,106 @@ Block может быть:
   contract test_var_decl
   {
       function fn_var_decl_1 (uint p_one) returns (uint r_one) {
-          uint the_var ;
+          uint first_var;
+          uint memory second_var;
+          int init_var_third = 123;
       }
   }
 #+END_SRC
 
+** TODO Expression
 
+Это один из самых сложных нетерминалов
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%expr
+   (%lit #'(lambda (x) `(:expr ,x)))
+   ;; ...
+   )
+#+END_SRC
+
+*** TODO Literal
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%lit
+   ;; (%str-lit #'(lambda (lt)
+   ;;               `(:expr-lit ,vt :name ,vn)))/
+   (%num-lit #'(lambda (lt)
+                 `(:lit ,lt)))
+   ;; (%bool-lit #'(lambda (lt)
+   ;;                `(:expr-bool-lit ,lt)))
+   ;; (%hex-str-litl #'(lambda (lt)
+   ;;                    `(:expr-hex-str-lit ,lt)))
+   ;; (%unicode-str-lit #'(lambda (lt)
+   ;;            `(:expr-unicode-str-lit ,lt))).
+   )
+#+END_SRC
+
+**** TODO Number-literal
+
+Числовые литералы могут быть либо десятичными либо шестнадцатиричными,
+при этом могут иметь опциональный number-unit
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%num-lit
+   (%dec-num #'(lambda (lt) `(:num-lit ,lt)))
+   ;; (%dec-num %num-unit #'(lambda (lt nu)
+   ;;                         `(:dec-num ,lt :num-unit ,nu)))
+   ;; (%hex-num #'(lambda (lt) `(:hex-number ,lt)))
+   ;; (%hex-num %num-unit #'(lambda (lt nu)
+   ;;                         `(:hex-num ,lt :num-unit ,nu)))
+   )
+#+END_SRC
+
+***** TODO Decimal-number
+
+может быть:
+- набором из цифр и знаков подчеркивания (regex: [0-9_])
+- или парой из таких наборов, разделенных точкой
+
+За этим всем может следовать экспоненциальная часть, которая состоит
+из большой или маленькой буквы "е", опционального минуса и снова
+набора из цифр и знаков подчеркивания.
+
+Поэтому, первое что понадобится - это этот набор. Его надо разместить
+в last_lexer_tokens:
+
+#+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
+  ("\\b[0-9_]+\\b" '%dec_num_v1 $@)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %dec_num_v1
+#+END_SRC
+
+Там же можно построить пару этих наборов, разделенную точкой:
+
+#+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
+  ;; ("\\b[0-9_]+\\\\.[0-9_]+\\b" '%dec_num_v2 $@)
+#+END_SRC
+
+Теперь построим набор с последующий экспонециальной частью
+
+#+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
+  ;; ("\\b[0-9_]+[eE]+[-]*[0-9_]+\\b" '%dec_num_v3 $@)
+#+END_SRC
+
+И то самое, но для двух наборов, разделенных точкой:
+
+#+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
+  ;; ("\\b[0-9_]+\\\\.[0-9_]+[eE]+[-]*[0-9_]+\\b" '%dec_num_v4 $@)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%dec-num
+   (%dec_num_v1 #'(lambda (dn) `(:dec-num ,dn)))
+   ;; (%dec-num %num-unit #'(lambda (lt nu)
+   ;;                         `(:dec-num ,lt :num-unit ,nu)))
+   ;; (%hex-num #'(lambda (lt) `(:hex-number ,lt)))
+   ;; (%hex-num %num-unit #'(lambda (lt nu)
+   ;;                         `(:hex-num ,lt :num-unit ,nu)))
+   )
+#+END_SRC
 
 * Макросы для корректного вывода ошибок
 
