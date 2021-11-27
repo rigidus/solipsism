@@ -103,20 +103,20 @@ solidity-конструкциями и ожидаю получить дерев�
               (reverse test-files))))
 
   ;; run-tests
-  ;; (map-subdir-files
-  ;;  "./tests"
-  ;;  #'(lambda (file)
-  ;;      (print file)
-  ;;      (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
-  ;;        (print (parse-with-lexer clj-lex *sol-parser*)))))
+  (map-subdir-files
+   "./tests"
+   #'(lambda (file)
+       (print file)
+       (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+         (print (parse-with-lexer clj-lex *sol-parser*)))))
 
   ;; Вариант для тестирования конкретного файла
-  (funcall #'(lambda (file)
-               (print file)
-               (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
-                 (print (parse-with-lexer clj-lex *sol-parser*))))
-           ;; #P"~/src/solipsism/tests/test_simple_func_def.sol")
-           #P"/home/rigidus/src/solipsism/tests/test_var_decl.sol")
+  ;; (funcall #'(lambda (file)
+  ;;              (print file)
+  ;;              (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+  ;;                (print (parse-with-lexer clj-lex *sol-parser*))))
+  ;;          ;; #P"~/src/solipsism/tests/test_simple_func_def.sol")
+  ;;          #P"/home/rigidus/src/solipsism/tests/test_var_decl.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -612,7 +612,6 @@ returns, которое надо добавить в лексер:
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
   (%func %identifier %parlist %retlist |%;|
          #'(lambda (fun id parlist retlist blk)
-             (error "empty-block")
              `(:fun ,id :parlist ,parlist :retlist ,retlist)))
   (%func %identifier %parlist %retlist %block
          #'(lambda (fun id parlist retlist blk)
@@ -928,14 +927,14 @@ Block может быть:
                   (print "dbg: empty-blk")
                   `(:empty-blk 'empty)))
    (|%{| %stmnt |%}| #'(lambda (l-brak stmnt r-brak) `(:stmnt ,stmnt)))
-   ;; (|%{| %unchecked-block-contents |%}|
-   ;;       #'(lambda (l-brak cont r-brak) `(:unchecked-blk-contents ,cont)))
+   (|%{| %unchecked-block-contents |%}|
+         #'(lambda (l-brak cont r-brak) `(:unchecked-blk-contents ,cont)))
    )
-  ;; (%unchecked-block-contents
-  ;;  (%unchecked-block #'(lambda (x) `(:unchk-blk-last ,x)))
-  ;;  (%unchecked-block %unchecked-block-contents
-  ;;                    #'(lambda (a b) `(:unchk-blk-head ,a :unchk-blk-rest ,b)))
-  ;;  )
+  (%unchecked-block-contents
+   (%unchecked-block #'(lambda (x) `(:unchk-blk-last ,x)))
+   (%unchecked-block %unchecked-block-contents
+                     #'(lambda (a b) `(:unchk-blk-head ,a :unchk-blk-rest ,b)))
+   )
 #+END_SRC
 
 В тесте мы проверим, что unchecked-block могут вкладываться друг в друга.
@@ -983,7 +982,7 @@ Block может быть:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%stmnt
-   ;; (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
+   (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
    (%var-decl-stmnt-contents #'(lambda (a) `(:decl-vars-contents ,a)))
    ;; (%expression-statement-contents)
    ;; (%if-statement)
