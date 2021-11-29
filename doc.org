@@ -987,19 +987,19 @@ Block может быть:
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%stmnt
    (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
-   (%var-decl-stmnt-contents #'(lambda (a) `(:decl-vars-contents ,a)))
-   ;; (%expression-statement-contents)
-   ;; (%if-statement)
-   ;; (%for-statement)
-   ;; (%while-statement)
-   ;; (%do-while-statement)
-   ;; (%continue-statement)
-   ;; (%break-statement)
-   ;; (%try-statement)
-   ;; (%return-statement)
-   ;; (%emit-statement)
-   ;; (%revert-statement)
-   ;; (%assembly-statement)
+   (%var-decl-stmnt-contents #'(lambda (x) `(:decl-vars-contents ,x)))
+   ;; (%expr-stmnt-contents #'(lambda (x) `(:expr-stmnt-contents ,x)))
+   ;; (%if-stmnt)
+   ;; (%for-stmnt)
+   ;; (%while-stmnt)
+   ;; (%do-while-stmnt)
+   ;; (%continue-stmnt)
+   ;; (%break-stmnt)
+   ;; (%try-stmnt)
+   ;; (%return-stmnt)
+   ;; (%emit-stmnt)
+   ;; (%revert-stmnt)
+   ;; (%assembly-stmnt)
    )
 #+END_SRC
 
@@ -1120,6 +1120,42 @@ Block может быть:
   }
 #+END_SRC
 
+*** TODO expression-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%expr-stmnt
+   (|%(| %var-decl |%)| #'(lambda (lb vd rb)
+                            `(:var-decl-tuple ,vd)))
+   (|%(| %var-decl %one-more-var-decl |%)|
+         #'(lambda (lb vd om rb)
+             `(:var-decl-tuple ,vd :rest ,om)))
+   )
+  (%one-more-var-decl
+   (|%,| %var-decl #'(lambda (cm vd)
+                       `(one-more-var-decl ,vd)))
+   (|%,| #'(lambda (cm)
+             `(one-more-comma ,cm)))
+   (|%,| %var-decl %one-more-var-decl
+         #'(lambda (cm vd om)
+             `(one-more-var-decl ,vd :rest ,om)))
+   (|%,| %one-more-var-decl
+         #'(lambda (cm om)
+             `(one-more-comma ,cm :rest ,om)))
+   )
+#+END_SRC
+
+
+*** TODO if-statement
+*** TODO for-statement
+*** TODO while-statement
+*** TODO do-while-statement
+*** TODO continue-statement
+*** TODO break-statement
+*** TODO try-statement
+*** TODO return-statement
+*** TODO emit-statement
+*** TODO revert-statement
+*** TODO assembly-statement
 ** TODO Expression
 
 Это один из самых сложных нетерминалов
