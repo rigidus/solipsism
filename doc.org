@@ -913,13 +913,14 @@ identifier-path, поэтому нам понадобится раскрываю
   }
 #+END_SRC
 
-** START Block
+** Block
 
 Block может быть:
 - пустыми фигурными скобками
 - нетерминалом statement в фигурных скобках
 - любым количеством нетерминалов вида "unchecked-block", заключенных в
-  фигурные скобки, поэтому тут требуется снова применить трюк с оборачивающим contents-правилом.
+  фигурные скобки, поэтому тут требуется снова применить трюк с
+  оборачивающим contents-правилом.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%block
@@ -933,13 +934,16 @@ Block может быть:
   (%unchecked-block-contents
    (%unchecked-block #'(lambda (x) `(:unchk-blk-last ,x)))
    (%unchecked-block %unchecked-block-contents
-                     #'(lambda (a b) `(:unchk-blk-head ,a :unchk-blk-rest ,b)))
+                     #'(lambda (a b)
+                         `(:unchk-blk-head ,a :unchk-blk-rest ,b)))
    )
 #+END_SRC
 
-В тесте мы проверим, что unchecked-block могут вкладываться друг в друга.
+В тесте мы проверим, что unchecked-block могут вкладываться друг в
+друга.
 
-Наконец сам нетерминал unchecked-block может состоять только из терминала "unchecked" со следующим за ним нетерминалом "block":
+Наконец сам нетерминал unchecked-block может состоять только из
+терминала "unchecked" со следующим за ним нетерминалом "block":
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%unchecked-block
@@ -1011,7 +1015,7 @@ Block может быть:
   }
 #+END_SRC
 
-*** TODO VarDecl
+*** variable-declaration-statement
 
 Декларация переменной может быть одним из следующих вариантов:
 - просто декларация, завершающаяся точкой с запятой
@@ -1031,7 +1035,8 @@ Block может быть:
                        `(:var-decl ,vd)))
    (%var-decl |%=| %expr |%;| #'(lambda (vd eq ex sc)
                                   `(:var-decl vd :init ,ex)))
-   ;; (%var-decl-tuple |%=| %expr |%;|)
+   (%var-decl-tuple |%=| %expr |%;| #'(lambda (vd eq ex sc)
+                                        `(var-decl-tuple ,vd :init ,ex)))
    )
 #+END_SRC
 
@@ -1044,6 +1049,8 @@ Block может быть:
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
   |%=|
 #+END_SRC
+
+**** variable-declaration
 
 %var-decl (объявление переменной) - это объявление ее type-name,
 опционально data-location, и идентификатора:
@@ -1068,6 +1075,47 @@ Block может быть:
           uint first_var;
           uint memory second_var;
           int init_var_third = 123;
+          int memory init_var_fourth = 234;
+      }
+  }
+#+END_SRC
+
+**** variable-declaration-tuple
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%var-decl-tuple
+   (|%(| %var-decl |%)| #'(lambda (lb vd rb)
+                            `(:var-decl-tuple ,vd)))
+   (|%(| %var-decl %one-more-var-decl |%)|
+         #'(lambda (lb vd om rb)
+             `(:var-decl-tuple ,vd :rest ,om)))
+   )
+  (%one-more-var-decl
+   (|%,| %var-decl #'(lambda (cm vd)
+                       `(one-more-var-decl ,vd)))
+   (|%,| #'(lambda (cm)
+             `(one-more-comma ,cm)))
+   (|%,| %var-decl %one-more-var-decl
+         #'(lambda (cm vd om)
+             `(one-more-var-decl ,vd :rest ,om)))
+   (|%,| %one-more-var-decl
+         #'(lambda (cm om)
+             `(one-more-comma ,cm :rest ,om)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_var_decl_typle.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_var_decl_tuple
+  {
+      function fn_var_decl_1 (uint p_one) returns (uint r_one) {
+          (int one) = 1;
+          (int memory two) = 2;
+          (int ab, uint cd) = 3;
+          (int ab,) = 4;
+          (int ab, uint cd, int ef) = 5;
+          (int ab, , ,) = 6;
+          (int gh, , uint hi, , uint jk ,) = 7;
       }
   }
 #+END_SRC
