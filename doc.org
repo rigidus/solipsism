@@ -987,7 +987,8 @@ Block может быть:
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%stmnt
    (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
-   (%var-decl-stmnt-contents #'(lambda (x) `(:decl-vars-contents ,x)))
+   (%var-decl-stmnt #'(lambda (x) `(:var-decl ,x)))
+   (%var-decl-stmnt %stmnt #'(lambda (x y) `(:var-decl ,x :next-stmnt ,y)))
    ;; (%expr-stmnt-contents #'(lambda (x) `(:expr-stmnt-contents ,x)))
    ;; (%if-stmnt)
    ;; (%for-stmnt)
@@ -1023,13 +1024,6 @@ Block может быть:
 - декларация тупла с инициализацией
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%var-decl-stmnt-contents
-   (%var-decl-stmnt #'(lambda (x) `(:var-decl-stmnt-last ,x)))
-   (%var-decl-stmnt %var-decl-stmnt-contents
-                    #'(lambda (hd rt)
-                        `(:var-decl-stmnt-head ,hd
-                          :var-decl-stmnt-rest ,rt)))
-   )
   (%var-decl-stmnt
    (%var-decl |%;| #'(lambda (vd sc)
                        `(:var-decl ,vd)))
@@ -1071,7 +1065,7 @@ Block может быть:
   <<test_pragma>>
   contract test_var_decl
   {
-      function fn_var_decl_1 (uint p_one) returns (uint r_one) {
+      function fn_var_decl (uint p_one) returns (uint r_one) {
           uint first_var;
           uint memory second_var;
           int init_var_third = 123;
@@ -1108,7 +1102,7 @@ Block может быть:
   <<test_pragma>>
   contract test_var_decl_tuple
   {
-      function fn_var_decl_1 (uint p_one) returns (uint r_one) {
+      function fn_var_decl_typle (uint p_one) returns (uint r_one) {
           (int one) = 1;
           (int memory two) = 2;
           (int ab, uint cd) = 3;
@@ -1123,27 +1117,8 @@ Block может быть:
 *** TODO expression-statement
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%expr-stmnt
-   (|%(| %var-decl |%)| #'(lambda (lb vd rb)
-                            `(:var-decl-tuple ,vd)))
-   (|%(| %var-decl %one-more-var-decl |%)|
-         #'(lambda (lb vd om rb)
-             `(:var-decl-tuple ,vd :rest ,om)))
-   )
-  (%one-more-var-decl
-   (|%,| %var-decl #'(lambda (cm vd)
-                       `(one-more-var-decl ,vd)))
-   (|%,| #'(lambda (cm)
-             `(one-more-comma ,cm)))
-   (|%,| %var-decl %one-more-var-decl
-         #'(lambda (cm vd om)
-             `(one-more-var-decl ,vd :rest ,om)))
-   (|%,| %one-more-var-decl
-         #'(lambda (cm om)
-             `(one-more-comma ,cm :rest ,om)))
-   )
+  ;; (%expr-stmnt
 #+END_SRC
-
 
 *** TODO if-statement
 *** TODO for-statement
