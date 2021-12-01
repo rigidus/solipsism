@@ -103,20 +103,20 @@ solidity-конструкциями и ожидаю получить дерев�
               (reverse test-files))))
 
   ;; run-tests
-  (map-subdir-files
-   "./tests"
-   #'(lambda (file)
-       (print file)
-       (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
-         (print (parse-with-lexer clj-lex *sol-parser*)))))
+  ;; (map-subdir-files
+  ;;  "./tests"
+  ;;  #'(lambda (file)
+  ;;      (print file)
+  ;;      (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+  ;;        (print (parse-with-lexer clj-lex *sol-parser*)))))
 
   ;; Вариант для тестирования конкретного файла
-  ;; (funcall #'(lambda (file)
-  ;;              (print file)
-  ;;              (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
-  ;;                (print (parse-with-lexer clj-lex *sol-parser*))))
-  ;;          ;; #P"~/src/solipsism/tests/test_simple_func_def.sol")
-  ;;          #P"/home/rigidus/src/solipsism/tests/test_var_decl.sol")
+  (funcall #'(lambda (file)
+               (print file)
+               (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+                 (print (parse-with-lexer clj-lex *sol-parser*))))
+           ;; #P"~/src/solipsism/tests/test_simple_func_def.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_if_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -989,8 +989,10 @@ Block может быть:
    (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
    (%var-decl-stmnt #'(lambda (x) `(:var-decl ,x)))
    (%var-decl-stmnt %stmnt #'(lambda (x y) `(:var-decl ,x :next-stmnt ,y)))
-   ;; (%expr-stmnt-contents #'(lambda (x) `(:expr-stmnt-contents ,x)))
-   ;; (%if-stmnt)
+   (%expr-stmnt #'(lambda (x) `(:expr-stmnt ,x)))
+   (%expr-stmnt #'(lambda (x y) `(:expr-stmnt ,x :next-stmnt ,y)))
+   (%if-stmnt #'(lambda (x) `(:if-stmnt ,x)))
+   (%if-stmnt %stmnt #'(lambda (x y) `(:if-stmnt ,x :next-stmnt ,y)))
    ;; (%for-stmnt)
    ;; (%while-stmnt)
    ;; (%do-while-stmnt)
@@ -1114,13 +1116,59 @@ Block может быть:
   }
 #+END_SRC
 
-*** TODO expression-statement
+*** expression-statement
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
-  ;; (%expr-stmnt
+  (%expr-stmnt
+   (%expr |%;| #'(lambda (ex sc) `(:expr ,ex)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_expr_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_var_decl
+  {
+      function fn_expr_stmnt (uint p_one) returns (uint r_one) {
+          234;
+      }
+  }
 #+END_SRC
 
 *** TODO if-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%if-stmnt
+   (%if |%(| %expr |%)| %stmnt
+        #'(lambda (ef lb ce rb th) `(if-stmnt ,ce :then ,th)))
+   (%if |%(| %expr |%)| %stmnt %else %stmnt
+        #'(lambda (ef lb ce rb th el es)
+            `(if-stmnt ,ce :then ,th :else ,es)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bif\\b" '%if '%if)
+  ("\\belse\\b" '%else '%else)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %if %else
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_if_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_if_stmnt
+  {
+      function fn_if_stmnt (uint p_one) returns (uint r_one) {
+          if ( 123 ) 345 ;
+          if ( 123 ) { 345; }
+          if ( 123 ) 345 ; else 998 ;
+          if ( 123 ) { 345 ; } else 998 ;
+          if ( 123 ) { 345 ; } else { 998 ; }
+      }
+  }
+#+END_SRC
+
 *** TODO for-statement
 *** TODO while-statement
 *** TODO do-while-statement
