@@ -115,7 +115,7 @@ solidity-конструкциями и ожидаю получить дерев�
                (print file)
                (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
-           #P"/home/rigidus/src/solipsism/tests/test_continue_stmnt.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_break_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -1000,7 +1000,8 @@ Block может быть:
    (%do-while-stmnt %stmnt #'(lambda (x y) `(:dowhile-stmnt ,x :next-stmnt ,y)))
    (%cont-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
    (%cont-stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
-   ;; (%break-stmnt)
+   (%break-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
+   (%break-stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
    ;; (%try-stmnt)
    ;; (%return-stmnt)
    ;; (%emit-stmnt)
@@ -1300,7 +1301,7 @@ Block может быть:
 
 #+BEGIN_SRC solidity :tangle tests/test_dowhile_stmnt.sol :mkdirp yes :noweb yes
   <<test_pragma>>
-  contract test_if_stmnt
+  contract test_dowhile_stmnt
   {
       function fn_dowhile_stmnt (uint p_one) returns (uint r_one) {
           do { 123 ; } while ( 345 ) ;
@@ -1329,15 +1330,42 @@ Block может быть:
 
 #+BEGIN_SRC solidity :tangle tests/test_continue_stmnt.sol :mkdirp yes :noweb yes
   <<test_pragma>>
-  contract test_if_stmnt
+  contract test_continue_stmnt
   {
-      function fn_dowhile_stmnt (uint p_one) returns (uint r_one) {
+      function fn_continue_stmnt (uint p_one) returns (uint r_one) {
           continue ;
       }
   }
 #+END_SRC
 
 *** TODO break-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%break-stmnt
+   (%break |%;|
+         #'(lambda (br sc)
+             `(:break nil)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bbreak\\b" '%break '%break)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %break
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_break_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_break_stmnt
+  {
+      function fn_break_stmnt (uint p_one) returns (uint r_one) {
+          continue ;
+      }
+  }
+#+END_SRC
+
 *** TODO try-statement
 *** TODO return-statement
 *** TODO emit-statement
