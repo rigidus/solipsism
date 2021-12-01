@@ -994,7 +994,8 @@ Block может быть:
    (%if-stmnt %stmnt #'(lambda (x y) `(:if-stmnt ,x :next-stmnt ,y)))
    (%for-stmnt #'(lambda (x) `(:for-stmnt ,x)))
    (%for-stmnt %stmnt #'(lambda (x y) `(:for-stmnt ,x :next-stmnt ,y)))
-   ;; (%while-stmnt)
+   (%while-stmnt #'(lambda (x) `(:for-stmnt ,x)))
+   (%while-stmnt %stmnt #'(lambda (x y) `(:for-stmnt ,x :next-stmnt ,y)))
    ;; (%do-while-stmnt)
    ;; (%continue-stmnt)
    ;; (%break-stmnt)
@@ -1169,7 +1170,7 @@ Block может быть:
   }
 #+END_SRC
 
-*** START for-statement
+*** for-statement
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%for-stmnt
@@ -1249,7 +1250,34 @@ Block может быть:
   }
 #+END_SRC
 
-*** TODO while-statement
+*** while-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%while-stmnt
+   (%while |%(| %expr |%)| %stmnt
+         #'(lambda (wh lb ex rb bd)
+             `(:while ,ex :body ,bd)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bwhile\\b" '%while '%while)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %while
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_while_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_if_stmnt
+  {
+      function fn_if_stmnt (uint p_one) returns (uint r_one) {
+          while ( 123 ) 345 ;
+      }
+  }
+#+END_SRC
+
 *** TODO do-while-statement
 *** TODO continue-statement
 *** TODO break-statement
