@@ -111,11 +111,11 @@ solidity-конструкциями и ожидаю получить дерев�
          (print (parse-with-lexer clj-lex *sol-parser*)))))
 
   ;; Вариант для тестирования конкретного файла
-  ;; (funcall #'(lambda (file)
-  ;;              (print file)
-  ;;              (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
-  ;;                (print (parse-with-lexer clj-lex *sol-parser*))))
-  ;;          #P"/home/rigidus/src/solipsism/tests/test_for_stmnt.sol")
+  (funcall #'(lambda (file)
+               (print file)
+               (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+                 (print (parse-with-lexer clj-lex *sol-parser*))))
+           #P"/home/rigidus/src/solipsism/tests/test_continue_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -998,7 +998,8 @@ Block может быть:
    (%while-stmnt %stmnt #'(lambda (x y) `(:while-stmnt ,x :next-stmnt ,y)))
    (%do-while-stmnt #'(lambda (x) `(:dowhile-stmnt ,x)))
    (%do-while-stmnt %stmnt #'(lambda (x y) `(:dowhile-stmnt ,x :next-stmnt ,y)))
-   ;; (%continue-stmnt)
+   (%cont-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
+   (%cont-stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
    ;; (%break-stmnt)
    ;; (%try-stmnt)
    ;; (%return-stmnt)
@@ -1279,7 +1280,7 @@ Block может быть:
   }
 #+END_SRC
 
-*** START do-while-statement
+*** do-while-statement
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%do-while-stmnt
@@ -1308,8 +1309,34 @@ Block может быть:
   }
 #+END_SRC
 
+*** continue-statement
 
-*** TODO continue-statement
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%cont-stmnt
+   (%continue |%;|
+         #'(lambda (co sc)
+             `(:cont nil)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bcontinue\\b" '%continue '%continue)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %continue
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_continue_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_if_stmnt
+  {
+      function fn_dowhile_stmnt (uint p_one) returns (uint r_one) {
+          continue ;
+      }
+  }
+#+END_SRC
+
 *** TODO break-statement
 *** TODO try-statement
 *** TODO return-statement
