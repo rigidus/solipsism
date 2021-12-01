@@ -994,9 +994,10 @@ Block может быть:
    (%if-stmnt %stmnt #'(lambda (x y) `(:if-stmnt ,x :next-stmnt ,y)))
    (%for-stmnt #'(lambda (x) `(:for-stmnt ,x)))
    (%for-stmnt %stmnt #'(lambda (x y) `(:for-stmnt ,x :next-stmnt ,y)))
-   (%while-stmnt #'(lambda (x) `(:for-stmnt ,x)))
-   (%while-stmnt %stmnt #'(lambda (x y) `(:for-stmnt ,x :next-stmnt ,y)))
-   ;; (%do-while-stmnt)
+   (%while-stmnt #'(lambda (x) `(:while-stmnt ,x)))
+   (%while-stmnt %stmnt #'(lambda (x y) `(:while-stmnt ,x :next-stmnt ,y)))
+   (%do-while-stmnt #'(lambda (x) `(:dowhile-stmnt ,x)))
+   (%do-while-stmnt %stmnt #'(lambda (x y) `(:dowhile-stmnt ,x :next-stmnt ,y)))
    ;; (%continue-stmnt)
    ;; (%break-stmnt)
    ;; (%try-stmnt)
@@ -1226,9 +1227,9 @@ Block может быть:
 
 #+BEGIN_SRC solidity :tangle tests/test_for_stmnt.sol :mkdirp yes :noweb yes
   <<test_pragma>>
-  contract test_if_stmnt
+  contract test_for_stmnt
   {
-      function fn_if_stmnt (uint p_one) returns (uint r_one) {
+      function fn_for_stmnt (uint p_one) returns (uint r_one) {
           for (            ;     ; ) 345 ;
           for (            ;     ; ) { 345 ; }
           for ( uint idx   ;     ; ) { 345 ; }
@@ -1270,15 +1271,44 @@ Block может быть:
 
 #+BEGIN_SRC solidity :tangle tests/test_while_stmnt.sol :mkdirp yes :noweb yes
   <<test_pragma>>
-  contract test_if_stmnt
+  contract test_while_stmnt
   {
-      function fn_if_stmnt (uint p_one) returns (uint r_one) {
+      function fn_while_stmnt (uint p_one) returns (uint r_one) {
           while ( 123 ) 345 ;
       }
   }
 #+END_SRC
 
-*** TODO do-while-statement
+*** START do-while-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%do-while-stmnt
+   (%do %stmnt %while |%(| %expr |%)| |%;|
+         #'(lambda (dd bd wh lb ex rb sc)
+             `(:dowhile ,ex :body ,bd)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bdo\\b" '%do '%do)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %do
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_dowhile_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_if_stmnt
+  {
+      function fn_dowhile_stmnt (uint p_one) returns (uint r_one) {
+          do { 123 ; } while ( 345 ) ;
+          do 123 ; while ( 345 ) ;
+      }
+  }
+#+END_SRC
+
+
 *** TODO continue-statement
 *** TODO break-statement
 *** TODO try-statement
