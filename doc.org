@@ -1000,10 +1000,10 @@ Block может быть:
    (%do-while-stmnt %stmnt #'(lambda (x y) `(:dowhile-stmnt ,x :next-stmnt ,y)))
    (%cont-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
    (%cont-stmnt %stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
-   (%break-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
-   (%break-stmnt %stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
-   (%try-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
-   (%try-stmnt %stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
+   (%break-stmnt #'(lambda (x) `(:break-stmnt ,x)))
+   (%break-stmnt %stmnt #'(lambda (x y) `(:break-stmnt ,x :next-stmnt ,y)))
+   (%try-stmnt #'(lambda (x) `(:try-stmnt ,x)))
+   (%try-stmnt %stmnt #'(lambda (x y) `(:try-stmnt ,x :next-stmnt ,y)))
    ;; (%return-stmnt)
    ;; (%emit-stmnt)
    ;; (%revert-stmnt)
@@ -1374,9 +1374,9 @@ Block может быть:
    (%try %expr %block %catch-clause-contents
          #'(lambda (tr ex bl cc)
              `(:try ,ex :blk ,bl :catch ,cc)))
-   ;; (%try %expr %returns |%(| %parameter-list |%)| %block %catch-clause-contents
-   ;;       #'(lambda (tr ex rt lb pl rb bl cc)
-   ;;           `(:try ,ex :ret ,pl :blk ,bl :catch cc)))
+   (%try %expr %returns |%(| %parameter-list |%)| %block %catch-clause-contents
+         #'(lambda (tr ex rt lb pl rb bl cc)
+             `(:try ,ex :ret ,pl :blk ,bl :catch ,cc)))
    )
   (%catch-clause-contents
    (%catch-clause %catch-clause-contents
@@ -1385,10 +1385,10 @@ Block может быть:
    )
   (%catch-clause
    (%catch %block #'(lambda (ca bl) `(:catch nil :blk ,bl)))
-   ;; (%catch |%(| %parameter-list |%)| %block
-   ;;         #'(lambda (ca lb pl rb bl) `(:catch nil :par-list ,pl :blk ,bl)))
-   ;; (%catch %identifier |%(| %parameter-list |%)| %block
-   ;;          #'(lambda (ca id lb pl rb bl) `(:catch id :par-list ,pl :blk ,bl)))
+   (%catch |%(| %parameter-list |%)| %block
+           #'(lambda (ca lb pl rb bl) `(:catch nil :par-list ,pl :blk ,bl)))
+   (%catch %identifier |%(| %parameter-list |%)| %block
+           #'(lambda (ca id lb pl rb bl) `(:catch ,id :par-list ,pl :blk ,bl)))
    )
 #+END_SRC
 
@@ -1409,6 +1409,10 @@ Block может быть:
       function fn_try_stmnt (uint p_one) returns (uint r_one) {
           try 123 { } catch { }
           try 123 { } catch { } catch { }
+          try 123 { } catch (uint memory reason) { }
+          try 123 { } catch Error(uint memory reason) { }
+          try 123 returns (int memory retval)
+              { } catch Error(uint memory reason) { }
       }
   }
 #+END_SRC
