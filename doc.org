@@ -115,7 +115,7 @@ solidity-конструкциями и ожидаю получить дерев�
                (print file)
                (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
-           #P"/home/rigidus/src/solipsism/tests/test_try_catch_stmnt.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_return_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -1004,7 +1004,8 @@ Block может быть:
    (%break-stmnt %stmnt #'(lambda (x y) `(:break-stmnt ,x :next-stmnt ,y)))
    (%try-stmnt #'(lambda (x) `(:try-stmnt ,x)))
    (%try-stmnt %stmnt #'(lambda (x y) `(:try-stmnt ,x :next-stmnt ,y)))
-   ;; (%return-stmnt)
+   (%return-stmnt #'(lambda (x) `(:return-stmnt ,x)))
+   (%return-stmnt %stmnt #'(lambda (x y) `(:return-stmnt ,x :next-stmnt ,y)))
    ;; (%emit-stmnt)
    ;; (%revert-stmnt)
    ;; (%assembly-stmnt)
@@ -1367,7 +1368,7 @@ Block может быть:
   }
 #+END_SRC
 
-*** START try-statement and catch-clause
+*** try-statement and catch-clause
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%try-stmnt
@@ -1417,7 +1418,38 @@ Block может быть:
   }
 #+END_SRC
 
-*** TODO return-statement
+*** return-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%return-stmnt
+   (%return |%;|
+         #'(lambda (rt sc)
+             `(:return nil)))
+   (%return %expr |%;|
+            #'(lambda (rt ex sc)
+                `(:return ,ex)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\breturn\\b" '%return '%return)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %return
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_return_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_return_stmnt
+  {
+      function fn_return_stmnt (uint p_one) returns (uint r_one) {
+          return ;
+          return 123 ;
+      }
+  }
+#+END_SRC
+
 *** TODO emit-statement
 *** TODO revert-statement
 *** TODO assembly-statement
