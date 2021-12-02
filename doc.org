@@ -115,7 +115,7 @@ solidity-конструкциями и ожидаю получить дерев�
                (print file)
                (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
-           #P"/home/rigidus/src/solipsism/tests/test_emit_stmnt.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -1008,7 +1008,8 @@ Block может быть:
    (%return-stmnt %stmnt #'(lambda (x y) `(:return-stmnt ,x :next-stmnt ,y)))
    (%emit-stmnt #'(lambda (x) `(:emit-stmnt ,x)))
    (%emit-stmnt %stmnt #'(lambda (x y) `(:emit-stmnt ,x :next-stmnt ,y)))
-   ;; (%revert-stmnt)
+   (%revert-stmnt #'(lambda (x) `(:emit-stmnt ,x)))
+   (%revert-stmnt %stmnt #'(lambda (x y) `(:emit-stmnt ,x :next-stmnt ,y)))
    ;; (%assembly-stmnt)
    )
 #+END_SRC
@@ -1451,7 +1452,7 @@ Block может быть:
   }
 #+END_SRC
 
-*** START emit-statement
+*** emit-statement
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%emit-stmnt
@@ -1484,9 +1485,41 @@ Block может быть:
   }
 #+END_SRC
 
-*** TODO revert-statement
+*** START revert-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%revert-stmnt
+   (%revert %expr %call-arg-list |%;|
+            #'(lambda (et ex al sc)
+                `(:emit ,ex, :args ,al)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\brevert\\b" '%revert '%revert)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %revert
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_revert_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_revert_stmnt
+  {
+      function fn_revert_stmnt (uint p_one) returns (uint r_one) {
+          revert 123 ( ) ;
+          revert 123 ( 321 ) ;
+          revert 123 ( 321, 432 ) ;
+          revert 123 ( { } ) ;
+          revert 123 ( { Log : 987 } ) ;
+          revert 123 ( { Log : 987, Some : 765 } ) ;
+      }
+  }
+#+END_SRC
+
 *** TODO assembly-statement
-** TODO Call-argument-list
+** Call-argument-list
 
 Arguments when calling a function or a similar callable object. The
 arguments are either given as comma separated list or as map of named
@@ -1525,7 +1558,7 @@ arguments.
   |%:|
 #+END_SRC
 
-** TODO Expression
+** START Expression
 
 Это один из самых сложных нетерминалов
 
