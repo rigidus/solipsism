@@ -115,7 +115,7 @@ solidity-конструкциями и ожидаю получить дерев�
                (print file)
                (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
-           #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_assembly_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -1008,9 +1008,10 @@ Block может быть:
    (%return-stmnt %stmnt #'(lambda (x y) `(:return-stmnt ,x :next-stmnt ,y)))
    (%emit-stmnt #'(lambda (x) `(:emit-stmnt ,x)))
    (%emit-stmnt %stmnt #'(lambda (x y) `(:emit-stmnt ,x :next-stmnt ,y)))
-   (%revert-stmnt #'(lambda (x) `(:emit-stmnt ,x)))
-   (%revert-stmnt %stmnt #'(lambda (x y) `(:emit-stmnt ,x :next-stmnt ,y)))
-   ;; (%assembly-stmnt)
+   (%revert-stmnt #'(lambda (x) `(:revert-stmnt ,x)))
+   (%revert-stmnt %stmnt #'(lambda (x y) `(:revert-stmnt ,x :next-stmnt ,y)))
+   (%assembly-stmnt #'(lambda (x) `(:assembly-stmnt ,x)))
+   (%assembly-stmnt %stmnt #'(lambda (x y) `(:assembly-stmnt ,x :next-stmnt ,y)))
    )
 #+END_SRC
 
@@ -1485,7 +1486,7 @@ Block может быть:
   }
 #+END_SRC
 
-*** START revert-statement
+*** revert-statement
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%revert-stmnt
@@ -1518,7 +1519,44 @@ Block может быть:
   }
 #+END_SRC
 
-*** TODO assembly-statement
+*** START assembly-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%assembly-stmnt
+   (%assembly |%{| yul-stmnt |%}| #'(lambda (as lb yu rb) `(:asm ,yu)))
+   (%assembly %evmasm |%{| yul-stmnt |%}| #'(lambda (as em lb yu rb) `(:asm ,yu)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bassembly\\b" '%assembly '%assembly)
+  ("\\b\\\"%evmasm\\\"\\b" '%evmasm '%evmasm)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %assembly %evmasm
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_assembly_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_assembly_stmnt
+  {
+      function fn_assembly_stmnt (uint p_one) returns (uint r_one) {
+          assembly "evmasm" {}
+      }
+  }
+#+END_SRC
+
+**** TODO Yul-statement
+***** TODO yul-block
+***** TODO yul-variable-declaration
+***** TODO yul-assignment
+***** TODO yul-function-call
+***** TODO yul-if-statement
+***** TODO yul-for-statement
+***** TODO yul-switch-statementleavebreakcontinue
+***** TODO yul-function-definition
+
 ** Call-argument-list
 
 Arguments when calling a function or a similar callable object. The
