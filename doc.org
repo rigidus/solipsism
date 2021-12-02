@@ -288,6 +288,7 @@ identifier, он может совпасть с практически любы�
   pragma solidity ^0.8.0;
 #+END_SRC
 
+** TODO Import-directive
 ** ContractDefinition
 
 В одном файле может быть много определений контракта, особенно если мы
@@ -350,6 +351,8 @@ identifier, он может совпасть с практически любы�
   }
 #+END_SRC
 
+** TODO Interface-definition
+** TODO Library-definition
 ** FuncDefinition
 
 Я использую Виртовскую диаграмму, описывающую фунцию отсюда:
@@ -912,6 +915,11 @@ identifier-path, поэтому нам понадобится раскрываю
   }
 #+END_SRC
 
+** TODO Constant-variable-declaration
+** TODO Struct-definition
+** TODO Enum-definition
+** TODO User-defined-value-type-definition
+** TODO Error-definition
 ** Block
 
 Block может быть:
