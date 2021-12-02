@@ -1478,7 +1478,8 @@ Block может быть:
           emit 123 ( 321 ) ;
           emit 123 ( 321, 432 ) ;
           emit 123 ( { } ) ;
-          emit 123 ( { Log RRR 987 } ) ;
+          emit 123 ( { Log : 987 } ) ;
+          emit 123 ( { Log : 987, Some : 765 } ) ;
       }
   }
 #+END_SRC
@@ -1509,15 +1510,15 @@ arguments.
   (%call-arg-obj
    (%identifier |%:| %expr #'(lambda (id cm ex)
                                `(:call-arg-obj-last ,id :call-expr ,ex)))
-  ;;  (%identifier |%:| %expr |%,| %call-arg-obj #'(lambda (id cm ex rt)
-  ;;                                                 `(:call-arg-obj-head ,id
-  ;;                                                   :call-expr ,ex
-  ;;                                                   :call-arg-obj-head ,rt)))
+   (%identifier |%:| %expr |%,| %call-arg-obj
+                #'(lambda (id cm ex sc rt)
+                    `(:call-arg-obj-head ,id :call-expr ,ex
+                      :call-arg-obj-head ,rt)))
    )
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\bRRR\\b" '|%:| '|%:|)
+  (":" '|%:| '|:|)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
