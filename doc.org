@@ -115,7 +115,7 @@ solidity-конструкциями и ожидаю получить дерев�
                (print file)
                (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
-           #P"/home/rigidus/src/solipsism/tests/test_return_stmnt.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_emit_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -431,7 +431,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%parameter-list
-   (%parameter #'(lambda (x) `(:par-last ,x)))
+   (%parameter #'(lambda (x) `(:par-lastg ,x)))
    (%parameter |%,| %parameter-list #'(lambda (a b c) `(:par-head ,a :par-rest ,c)))
    )
 #+END_SRC
@@ -1006,7 +1006,8 @@ Block может быть:
    (%try-stmnt %stmnt #'(lambda (x y) `(:try-stmnt ,x :next-stmnt ,y)))
    (%return-stmnt #'(lambda (x) `(:return-stmnt ,x)))
    (%return-stmnt %stmnt #'(lambda (x y) `(:return-stmnt ,x :next-stmnt ,y)))
-   ;; (%emit-stmnt)
+   (%emit-stmnt #'(lambda (x) `(:emit-stmnt ,x)))
+   (%emit-stmnt %stmnt #'(lambda (x y) `(:emit-stmnt ,x :next-stmnt ,y)))
    ;; (%revert-stmnt)
    ;; (%assembly-stmnt)
    )
@@ -1450,9 +1451,79 @@ Block может быть:
   }
 #+END_SRC
 
-*** TODO emit-statement
+*** START emit-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%emit-stmnt
+   (%emit %expr %call-arg-list |%;|
+            #'(lambda (et ex al sc)
+                `(:emit ,ex, :args ,al)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bemit\\b" '%emit '%emit)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %emit
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_emit_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_emit_stmnt
+  {
+      function fn_emit_stmnt (uint p_one) returns (uint r_one) {
+          emit 123 ( ) ;
+          emit 123 ( 321 ) ;
+          emit 123 ( 321, 432 ) ;
+          emit 123 ( { } ) ;
+          emit 123 ( { Log RRR 987 } ) ;
+      }
+  }
+#+END_SRC
+
 *** TODO revert-statement
 *** TODO assembly-statement
+** TODO Call-argument-list
+
+Arguments when calling a function or a similar callable object. The
+arguments are either given as comma separated list or as map of named
+arguments.
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%call-arg-list
+   (|%(| |%)| #'(lambda (lb rb) `(:call-arg-list nil)))
+   (|%(| %call-arg-expr |%)| #'(lambda (lb ex rb) `(:call-arg-list ,ex)))
+   (|%(| |%{|  |%}| |%)|
+         #'(lambda (lb lc rc rb) `(:call-arg-list-empty nil)))
+   (|%(| |%{| %call-arg-obj |%}| |%)|
+         #'(lambda (lb lc ob rc rb) `(:call-arg-list ,ob)))
+   )
+  (%call-arg-expr
+   (%expr #'(lambda (a) `(:call-arg-expr-last ,a)))
+   (%expr |%,| %call-arg-expr
+          #'(lambda (ex cm nx)
+              `(:call-arg-expr-head ,ex :call-arg-expr-rest ,nx)))
+   )
+  (%call-arg-obj
+   (%identifier |%:| %expr #'(lambda (id cm ex)
+                               `(:call-arg-obj-last ,id :call-expr ,ex)))
+  ;;  (%identifier |%:| %expr |%,| %call-arg-obj #'(lambda (id cm ex rt)
+  ;;                                                 `(:call-arg-obj-head ,id
+  ;;                                                   :call-expr ,ex
+  ;;                                                   :call-arg-obj-head ,rt)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bRRR\\b" '|%:| '|%:|)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  |%:|
+#+END_SRC
+
 ** TODO Expression
 
 Это один из самых сложных нетерминалов
