@@ -115,7 +115,7 @@ solidity-конструкциями и ожидаю получить дерев�
                (print file)
                (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
-           #P"/home/rigidus/src/solipsism/tests/test_break_stmnt.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_try_catch_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -989,7 +989,7 @@ Block может быть:
    (%var-decl-stmnt #'(lambda (x) `(:var-decl ,x)))
    (%var-decl-stmnt %stmnt #'(lambda (x y) `(:var-decl ,x :next-stmnt ,y)))
    (%expr-stmnt #'(lambda (x) `(:expr-stmnt ,x)))
-   (%expr-stmnt #'(lambda (x y) `(:expr-stmnt ,x :next-stmnt ,y)))
+   ;; (%expr-stmnt #'(lambda (x y) `(:expr-stmnt ,x :next-stmnt ,y)))
    (%if-stmnt #'(lambda (x) `(:if-stmnt ,x)))
    (%if-stmnt %stmnt #'(lambda (x y) `(:if-stmnt ,x :next-stmnt ,y)))
    (%for-stmnt #'(lambda (x) `(:for-stmnt ,x)))
@@ -999,10 +999,11 @@ Block может быть:
    (%do-while-stmnt #'(lambda (x) `(:dowhile-stmnt ,x)))
    (%do-while-stmnt %stmnt #'(lambda (x y) `(:dowhile-stmnt ,x :next-stmnt ,y)))
    (%cont-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
-   (%cont-stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
+   (%cont-stmnt %stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
    (%break-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
-   (%break-stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
-   ;; (%try-stmnt)
+   (%break-stmnt %stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
+   (%try-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
+   (%try-stmnt %stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
    ;; (%return-stmnt)
    ;; (%emit-stmnt)
    ;; (%revert-stmnt)
@@ -1338,7 +1339,7 @@ Block может быть:
   }
 #+END_SRC
 
-*** TODO break-statement
+*** break-statement
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%break-stmnt
@@ -1366,7 +1367,52 @@ Block может быть:
   }
 #+END_SRC
 
-*** TODO try-statement
+*** START try-statement and catch-clause
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%try-stmnt
+   (%try %expr %block %catch-clause-contents
+         #'(lambda (tr ex bl cc)
+             `(:try ,ex :blk ,bl :catch ,cc)))
+   ;; (%try %expr %returns |%(| %parameter-list |%)| %block %catch-clause-contents
+   ;;       #'(lambda (tr ex rt lb pl rb bl cc)
+   ;;           `(:try ,ex :ret ,pl :blk ,bl :catch cc)))
+   )
+  (%catch-clause-contents
+   (%catch-clause %catch-clause-contents
+                  #'(lambda (a b) `(:catch-head ,a :catch-rest ,b)))
+   (%catch-clause #'(lambda (a) `(:catch-last ,a)))
+   )
+  (%catch-clause
+   (%catch %block #'(lambda (ca bl) `(:catch nil :blk ,bl)))
+   ;; (%catch |%(| %parameter-list |%)| %block
+   ;;         #'(lambda (ca lb pl rb bl) `(:catch nil :par-list ,pl :blk ,bl)))
+   ;; (%catch %identifier |%(| %parameter-list |%)| %block
+   ;;          #'(lambda (ca id lb pl rb bl) `(:catch id :par-list ,pl :blk ,bl)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\btry\\b" '%try '%try)
+  ("\\bcatch\\b" '%catch '%catch)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %try
+  %catch
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_try_catch_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_try_stmnt
+  {
+      function fn_try_stmnt (uint p_one) returns (uint r_one) {
+          try 123 { } catch { }
+          try 123 { } catch { } catch { }
+      }
+  }
+#+END_SRC
+
 *** TODO return-statement
 *** TODO emit-statement
 *** TODO revert-statement
