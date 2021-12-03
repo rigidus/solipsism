@@ -1531,14 +1531,16 @@ Block может быть:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%assembly-stmnt
+   (%assembly |%{| |%}| #'(lambda (as lb rb) `(:asm-empty nil)))
    (%assembly |%{| yul-stmnt |%}| #'(lambda (as lb yu rb) `(:asm ,yu)))
-   (%assembly %evmasm |%{| yul-stmnt |%}| #'(lambda (as em lb yu rb) `(:asm ,yu)))
+   (%assembly %evmasm |%{|  |%}| #'(lambda (as em lb rb) `(:asm-empty ,yu)))
+   (%assembly %evmasm |%{| yul-stmnt |%}| #'(lambda (as em lb yu rb) `(:asm nil)))
    )
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
   ("\\bassembly\\b" '%assembly '%assembly)
-  ("\\b\\\"%evmasm\\\"\\b" '%evmasm '%evmasm)
+  ("\"evmasm\"" '%evmasm '%evmasm)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
@@ -1550,7 +1552,7 @@ Block может быть:
   contract test_assembly_stmnt
   {
       function fn_assembly_stmnt (uint p_one) returns (uint r_one) {
-          assembly "evmasm" {}
+          assembly "evmasm" { }
       }
   }
 #+END_SRC
