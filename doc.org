@@ -1617,6 +1617,9 @@ arguments.
    )
 #+END_SRC
 
+*** TODO Typle-expression
+*** TODO Inline-array-expression
+*** TODO Identifier
 *** TODO Literal
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
@@ -1634,6 +1637,7 @@ arguments.
    )
 #+END_SRC
 
+**** TODO String-literal
 **** TODO Number-literal
 
 Числовые литералы могут быть либо десятичными либо шестнадцатиричными,
@@ -1700,6 +1704,10 @@ arguments.
    )
 #+END_SRC
 
+**** TODO Boolean-literal
+**** TODO Hex-literal
+**** TODO Unicode-string-literal
+*** TODO Elementary-type-name
 * Макросы для корректного вывода ошибок
 
 #+NAME: macro_bprint
