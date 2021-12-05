@@ -115,7 +115,9 @@ solidity-конструкциями и ожидаю получить дерев�
                (print file)
                (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
-           #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
+
+           #P"/home/rigidus/src/solipsism/tests/test_fn_state_mutability.sol")
+           ;; #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -752,39 +754,25 @@ Retlist представляет из себя два возможных вар�
 Следующий модификатор - state-mutability. Так как payable встречается в других конструкциях, мы должны добавить их в лексер
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ;; ("\\bpure\\b" '%pure 'pure)
-  ;; ("\\bview\\b" '%view 'view)
-  ;; ("\\bpayable\\b" '%payable 'payable)
+  ("\\bpure\\b" '%pure 'pure)
+  ("\\bview\\b" '%view 'view)
+  ("\\bpayable\\b" '%payable 'payable)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  ;; %pure
-  ;; %view
-  ;; %payable
+  %pure
+  %view
+  %payable
 #+END_SRC
 
 И нам нужно правило, которое позволит объединить их под общим "брендом":
 
-#+BEGIN_SRC lisp :noweb-ref func_def_contents
-  ;; (%state-mutability
-  ;;  (%pure    #'(lambda (x) `(:state-mutability ,x)))
-  ;;  (%view    #'(lambda (x) `(:state-mutability ,x)))
-  ;;  (%payable #'(lambda (x) `(:state-mutability ,x)))
-  ;;  )
-#+END_SRC
-
-Добавляем в лексер:
-
-#+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\bpure\\b" '%state-mutability 'pure)
-  ("\\bview\\b" '%state-mutability 'view)
-  ("\\bpayable\\b" '%state-mutability 'payable)
-#+END_SRC
-
-%state-mutability - это терминал, его надо добавить в список терминалов:
-
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %state-mutability
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%state-mutability
+   (%pure    #'(lambda (x) `(:state-mutability ,x)))
+   (%view    #'(lambda (x) `(:state-mutability ,x)))
+   (%payable #'(lambda (x) `(:state-mutability ,x)))
+   )
 #+END_SRC
 
 Тест:
