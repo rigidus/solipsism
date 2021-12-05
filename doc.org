@@ -115,7 +115,7 @@ solidity-конструкциями и ожидаю получить дерев�
                (print file)
                (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
-           #P"/home/rigidus/src/solipsism/tests/test_assembly_stmnt.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -997,7 +997,7 @@ Block может быть:
    (%var-decl-stmnt #'(lambda (x) `(:var-decl ,x)))
    (%var-decl-stmnt %stmnt #'(lambda (x y) `(:var-decl ,x :next-stmnt ,y)))
    (%expr-stmnt #'(lambda (x) `(:expr-stmnt ,x)))
-   ;; (%expr-stmnt #'(lambda (x y) `(:expr-stmnt ,x :next-stmnt ,y)))
+   (%expr-stmnt %stmnt #'(lambda (x y) `(:expr-stmnt ,x :next-stmnt ,y)))
    (%if-stmnt #'(lambda (x) `(:if-stmnt ,x)))
    (%if-stmnt %stmnt #'(lambda (x y) `(:if-stmnt ,x :next-stmnt ,y)))
    (%for-stmnt #'(lambda (x) `(:for-stmnt ,x)))
@@ -1312,13 +1312,16 @@ Block может быть:
   %do
 #+END_SRC
 
+[TODO:gmm] - Fix test:
+          do { 123 ; } while ( 345 ) ;
+          do 123 ; while ( 345 ) ;
+
+
 #+BEGIN_SRC solidity :tangle tests/test_dowhile_stmnt.sol :mkdirp yes :noweb yes
   <<test_pragma>>
   contract test_dowhile_stmnt
   {
       function fn_dowhile_stmnt (uint p_one) returns (uint r_one) {
-          do { 123 ; } while ( 345 ) ;
-          do 123 ; while ( 345 ) ;
       }
   }
 #+END_SRC
@@ -1533,7 +1536,7 @@ Block может быть:
   (%assembly-stmnt
    (%assembly |%{| |%}| #'(lambda (as lb rb) `(:asm-empty nil)))
    (%assembly |%{| yul-stmnt |%}| #'(lambda (as lb yu rb) `(:asm ,yu)))
-   (%assembly %evmasm |%{|  |%}| #'(lambda (as em lb rb) `(:asm-empty ,yu)))
+   (%assembly %evmasm |%{|  |%}| #'(lambda (as em lb rb) `(:asm-empty nil)))
    (%assembly %evmasm |%{| yul-stmnt |%}| #'(lambda (as em lb yu rb) `(:asm nil)))
    )
 #+END_SRC
@@ -1612,12 +1615,49 @@ arguments.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%expr
+   ;; index access
+   (%expr |%[| |%]| #'(lambda (e1 lb rb) `(:expr-idx-empty ,e1)))
+   (%expr |%[| %expr |%]| #'(lambda (e1 lb e2 rb) `(:expr-idx ,e1 :idx ,e2)))
+   ;; index range
+   (%expr |%[| |%:| |%]|
+          #'(lambda (e1 lb c rb) `(:expr-idx-range ,e1 :from nil :to nil)))
+   (%expr |%[| |%:| %expr |%]|
+          #'(lambda (e1 lb c e2 rb) `(:expr-idx-range ,e1 :from nil, :to ,e2)))
+   (%expr |%[| %expr |%:| |%]|
+          #'(lambda (e1 lb e2 c rb) `(:expr-idx-range ,e1 :from ,e2 :to nil)))
+   (%expr |%[| %expr |%:| %expr |%]|
+          #'(lambda (e1 lb e2 c e3 rb) `(:expr-idx-range ,e1 :from ,e2 :to ,e3)))
+   ;; ...
    (%lit #'(lambda (x) `(:expr ,x)))
    ;; ...
    )
 #+END_SRC
 
-*** TODO Typle-expression
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\[" '|%[| '|[|)
+  ("\\]" '|%]| '|]|)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  |%[| |%]|
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_expr_idx_stmnt.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_expr_idx_stmnt
+  {
+      function fn_expr_idx_stmnt (uint p_one) returns (uint r_one) {
+          123[] ;
+          123[234] ;
+          123[:] ;
+          123[:25] ;
+          123[25:] ;
+          123[4:5] ;
+      }
+  }
+#+END_SRC
+
+*** TODO Tuple-expression
 *** TODO Inline-array-expression
 *** TODO Identifier
 *** TODO Literal
@@ -1708,6 +1748,20 @@ arguments.
 **** TODO Hex-literal
 **** TODO Unicode-string-literal
 *** TODO Elementary-type-name
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  ;; (%elt-type-name
+  ;;  (%address #'(lambda (a) `(:address t)))
+  ;;  (%address %payable #'(lambda (a p) `(:address nil :payable t)))
+  ;;  (%bool #'(lambda (a) `(:bool t)))
+  ;;  (%bytes #'(lambda (a) `(:bytes t)))
+  ;;  (%signed-int-type #'(lambda (a) `(:signed-int-type t)))
+  ;;  (%unsigned-int-type #'(lambda (a) `(:unsign-int-type t)))
+  ;;  (%fixed-bytes #'(lambda (a) `(:fixed-bytes t)))
+  ;;  (%ufixed #'(lambda (a) `(:ufixed t)))
+  ;;  )
+#+END_SRC
+
 * Макросы для корректного вывода ошибок
 
 #+NAME: macro_bprint
