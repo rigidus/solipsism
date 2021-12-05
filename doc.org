@@ -1658,8 +1658,19 @@ arguments.
    (|%-|  %expr #'(lambda (op ex) `(:expr-unary-minus ,ex)))
    (%expr |%++| #'(lambda (ex op) `(:expr-post-inc ,ex)))
    (%expr |%--| #'(lambda (ex op) `(:expr-post-dec ,ex)))
-   (%expr |%*|  %expr #'(lambda (e1 op e2) `(:expr-mul   ,e1 :arg ,e2)))
    (%expr |%**| %expr #'(lambda (e1 op e2) `(:expr-power ,e1 :arg ,e2)))
+   (%expr |%*|  %expr #'(lambda (e1 op e2) `(:expr-mul   ,e1 :arg ,e2)))
+   (%expr |%/|  %expr #'(lambda (e1 op e2) `(:expr-div   ,e1 :arg ,e2)))
+   (%expr |%%|  %expr #'(lambda (e1 op e2) `(:expr-mod   ,e1 :arg ,e2)))
+   (%expr |%+|  %expr #'(lambda (e1 op e2) `(:expr-add   ,e1 :arg ,e2)))
+   (%expr |%-|  %expr #'(lambda (e1 op e2) `(:expr-sub   ,e1 :arg ,e2)))
+   (%expr |%>>>|  %expr #'(lambda (e1 op e2) `(:expr->>>   ,e1 :arg ,e2)))
+   (%expr |%>>|  %expr #'(lambda (e1 op e2) `(:expr->>   ,e1 :arg ,e2)))
+   (%expr |%<<|  %expr #'(lambda (e1 op e2) `(:expr-<<   ,e1 :arg ,e2)))
+   (%expr |%&|  %expr #'(lambda (e1 op e2) `(:expr-&   ,e1 :arg ,e2)))
+   (%expr |%^|  %expr #'(lambda (e1 op e2) `(:expr-^   ,e1 :arg ,e2)))
+   (%expr |%pipe|  %expr #'(lambda (e1 op e2) `(:expr-pipe   ,e1 :arg ,e2)))
+
    ;; ...
    (%lit #'(lambda (x) `(:expr ,x)))
    ;; ...
@@ -1686,16 +1697,27 @@ arguments.
   ("[~]{1}" '|%~| '|%~|)
   ("\\bdelete\\b" '%delete '%delete)
   ("[-]{1}" '|%-| '|%-|)
+  ("[+]{1}" '|%+| '|%+|)
   ("[*]{2}" '|%**| '|%**|)
   ("[*]{1}" '|%*| '|%*|)
+  ("[/]{1}" '|%/| '|%/|)
+  ("[%]{1}" '|%%| '|%%|)
+  ("[>]{3}" '|%>>>| '|%>>>|)
+  ("[>]{2}" '|%>>| '|%>>|)
+  ("[<]{2}" '|%<<| '|%<<|)
+
+  ("[&]{1}" '|%&| '|%&|)
+  ("[\\^]{1}" '|%^| '|%^|)
+  ("[|]{1}" '|%pipe| '|%pipe|)
 
   ;; (cl-ppcre:all-matches-as-strings
-  ;;  "[~]{1}"
-  ;;  "~a")
+  ;;  "[|]{1}"
+  ;;  "a|b");
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%[| |%]| |.| %addr %type |%++| |%--| |%!| |%~| %delete |%-| |%*| |%**|
+  |%[| |%]| |.| %addr %type |%++| |%--| |%!| |%~| %delete |%-| |%*| |%**| |%/| |%%|
+  |%+| |%-| |%>>>| |%>>| |%<<| |%&| |%^| |%pipe|
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_expr_idx_stmnt.sol :mkdirp yes :noweb yes
@@ -1725,8 +1747,18 @@ arguments.
           -123  ;
           123++ ;
           123-- ;
-          123 * 321 ;
           123 ** 321 ;
+          123 * 321  ;
+          123 / 321  ;
+          123 % 321  ;
+          123 + 321  ;
+          123 - 321  ;
+          123 >>> 321 ;
+          123 >> 321 ;
+          123 << 321 ;
+          123 & 321 ;
+          123 ^ 321 ;
+          123 | 321 ;
       }
   }
 #+END_SRC
