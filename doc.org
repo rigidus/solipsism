@@ -749,7 +749,31 @@ Retlist представляет из себя два возможных вар�
   }
 #+END_SRC
 
-Следующий модификатор - state-mutability. Добавляем в лексер:
+Следующий модификатор - state-mutability. Так как payable встречается в других конструкциях, мы должны добавить их в лексер
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ;; ("\\bpure\\b" '%pure 'pure)
+  ;; ("\\bview\\b" '%view 'view)
+  ;; ("\\bpayable\\b" '%payable 'payable)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  ;; %pure
+  ;; %view
+  ;; %payable
+#+END_SRC
+
+И нам нужно правило, которое позволит объединить их под общим "брендом":
+
+#+BEGIN_SRC lisp :noweb-ref func_def_contents
+  ;; (%state-mutability
+  ;;  (%pure    #'(lambda (x) `(:state-mutability ,x)))
+  ;;  (%view    #'(lambda (x) `(:state-mutability ,x)))
+  ;;  (%payable #'(lambda (x) `(:state-mutability ,x)))
+  ;;  )
+#+END_SRC
+
+Добавляем в лексер:
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
   ("\\bpure\\b" '%state-mutability 'pure)
@@ -1630,10 +1654,25 @@ arguments.
    ;; member access
    (%expr |%.| %identifier #'(lambda (ex dt id) `(:expr-identifier ,ex :if ,id)))
    (%expr |%.| %addr    #'(lambda (ex dt ad) `(:expr-addr    ,ex :add ,ad)))
+   ;; idex
+   (%expr |%{| |%}| #'(lambda (ex lb rb) `(:expr-idex-empty nil)))
+   (%expr |%{| %idex-contents |%}| #'(lambda (ex lb idex rb) `(:expr-idex ,idex)))
+   ;; expr with call-arg-list
+   (%expr %call-arg-list #'(lambda (ex cal) `(:expr-call ,ex :arg-lst ,cal)))
+   ;; payable
+   (%payable %call-arg-list #'(lambda (ex cal) `(:expr-call ,ex :arg-lst ,cal)))
    ;; ...
    (%lit #'(lambda (x) `(:expr ,x)))
    ;; ...
    )
+  (%idex-contents
+   (%idex #'(lambda (idex) `(:idex-last ,idex)))
+   (%idex |%,| %idex-contents #'(lambda (idex c rest) `(:idex-head ,idex :idex-rest ,rest)))
+   )
+  (%idex
+   (%identifier |%:| %expr #'(lambda (id cm ex) `(:idex-last ,id :expr ,ex)))
+   )
+
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
@@ -1641,6 +1680,7 @@ arguments.
   ("\\]" '|%]| '|]|)
   ("\\." '|%.| '|.|)
   ("0x[a-fA-F0-9]{40}" '%addr $@)
+  ("\\bpayable\\b" '%payable '%payable)
   ;; (cl-ppcre:all-matches-as-strings
   ;;  "0x[a-fA-F0-9]{40}"
   ;;  "0x6ac7ea33f8831ea9dcc53393aaa88b25a785dbf0")
@@ -1663,9 +1703,15 @@ arguments.
           123[4:5] ;
           123.toIdentifier ;
           123.0x6ac7ea33f8831ea9dcc53393aaa88b25a785dbf0 ;
+          123 { } ;
+          123 { key : 234 } ;
+          123 { key : 234 , key2 : 987 } ;
+          123 ( 123 , 789 ) ;
       }
   }
 #+END_SRC
+
+          payable ( 123 , 789 ) ;
 
 *** TODO Tuple-expression
 *** TODO Inline-array-expression
