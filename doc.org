@@ -115,9 +115,7 @@ solidity-конструкциями и ожидаю получить дерев�
                (print file)
                (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
-
-           #P"/home/rigidus/src/solipsism/tests/test_fn_state_mutability.sol")
-           ;; #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -1649,6 +1647,19 @@ arguments.
    (%expr %call-arg-list #'(lambda (ex cal) `(:expr-call ,ex :arg-lst ,cal)))
    ;; payable
    (%payable %call-arg-list #'(lambda (ex cal) `(:expr-call ,ex :arg-lst ,cal)))
+   ;; type
+   (%type |%(| %type-name |%)| #'(lambda (tl lb tn rb) `(:expr-type ,tn)))
+   ;; math
+   (|%++| %expr #'(lambda (op ex) `(:expr-pre-inc ,ex)))
+   (|%--| %expr #'(lambda (op ex) `(:expr-pre-dec ,ex)))
+   (|%!|  %expr #'(lambda (op ex) `(:expr-not ,ex)))
+   (|%~|  %expr #'(lambda (op ex) `(:expr-tilda ,ex)))
+   (%delete  %expr #'(lambda (op ex) `(:expr-delete ,ex)))
+   (|%-|  %expr #'(lambda (op ex) `(:expr-unary-minus ,ex)))
+   (%expr |%++| #'(lambda (ex op) `(:expr-post-inc ,ex)))
+   (%expr |%--| #'(lambda (ex op) `(:expr-post-dec ,ex)))
+   (%expr |%*|  %expr #'(lambda (e1 op e2) `(:expr-mul   ,e1 :arg ,e2)))
+   (%expr |%**| %expr #'(lambda (e1 op e2) `(:expr-power ,e1 :arg ,e2)))
    ;; ...
    (%lit #'(lambda (x) `(:expr ,x)))
    ;; ...
@@ -1668,14 +1679,23 @@ arguments.
   ("\\]" '|%]| '|]|)
   ("\\." '|%.| '|.|)
   ("0x[a-fA-F0-9]{40}" '%addr $@)
-  ("\\bpayable\\b" '%payable '%payable)
+  ("\\btype\\b" '%type 'type)
+  ("[+]{2}" '|%++| '|%++|)
+  ("[-]{2}" '|%--| '|%--|)
+  ("[!]{1}" '|%!| '|%!|)
+  ("[~]{1}" '|%~| '|%~|)
+  ("\\bdelete\\b" '%delete '%delete)
+  ("[-]{1}" '|%-| '|%-|)
+  ("[*]{2}" '|%**| '|%**|)
+  ("[*]{1}" '|%*| '|%*|)
+
   ;; (cl-ppcre:all-matches-as-strings
-  ;;  "0x[a-fA-F0-9]{40}"
-  ;;  "0x6ac7ea33f8831ea9dcc53393aaa88b25a785dbf0")
+  ;;  "[~]{1}"
+  ;;  "~a")
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%[| |%]| |.| %addr
+  |%[| |%]| |.| %addr %type |%++| |%--| |%!| |%~| %delete |%-| |%*| |%**|
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_expr_idx_stmnt.sol :mkdirp yes :noweb yes
@@ -1695,11 +1715,23 @@ arguments.
           123 { key : 234 } ;
           123 { key : 234 , key2 : 987 } ;
           123 ( 123 , 789 ) ;
+          payable ( 123 , 789 ) ;
+          type ( uint ) ;
+          ++123 ;
+          --123 ;
+          !123  ;
+          ~123  ;
+          delete 123 ;
+          -123  ;
+          123++ ;
+          123-- ;
+          123 * 321 ;
+          123 ** 321 ;
       }
   }
 #+END_SRC
 
-          payable ( 123 , 789 ) ;
+[TODO:gmm] - All types
 
 *** TODO Tuple-expression
 *** TODO Inline-array-expression
