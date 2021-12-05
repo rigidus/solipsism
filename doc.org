@@ -1627,6 +1627,9 @@ arguments.
           #'(lambda (e1 lb e2 c rb) `(:expr-idx-range ,e1 :from ,e2 :to nil)))
    (%expr |%[| %expr |%:| %expr |%]|
           #'(lambda (e1 lb e2 c e3 rb) `(:expr-idx-range ,e1 :from ,e2 :to ,e3)))
+   ;; member access
+   (%expr |%.| %identifier #'(lambda (ex dt id) `(:expr-identifier ,ex :if ,id)))
+   (%expr |%.| %addr    #'(lambda (ex dt ad) `(:expr-addr    ,ex :add ,ad)))
    ;; ...
    (%lit #'(lambda (x) `(:expr ,x)))
    ;; ...
@@ -1636,10 +1639,15 @@ arguments.
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
   ("\\[" '|%[| '|[|)
   ("\\]" '|%]| '|]|)
+  ("\\." '|%.| '|.|)
+  ("0x[a-fA-F0-9]{40}" '%addr $@)
+  ;; (cl-ppcre:all-matches-as-strings
+  ;;  "0x[a-fA-F0-9]{40}"
+  ;;  "0x6ac7ea33f8831ea9dcc53393aaa88b25a785dbf0")
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%[| |%]|
+  |%[| |%]| |.| %addr
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_expr_idx_stmnt.sol :mkdirp yes :noweb yes
@@ -1653,6 +1661,8 @@ arguments.
           123[:25] ;
           123[25:] ;
           123[4:5] ;
+          123.toIdentifier ;
+          123.0x6ac7ea33f8831ea9dcc53393aaa88b25a785dbf0 ;
       }
   }
 #+END_SRC
