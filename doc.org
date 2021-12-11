@@ -1063,15 +1063,9 @@ Block может быть:
    )
 #+END_SRC
 
-Потребуется добавить в список лексем и терминалов "знак равно":
-
-#+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("=" '|%=| '|%=|)
-#+END_SRC
-
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%=|
-#+END_SRC
+Потребуется добавить в список лексем и терминалов "знак равно", но я
+его добавлю в разделе [[*Expression][Expression]] потому что нужно избежать
+интерференции с "!=" "==" и т п.
 
 **** variable-declaration
 
@@ -1671,6 +1665,16 @@ arguments.
    (%expr |%^|  %expr #'(lambda (e1 op e2) `(:expr-^   ,e1 :arg ,e2)))
    (%expr |%pipe|  %expr #'(lambda (e1 op e2) `(:expr-pipe   ,e1 :arg ,e2)))
 
+   (%expr |%<|  %expr #'(lambda (e1 op e2) `(:expr-less      ,e1 :arg ,e2)))
+   (%expr |%>|  %expr #'(lambda (e1 op e2) `(:expr-more      ,e1 :arg ,e2)))
+   (%expr |%<=| %expr #'(lambda (e1 op e2) `(:expr-less-eq   ,e1 :arg ,e2)))
+   (%expr |%>=| %expr #'(lambda (e1 op e2) `(:expr-more-eq   ,e1 :arg ,e2)))
+   (%expr |%==| %expr #'(lambda (e1 op e2) `(:expr-eq        ,e1 :arg ,e2)))
+   (%expr |%!=| %expr #'(lambda (e1 op e2) `(:expr-not-eq    ,e1 :arg ,e2)))
+   (%expr |%&&| %expr #'(lambda (e1 op e2) `(:expr-and       ,e1 :arg ,e2)))
+   (%expr |%pipepipe| %expr #'(lambda (e1 op e2) `(:expr-or  ,e1 :arg ,e2)))
+   (%expr |%?| %expr #'(lambda (e1 op e2) `(:expr-question   ,e1 :arg ,e2)))
+
    ;; ...
    (%lit #'(lambda (x) `(:expr ,x)))
    ;; ...
@@ -1685,6 +1689,10 @@ arguments.
 
 #+END_SRC
 
+Здесь важен порядок разбора токенов (составные типа "!=" должны идти
+раньше простых "!") и в дополнение к ним я добавляю %= из другого
+раздела.
+
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
   ("\\[" '|%[| '|[|)
   ("\\]" '|%]| '|]|)
@@ -1693,7 +1701,6 @@ arguments.
   ("\\btype\\b" '%type 'type)
   ("[+]{2}" '|%++| '|%++|)
   ("[-]{2}" '|%--| '|%--|)
-  ("[!]{1}" '|%!| '|%!|)
   ("[~]{1}" '|%~| '|%~|)
   ("\\bdelete\\b" '%delete '%delete)
   ("[-]{1}" '|%-| '|%-|)
@@ -1705,10 +1712,21 @@ arguments.
   ("[>]{3}" '|%>>>| '|%>>>|)
   ("[>]{2}" '|%>>| '|%>>|)
   ("[<]{2}" '|%<<| '|%<<|)
-
-  ("[&]{1}" '|%&| '|%&|)
   ("[\\^]{1}" '|%^| '|%^|)
+
+  ("[<]{1}[=]{1}" '|%<=| '|%<=|)
+  ("[>]{1}[=]{1}" '|%>=| '|%>=|)
+  ("[<]{1}" '|%<| '|%<|)
+  ("[>]{1}" '|%>| '|%>|)
+  ("[!]{1}[=]{1}" '|%!=| '|%!=|)
+  ("[!]{1}" '|%!| '|%!|)
+  ("[=]{2}" '|%==| '|%==|)
+  ("[=]{1}" '|%=| '|%=|)
+  ("[&&]{2}" '|%&&| '|%&&|)
+  ("[&]{1}" '|%&| '|%&|)
+  ("[|]{2}" '|%pipepipe| '|%pipepipe|)
   ("[|]{1}" '|%pipe| '|%pipe|)
+  ("[\\?]{1}" '|%?|  '|%?|)
 
   ;; (cl-ppcre:all-matches-as-strings
   ;;  "[|]{1}"
@@ -1718,6 +1736,8 @@ arguments.
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
   |%[| |%]| |.| %addr %type |%++| |%--| |%!| |%~| %delete |%-| |%*| |%**| |%/| |%%|
   |%+| |%-| |%>>>| |%>>| |%<<| |%&| |%^| |%pipe|
+
+  |%<| |%>| |%<=| |%>=| |%==| |%=| |%!=| |%&&| |%pipepipe| |%?|
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_expr_idx_stmnt.sol :mkdirp yes :noweb yes
@@ -1759,6 +1779,15 @@ arguments.
           123 & 321 ;
           123 ^ 321 ;
           123 | 321 ;
+          123 < 321 ;
+          321 > 121 ;
+          123 <= 321 ;
+          321 >= 123 ;
+          321 == 123 ;
+          321 != 123 ;
+          321 && 123 ;
+          321 || 123 ;
+          321 ? 234 ;
       }
   }
 #+END_SRC
