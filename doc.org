@@ -1675,13 +1675,13 @@ arguments.
    (%expr |%pipepipe| %expr #'(lambda (e1 op e2) `(:expr-or  ,e1 :arg ,e2)))
    (%expr |%?| %expr #'(lambda (e1 op e2) `(:expr-question   ,e1 :arg ,e2)))
 
-   ;; (%expr |%=|     %expr #'(lambda (e1 op e2) `(:expr-eq   ,e1 :arg ,e2)))
+   (%expr |%=|     %expr #'(lambda (e1 op e2) `(:expr-eq   ,e1 :arg ,e2)))
    (%expr |%pipe=| %expr #'(lambda (e1 op e2) `(:expr-or-eq   ,e1 :arg ,e2)))
-   ;; (%expr |%^=|    %expr #'(lambda (e1 op e2) `(:expr-^-eq   ,e1 :arg ,e2)))
-   ;; (%expr |%&=|    %expr #'(lambda (e1 op e2) `(:expr-&-eq   ,e1 :arg ,e2)))
-   ;; (%expr |%<<=|   %expr #'(lambda (e1 op e2) `(:expr-less-less-eq   ,e1 :arg ,e2)))
-   ;; (%expr |%>>=|   %expr #'(lambda (e1 op e2) `(:expr-more-more-eq   ,e1 :arg ,e2)))
-   ;; (%expr |%>>>=|  %expr #'(lambda (e1 op e2) `(:expr-more-more-more-eq   ,e1 :arg ,e2)))
+   (%expr |%^=|    %expr #'(lambda (e1 op e2) `(:expr-^-eq   ,e1 :arg ,e2)))
+   (%expr |%&=|    %expr #'(lambda (e1 op e2) `(:expr-&-eq   ,e1 :arg ,e2)))
+   (%expr |%<<=|   %expr #'(lambda (e1 op e2) `(:expr-less-less-eq   ,e1 :arg ,e2)))
+   (%expr |%>>=|   %expr #'(lambda (e1 op e2) `(:expr-more-more-eq   ,e1 :arg ,e2)))
+   (%expr |%>>>=|  %expr #'(lambda (e1 op e2) `(:expr-more-more-more-eq   ,e1 :arg ,e2)))
    ;; (%expr |%+=|    %expr #'(lambda (e1 op e2) `(:expr-plus-eq   ,e1 :arg ,e2)))
    ;; (%expr |%-=|    %expr #'(lambda (e1 op e2) `(:expr-minus-eq   ,e1 :arg ,e2)))
    ;; (%expr |%*=|    %expr #'(lambda (e1 op e2) `(:expr-mul-eq   ,e1 :arg ,e2)))
@@ -1711,18 +1711,18 @@ arguments.
   ("\\btype\\b" '%type 'type)
   ("\\bdelete\\b" '%delete '%delete)
 
+  ("[>]{3}[=]{1}" '|%>>>=| '|%>>>=|)
   ("[>]{3}" '|%>>>| '|%>>>|)
-  ("[<]{1}[=]{1}" '|%<=| '|%<=|)
+  ("[>]{2}[=]{1}" '|%>>=| '|%>>=|)
   ("[>]{1}[=]{1}" '|%>=| '|%>=|)
+
+  ("[<]{1}[=]{1}" '|%<=| '|%<=|)
   ("[!]{1}[=]{1}" '|%!=| '|%!=|)
   ("[|]{1}[=]{1}" '|%pipe=| '|%pipe=|)
+  ("[\\^]{1}[=]{1}" '|%^=| '|%^=|)
+  ("[&]{1}][=]{1}" '|%&=| '|%&=|)
+  ("[<]{2}[=]{1}" '|%<<=| '|%<<=|)
 
-  ;; ("[\\^]{1}[=]{1}" '|%^=| '|%^=|)
-  ;; ("[&]{1}][=]{1}" '|%&=| '|%&=|)
-  ;; ("[<]{2}[=]{1}" '|%<<=| '|%<<=|)
-
-  ;; ("" '|%>>=| '|%>>=|)
-  ;; ("" '|%>>>=| '|%>>>=|)
   ;; ("" '|%+=| '|%+=|)
   ;; ("" '|%-=| '|%-=|)
   ;; ("" '|%*=| '|%*=|)
@@ -1762,16 +1762,9 @@ arguments.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
   |%[| |%]| |.| %addr %type |%++| |%--| |%!| |%~| %delete |%-| |%*| |%**| |%/| |%%|
-  |%+| |%-| |%>>>| |%>>| |%<<| |%&| |%^| |%pipe|
-
-  |%<| |%>| |%<=| |%>=| |%==| |%=| |%!=| |%&&| |%pipepipe| |%?|
-
-  |%pipe=|
-  ;; |%^=|
-  ;; |%&=|
-  ;; |%<<=|
-  ;; |%>>=|
-  ;; |%>>>=|
+  |%+| |%-| |%>>>| |%>>| |%<<| |%&| |%^| |%pipe| |%<| |%>| |%<=| |%>=| |%==| |%=|
+  |%!=| |%&&| |%pipepipe| |%?| |%pipe=| |%^=| |%&=| |%<<=| |%>>=|
+  |%>>>=|
   ;; |%+=|
   ;; |%-=|
   ;; |%*=|
@@ -1828,15 +1821,15 @@ arguments.
           321 || 123 ;
           321 ? 234  ;
           321 |= 234 ;
+          321 ^= 234 ;
+
       }
   }
 #+END_SRC
-
-
-          /* 321 ^= 123 ; */
-          /* 321 &= 123 ; */
-          /* 321 <<= 123 ; */
-
+          321 &= 123 ;
+          321 <<= 123 ;
+          321 >>= 123 ;
+          321 >>>= 123 ;
 
 [TODO:gmm] - All types
 
