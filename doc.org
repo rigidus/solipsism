@@ -103,12 +103,12 @@ solidity-конструкциями и ожидаю получить дерев�
               (reverse test-files))))
 
   ;; run-tests
-  (map-subdir-files
-   "./tests"
-   #'(lambda (file)
-       (print file)
-       (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
-         (print (parse-with-lexer clj-lex *sol-parser*)))))
+  ;; (map-subdir-files
+  ;;  "./tests"
+  ;;  #'(lambda (file)
+  ;;      (print file)
+  ;;      (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+  ;;        (print (parse-with-lexer clj-lex *sol-parser*)))))
 
   ;; Вариант для тестирования конкретного файла
   (funcall #'(lambda (file)
@@ -1675,6 +1675,19 @@ arguments.
    (%expr |%pipepipe| %expr #'(lambda (e1 op e2) `(:expr-or  ,e1 :arg ,e2)))
    (%expr |%?| %expr #'(lambda (e1 op e2) `(:expr-question   ,e1 :arg ,e2)))
 
+   ;; (%expr |%=|     %expr #'(lambda (e1 op e2) `(:expr-eq   ,e1 :arg ,e2)))
+   (%expr |%pipe=| %expr #'(lambda (e1 op e2) `(:expr-or-eq   ,e1 :arg ,e2)))
+   ;; (%expr |%^=|    %expr #'(lambda (e1 op e2) `(:expr-^-eq   ,e1 :arg ,e2)))
+   ;; (%expr |%&=|    %expr #'(lambda (e1 op e2) `(:expr-&-eq   ,e1 :arg ,e2)))
+   ;; (%expr |%<<=|   %expr #'(lambda (e1 op e2) `(:expr-less-less-eq   ,e1 :arg ,e2)))
+   ;; (%expr |%>>=|   %expr #'(lambda (e1 op e2) `(:expr-more-more-eq   ,e1 :arg ,e2)))
+   ;; (%expr |%>>>=|  %expr #'(lambda (e1 op e2) `(:expr-more-more-more-eq   ,e1 :arg ,e2)))
+   ;; (%expr |%+=|    %expr #'(lambda (e1 op e2) `(:expr-plus-eq   ,e1 :arg ,e2)))
+   ;; (%expr |%-=|    %expr #'(lambda (e1 op e2) `(:expr-minus-eq   ,e1 :arg ,e2)))
+   ;; (%expr |%*=|    %expr #'(lambda (e1 op e2) `(:expr-mul-eq   ,e1 :arg ,e2)))
+   ;; (%expr |%/=|    %expr #'(lambda (e1 op e2) `(:expr-div-eq   ,e1 :arg ,e2)))
+   ;; (%expr |%%=|    %expr #'(lambda (e1 op e2) `(:expr-mod-eq   ,e1 :arg ,e2)))
+
    ;; ...
    (%lit #'(lambda (x) `(:expr ,x)))
    ;; ...
@@ -1694,40 +1707,54 @@ arguments.
 раздела.
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\[" '|%[| '|[|)
-  ("\\]" '|%]| '|]|)
-  ("\\." '|%.| '|.|)
   ("0x[a-fA-F0-9]{40}" '%addr $@)
   ("\\btype\\b" '%type 'type)
+  ("\\bdelete\\b" '%delete '%delete)
+
+  ("[>]{3}" '|%>>>| '|%>>>|)
+  ("[<]{1}[=]{1}" '|%<=| '|%<=|)
+  ("[>]{1}[=]{1}" '|%>=| '|%>=|)
+  ("[!]{1}[=]{1}" '|%!=| '|%!=|)
+  ("[|]{1}[=]{1}" '|%pipe=| '|%pipe=|)
+
+  ;; ("[\\^]{1}[=]{1}" '|%^=| '|%^=|)
+  ;; ("[&]{1}][=]{1}" '|%&=| '|%&=|)
+  ;; ("[<]{2}[=]{1}" '|%<<=| '|%<<=|)
+
+  ;; ("" '|%>>=| '|%>>=|)
+  ;; ("" '|%>>>=| '|%>>>=|)
+  ;; ("" '|%+=| '|%+=|)
+  ;; ("" '|%-=| '|%-=|)
+  ;; ("" '|%*=| '|%*=|)
+  ;; ("" '|%/=| '|%/=|)
+  ;; ("" '|%%=| '|%%=|)
+
+  ("[*]{2}" '|%**| '|%**|)
+  ("[>]{2}" '|%>>| '|%>>|)
+  ("[<]{2}" '|%<<| '|%<<|)
+  ("[=]{2}" '|%==| '|%==|)
+  ("[&]{2}" '|%&&| '|%&&|)
+  ("[|]{2}" '|%pipepipe| '|%pipepipe|)
   ("[+]{2}" '|%++| '|%++|)
   ("[-]{2}" '|%--| '|%--|)
+
+  ("[=]{1}" '|%=| '|%=|)
+  ("[|]{1}" '|%pipe| '|%pipe|)
+  ("[&]{1}" '|%&| '|%&|)
+  ("[!]{1}" '|%!| '|%!|)
   ("[~]{1}" '|%~| '|%~|)
-  ("\\bdelete\\b" '%delete '%delete)
   ("[-]{1}" '|%-| '|%-|)
   ("[+]{1}" '|%+| '|%+|)
-  ("[*]{2}" '|%**| '|%**|)
   ("[*]{1}" '|%*| '|%*|)
   ("[/]{1}" '|%/| '|%/|)
   ("[%]{1}" '|%%| '|%%|)
-  ("[>]{3}" '|%>>>| '|%>>>|)
-  ("[>]{2}" '|%>>| '|%>>|)
-  ("[<]{2}" '|%<<| '|%<<|)
   ("[\\^]{1}" '|%^| '|%^|)
-
-  ("[<]{1}[=]{1}" '|%<=| '|%<=|)
-  ("[>]{1}[=]{1}" '|%>=| '|%>=|)
   ("[<]{1}" '|%<| '|%<|)
   ("[>]{1}" '|%>| '|%>|)
-  ("[!]{1}[=]{1}" '|%!=| '|%!=|)
-  ("[!]{1}" '|%!| '|%!|)
-  ("[=]{2}" '|%==| '|%==|)
-  ("[=]{1}" '|%=| '|%=|)
-  ("[&&]{2}" '|%&&| '|%&&|)
-  ("[&]{1}" '|%&| '|%&|)
-  ("[|]{2}" '|%pipepipe| '|%pipepipe|)
-  ("[|]{1}" '|%pipe| '|%pipe|)
   ("[\\?]{1}" '|%?|  '|%?|)
-
+  ("\\[" '|%[| '|[|)
+  ("\\]" '|%]| '|]|)
+  ("\\." '|%.| '|.|)
   ;; (cl-ppcre:all-matches-as-strings
   ;;  "[|]{1}"
   ;;  "a|b");
@@ -1738,6 +1765,18 @@ arguments.
   |%+| |%-| |%>>>| |%>>| |%<<| |%&| |%^| |%pipe|
 
   |%<| |%>| |%<=| |%>=| |%==| |%=| |%!=| |%&&| |%pipepipe| |%?|
+
+  |%pipe=|
+  ;; |%^=|
+  ;; |%&=|
+  ;; |%<<=|
+  ;; |%>>=|
+  ;; |%>>>=|
+  ;; |%+=|
+  ;; |%-=|
+  ;; |%*=|
+  ;; |%/=|
+  ;; |%%=|
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_expr_idx_stmnt.sol :mkdirp yes :noweb yes
@@ -1787,10 +1826,17 @@ arguments.
           321 != 123 ;
           321 && 123 ;
           321 || 123 ;
-          321 ? 234 ;
+          321 ? 234  ;
+          321 |= 234 ;
       }
   }
 #+END_SRC
+
+
+          /* 321 ^= 123 ; */
+          /* 321 &= 123 ; */
+          /* 321 <<= 123 ; */
+
 
 [TODO:gmm] - All types
 
