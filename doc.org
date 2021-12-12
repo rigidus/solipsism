@@ -1664,7 +1664,6 @@ arguments.
    (%expr |%&|  %expr #'(lambda (e1 op e2) `(:expr-&   ,e1 :arg ,e2)))
    (%expr |%^|  %expr #'(lambda (e1 op e2) `(:expr-^   ,e1 :arg ,e2)))
    (%expr |%pipe|  %expr #'(lambda (e1 op e2) `(:expr-pipe   ,e1 :arg ,e2)))
-
    (%expr |%<|  %expr #'(lambda (e1 op e2) `(:expr-less      ,e1 :arg ,e2)))
    (%expr |%>|  %expr #'(lambda (e1 op e2) `(:expr-more      ,e1 :arg ,e2)))
    (%expr |%<=| %expr #'(lambda (e1 op e2) `(:expr-less-eq   ,e1 :arg ,e2)))
@@ -1674,7 +1673,6 @@ arguments.
    (%expr |%&&| %expr #'(lambda (e1 op e2) `(:expr-and       ,e1 :arg ,e2)))
    (%expr |%pipepipe| %expr #'(lambda (e1 op e2) `(:expr-or  ,e1 :arg ,e2)))
    (%expr |%?| %expr #'(lambda (e1 op e2) `(:expr-question   ,e1 :arg ,e2)))
-
    (%expr |%=|     %expr #'(lambda (e1 op e2) `(:expr-eq   ,e1 :arg ,e2)))
    (%expr |%pipe=| %expr #'(lambda (e1 op e2) `(:expr-or-eq   ,e1 :arg ,e2)))
    (%expr |%^=|    %expr #'(lambda (e1 op e2) `(:expr-^-eq   ,e1 :arg ,e2)))
@@ -1682,11 +1680,11 @@ arguments.
    (%expr |%<<=|   %expr #'(lambda (e1 op e2) `(:expr-less-less-eq   ,e1 :arg ,e2)))
    (%expr |%>>=|   %expr #'(lambda (e1 op e2) `(:expr-more-more-eq   ,e1 :arg ,e2)))
    (%expr |%>>>=|  %expr #'(lambda (e1 op e2) `(:expr-more-more-more-eq   ,e1 :arg ,e2)))
-   ;; (%expr |%+=|    %expr #'(lambda (e1 op e2) `(:expr-plus-eq   ,e1 :arg ,e2)))
-   ;; (%expr |%-=|    %expr #'(lambda (e1 op e2) `(:expr-minus-eq   ,e1 :arg ,e2)))
-   ;; (%expr |%*=|    %expr #'(lambda (e1 op e2) `(:expr-mul-eq   ,e1 :arg ,e2)))
-   ;; (%expr |%/=|    %expr #'(lambda (e1 op e2) `(:expr-div-eq   ,e1 :arg ,e2)))
-   ;; (%expr |%%=|    %expr #'(lambda (e1 op e2) `(:expr-mod-eq   ,e1 :arg ,e2)))
+   (%expr |%+=|    %expr #'(lambda (e1 op e2) `(:expr-plus-eq   ,e1 :arg ,e2)))
+   (%expr |%-=|    %expr #'(lambda (e1 op e2) `(:expr-minus-eq   ,e1 :arg ,e2)))
+   (%expr |%*=|    %expr #'(lambda (e1 op e2) `(:expr-mul-eq   ,e1 :arg ,e2)))
+   (%expr |%/=|    %expr #'(lambda (e1 op e2) `(:expr-div-eq   ,e1 :arg ,e2)))
+   (%expr |%%=|    %expr #'(lambda (e1 op e2) `(:expr-mod-eq   ,e1 :arg ,e2)))
 
    ;; ...
    (%lit #'(lambda (x) `(:expr ,x)))
@@ -1720,14 +1718,14 @@ arguments.
   ("[!]{1}[=]{1}" '|%!=| '|%!=|)
   ("[|]{1}[=]{1}" '|%pipe=| '|%pipe=|)
   ("[\\^]{1}[=]{1}" '|%^=| '|%^=|)
-  ("[&]{1}][=]{1}" '|%&=| '|%&=|)
+  ("[&]{1}[=]{1}" '|%&=| '|%&=|)
   ("[<]{2}[=]{1}" '|%<<=| '|%<<=|)
 
-  ;; ("" '|%+=| '|%+=|)
-  ;; ("" '|%-=| '|%-=|)
-  ;; ("" '|%*=| '|%*=|)
-  ;; ("" '|%/=| '|%/=|)
-  ;; ("" '|%%=| '|%%=|)
+  ("[\\+]{1}[=]{1}" '|%+=| '|%+=|)
+  ("[-]{1}[=]{1}" '|%-=| '|%-=|)
+  ("[\\*]{1}[=]{1}" '|%*=| '|%*=|)
+  ("[/]{1}[=]{1}" '|%/=| '|%/=|)
+  ("[%]{1}[=]{1}" '|%%=| '|%%=|)
 
   ("[*]{2}" '|%**| '|%**|)
   ("[>]{2}" '|%>>| '|%>>|)
@@ -1755,21 +1753,14 @@ arguments.
   ("\\[" '|%[| '|[|)
   ("\\]" '|%]| '|]|)
   ("\\." '|%.| '|.|)
+
   ;; (cl-ppcre:all-matches-as-strings
   ;;  "[|]{1}"
   ;;  "a|b");
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%[| |%]| |.| %addr %type |%++| |%--| |%!| |%~| %delete |%-| |%*| |%**| |%/| |%%|
-  |%+| |%-| |%>>>| |%>>| |%<<| |%&| |%^| |%pipe| |%<| |%>| |%<=| |%>=| |%==| |%=|
-  |%!=| |%&&| |%pipepipe| |%?| |%pipe=| |%^=| |%&=| |%<<=| |%>>=|
-  |%>>>=|
-  ;; |%+=|
-  ;; |%-=|
-  ;; |%*=|
-  ;; |%/=|
-  ;; |%%=|
+  |%[| |%]| |.| %addr %type |%++| |%--| |%!| |%~| %delete |%-| |%*| |%**| |%/| |%%| |%+| |%-| |%>>>| |%>>| |%<<| |%&| |%^| |%pipe| |%<| |%>| |%<=| |%>=| |%==| |%=| |%!=| |%&&| |%pipepipe| |%?| |%pipe=| |%^=| |%&=| |%<<=| |%>>=| |%>>>=| |%+=| |%-=| |%*=| |%/=| |%%=|
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_expr_idx_stmnt.sol :mkdirp yes :noweb yes
@@ -1822,14 +1813,18 @@ arguments.
           321 ? 234  ;
           321 |= 234 ;
           321 ^= 234 ;
-
-      }
-  }
-#+END_SRC
           321 &= 123 ;
           321 <<= 123 ;
           321 >>= 123 ;
           321 >>>= 123 ;
+          321 += 123 ;
+          321 -= 123 ;
+          321 *= 123 ;
+          321 /= 123 ;
+          321 %= 123 ;
+      }
+  }
+#+END_SRC
 
 [TODO:gmm] - All types
 
