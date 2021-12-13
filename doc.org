@@ -53,6 +53,8 @@ solidity-конструкциями и ожидаю получить дерев�
         (cons (car par) (lddr (cadr par)))
         par))
 
+  <<deleting_comments>>
+
   <<lexer>>
 
   <<parser>>
@@ -66,6 +68,52 @@ solidity-конструкциями и ожидаю получить дерев�
   ;;     ))
 
   <<tests>>
+#+END_SRC
+
+** Deleting comments
+
+#+BEGIN_SRC lisp :noweb-ref deleting_comments
+  (defun get-filtered-file-content (file filter)
+    (let ((output (make-string-output-stream)))
+      (with-open-file (input file)
+        (loop :for line = (read-line input nil)
+              :while line
+              :do (write-line (funcall filter line) output)))
+      (get-output-stream-string output)))
+
+  (let ((state :no-comment))
+    (defun filter-single-line-comment (line)
+      (macrolet ((add-acc () `(setf acc (concatenate 'string acc (coerce (list char) 'string))))
+                 (restore () `(setf acc (concatenate 'string acc "/"))))
+        (loop :for char :across line
+              :with acc = ""
+              :finally
+                 (progn (when (equal state :candidate) ;; last symbol before end of line
+                          (restore)
+                          (setf state :no-comment)) ;; clear for next call
+                        (return acc))
+              :do
+                 (cond ((equal state :no-comment)
+                        (if (char= #\/ char)
+                            (setf state :candidate) ;; then
+                            (add-acc)))
+                       ((equal state :candidate)
+                        (cond ((char= #\/ char) ;; single-line comment
+                               (progn
+                                 (setf state :no-comment)
+                                 (loop-finish))) ;; cut acc
+                              (t (progn
+                                   (setf state :no-comment)
+                                   (restore)
+                                   (add-acc)))))
+                       (t (error 'get-filtered-file-content-error)))
+              ))))
+
+  (print
+   (get-filtered-file-content
+    #P"/home/rigidus/src/solipsism/test_contract.sol"
+    #'filter-single-line-comment))
+
 #+END_SRC
 
 * Tests
@@ -116,6 +164,13 @@ solidity-конструкциями и ожидаю получить дерев�
                (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
            #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
+
+  ;; Вариант для тестирования тестового контракт
+  ;; (funcall #'(lambda (file)
+  ;;              (print file)
+  ;;              (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+  ;;                (print (parse-with-lexer clj-lex *sol-parser*))))
+  ;;          #P"/home/rigidus/src/solipsism/test_contract.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
