@@ -179,7 +179,7 @@ solidity-конструкциями и ожидаю получить дерев�
                (print file)
                (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
-           #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
+           #P"/home/rigidus/src/solipsism/tests/test_library_definition.sol")
 
   ;; Вариант для тестирования тестового контракта
   ;; (funcall #'(lambda (file)
@@ -328,6 +328,7 @@ identifier, он может совпасть с практически любы�
   (%source-unit-contents
    (%pragma-definition #'(lambda (x) `(:pragma-def ,x)))
    (%contract-definition #'(lambda (x) `(:contract-def ,x)))
+   (%library-definition  #'(lambda (x) `(:lib-def ,x)))
    )
 #+END_SRC
 
@@ -414,7 +415,7 @@ identifier, он может совпасть с практически любы�
 
 Тест проверяет общую рамочную конструкцию контракта
 
-#+BEGIN_SRC solidity :tangle tests/contract_definition.sol :mkdirp yes :noweb yes
+#+BEGIN_SRC solidity :tangle tests/test_contract_definition.sol :mkdirp yes :noweb yes
   <<test_pragma>>
   contract test_contract_definition
   {
@@ -424,6 +425,38 @@ identifier, он может совпасть с практически любы�
 
 ** TODO Interface-definition
 ** TODO Library-definition
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%library-definition
+   (%library %identifier |%{| |%}|
+             #'(lambda (library id l-brak r-brak)
+                 `(:library ,id :contents :empty)))
+   (%library %identifier |%{| %contract-body-elt |%}|
+             #'(lambda (library id l-brak body-elt r-brak)
+                 `(:library ,id :contents ,body-elt)))
+   )
+#+END_SRC
+
+Добавим терминалы
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %library
+#+END_SRC
+
+и их распознавание в лексер:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\blibrary\\b" '%library 'library)
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_library_definition.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  library test_library_definition
+  {
+  }
+#+END_SRC
+
+
 ** FuncDefinition
 
 Я использую Виртовскую диаграмму, описывающую фунцию отсюда:

@@ -7,8 +7,6 @@
 
 // SPDX-License-Identifier: MIT
 
-a / b
-
 pragma solidity ^0.8.0;
 
 /**
