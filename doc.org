@@ -424,16 +424,20 @@ identifier, он может совпасть с практически любы�
 #+END_SRC
 
 ** TODO Interface-definition
-** TODO Library-definition
+** Library-definition
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%library-definition
    (%library %identifier |%{| |%}|
              #'(lambda (library id l-brak r-brak)
                  `(:library ,id :contents :empty)))
-   (%library %identifier |%{| %contract-body-elt |%}|
+   (%library %identifier |%{| %library-contents |%}|
              #'(lambda (library id l-brak body-elt r-brak)
-                 `(:library ,id :contents ,body-elt)))
+                 `(:library ,id :contents ,body-elt))))
+  (%library-contents
+   (%ctract-body-elt #'(lambda (x) `(:ctract-body-elt-last ,x)))
+   (%ctract-body-elt %library-body-elt-contents
+                       #'(lambda (x) `(:ctract-body-elt-head ,x :ctract-body-elt-rest ,y)))
    )
 #+END_SRC
 
@@ -456,7 +460,23 @@ identifier, он может совпасть с практически любы�
   }
 #+END_SRC
 
+** ContractBodyElement
 
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%ctract-body-elt
+   (%func-definition #'(lambda (x) `(ctract-body-elt ,x)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_library_contents.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  library test_library_definition
+  {
+      function simple_func () ;
+  }
+#+END_SRC
+
+** TODO constructor-definition
 ** FuncDefinition
 
 Я использую Виртовскую диаграмму, описывающую фунцию отсюда:
@@ -1029,11 +1049,22 @@ identifier-path, поэтому нам понадобится раскрываю
   }
 #+END_SRC
 
+** TODO Modifier-definition
+** TODO Fallback-function-definition
+** TODO Receive-function-definition
+** TODO Struct-definition
+** TODO Enum-definition
+** TODO User-defined-value-type-definition
+** TODO State-variable-declaration
+** TODO Event-definition
+** TODO Error-definition
+** TODO Using-directive
 ** TODO Constant-variable-declaration
 ** TODO Struct-definition
 ** TODO Enum-definition
 ** TODO User-defined-value-type-definition
 ** TODO Error-definition
+** TODO Using-directive
 ** Block
 
 Block может быть:
