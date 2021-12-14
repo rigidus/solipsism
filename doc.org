@@ -73,6 +73,8 @@ solidity-конструкциями и ожидаю получить дерев�
 ** Deleting comments
 
 #+BEGIN_SRC lisp :noweb-ref deleting_comments
+  (in-package :sol-parser)
+
   (defun get-filtered-file-content (file filter)
     (let ((output (make-string-output-stream)))
       (with-open-file (input file)
@@ -81,8 +83,13 @@ solidity-конструкциями и ожидаю получить дерев�
               :do (write-line (funcall filter line) output)))
       (get-output-stream-string output)))
 
+  (define-condition get-filtered-file-content-error (error)
+    ((text :initarg :text :reader text)))
+
   (let ((state :no-comment))
-    (defun filter-single-line-comment (line)
+    (defun clear-filter-comments ()
+      (setf state :no-comment))
+    (defun filter-comments (line)
       (macrolet ((add-acc () `(setf acc (concatenate 'string acc (coerce (list char) 'string))))
                  (restore () `(setf acc (concatenate 'string acc "/"))))
         (loop :for char :across line
@@ -102,18 +109,27 @@ solidity-конструкциями и ожидаю получить дерев�
                                (progn
                                  (setf state :no-comment)
                                  (loop-finish))) ;; cut acc
+                              ((char= #\* char) ;; multi-line comment
+                               (progn
+                                 (setf state :multi-line-comment)))
                               (t (progn
                                    (setf state :no-comment)
                                    (restore)
                                    (add-acc)))))
-                       (t (error 'get-filtered-file-content-error)))
-              ))))
+                       ((equal state :multi-line-comment)
+                        (cond ((char= #\* char)
+                               (setf state :maybe-fin))))
+                       ((equal state :maybe-fin)
+                        (cond ((char= #\/ char)
+                               (setf state :no-comment))
+                              (t (setf state :multi-line-comment))))
+                       (t (error 'get-filtered-file-content-error :text (symbol-name state))))))))
 
-  (print
-   (get-filtered-file-content
-    #P"/home/rigidus/src/solipsism/test_contract.sol"
-    #'filter-single-line-comment))
+  (defun get-filtered-comments-file-contents (file)
+    (clear-filter-comments)
+    (get-filtered-file-content file #'filter-comments))
 
+  ;; (get-filtered-comments-file-contents #P"/home/rigidus/src/solipsism/test_contract.sol")
 #+END_SRC
 
 * Tests
@@ -155,20 +171,20 @@ solidity-конструкциями и ожидаю получить дерев�
   ;;  "./tests"
   ;;  #'(lambda (file)
   ;;      (print file)
-  ;;      (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+  ;;      (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
   ;;        (print (parse-with-lexer clj-lex *sol-parser*)))))
 
   ;; Вариант для тестирования конкретного файла
   (funcall #'(lambda (file)
                (print file)
-               (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+               (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
                  (print (parse-with-lexer clj-lex *sol-parser*))))
            #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
 
-  ;; Вариант для тестирования тестового контракт
+  ;; Вариант для тестирования тестового контракта
   ;; (funcall #'(lambda (file)
   ;;              (print file)
-  ;;              (let* ((clj-lex (sol-lexer (alexandria:read-file-into-string file))))
+  ;;              (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
   ;;                (print (parse-with-lexer clj-lex *sol-parser*))))
   ;;          #P"/home/rigidus/src/solipsism/test_contract.sol")
 
@@ -1823,6 +1839,10 @@ arguments.
   contract test_expr_idx_stmnt
   {
       function fn_expr_idx_stmnt (uint p_one) returns (uint r_one) {
+          // comment
+          /* multi-
+             line-
+             comment */
           123[] ;
           123[234] ;
           123[:] ;
