@@ -191,9 +191,9 @@ solidity-конструкциями и ожидаю получить дерев�
                    (print (parse-with-lexer clj-lex *sol-parser*))))
              pathname))
 
-  (test-all)
+  ;; (test-all)
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_library_definition.sol")
-  ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
+  (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -605,14 +605,15 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 Начнем с типа, для него добавим в лексер соответствующие токены
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\buint\\b" '%type-name 'uint)
-  ("\\bint\\b" '%type-name 'int)
+  ;; ("\\buint\\b" '%type-name 'uint)
+  ;; ("\\bint\\b" '%type-name 'int)
 #+END_SRC
 
 Эти же токены надо добавить в grammar_terminals
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%,| %type-name
+  |%,|
+  ;; %type-name
 #+END_SRC
 
 На этом этапе можно сделать тест, содержащий функцию с одним параметром
@@ -1055,6 +1056,73 @@ identifier-path, поэтому нам понадобится раскрываю
   }
 #+END_SRC
 
+** START TypeName
+
+A type name can be an elementary type, a function type, a mapping type, a user-defined type (e.g. a contract or struct) or an array type.
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%type-name
+   (%elementary-type-name #'(lambda (par) `(:elementary-type-name ,par)))
+   ;; (%function-type-name #'(lambda (par) `(:function-type-name ,par)))
+   ;; (%mapping-type #'(lambda (par) `(:mapping-type ,par)))
+   ;; (%identifier-path #'(lambda (par) `(:identifier-path ,par)))
+   ;; (%type-name |%[| %expr |%]| #'(lambda (par) `(:elementary-type-name ,par)))
+   )
+  (%elementary-type-name
+   ;; address
+   ;; address payable
+   ;; bool
+   (%string #'(lambda (par) `(:string par)))
+   ;; bytes
+   ;; signed-integer-type
+   (%unsigned-integer-type #'(lambda (par) `(:unsigned-integer-type par)))
+   ;; fixed-bytes
+   ;; fixed
+   ;; ufixed
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\buint\\b" '%unsigned-integer-type 'uint)
+  ("\\buint8\\b" '%unsigned-integer-type 'uint8)
+  ("\\buint16\\b" '%unsigned-integer-type 'uint16)
+  ("\\buint24\\b" '%unsigned-integer-type 'uint24)
+  ("\\buint32\\b" '%unsigned-integer-type 'uint32)
+  ("\\buint40\\b" '%unsigned-integer-type 'uint40)
+  ("\\buint48\\b" '%unsigned-integer-type 'uint48)
+  ("\\buint56\\b" '%unsigned-integer-type 'uint56)
+  ("\\buint64\\b" '%unsigned-integer-type 'uint64)
+  ("\\buint72\\b" '%unsigned-integer-type 'uint72)
+  ("\\buint80\\b" '%unsigned-integer-type 'uint80)
+  ("\\buint88\\b" '%unsigned-integer-type 'uint88)
+  ("\\buint96\\b" '%unsigned-integer-type 'uint96)
+  ("\\buint104\\b" '%unsigned-integer-type 'uint104)
+  ("\\buint112\\b" '%unsigned-integer-type 'uint112)
+  ("\\buint120\\b" '%unsigned-integer-type 'uint120)
+  ("\\buint128\\b" '%unsigned-integer-type 'uint128)
+  ("\\buint136\\b" '%unsigned-integer-type 'uint136)
+  ("\\buint144\\b" '%unsigned-integer-type 'uint144)
+  ("\\buint152\\b" '%unsigned-integer-type 'uint152)
+  ("\\buint160\\b" '%unsigned-integer-type 'uint160)
+  ("\\buint168\\b" '%unsigned-integer-type 'uint168)
+  ("\\buint176\\b" '%unsigned-integer-type 'uint176)
+  ("\\buint184\\b" '%unsigned-integer-type 'uint184)
+  ("\\buint192\\b" '%unsigned-integer-type 'uint192)
+  ("\\buint200\\b" '%unsigned-integer-type 'uint200)
+  ("\\buint208\\b" '%unsigned-integer-type 'uint208)
+  ("\\buint216\\b" '%unsigned-integer-type 'uint216)
+  ("\\buint224\\b" '%unsigned-integer-type 'uint224)
+  ("\\buint232\\b" '%unsigned-integer-type 'uint232)
+  ("\\buint240\\b" '%unsigned-integer-type 'uint240)
+  ("\\buint248\\b" '%unsigned-integer-type 'uint248)
+  ("\\buint256\\b" '%unsigned-integer-type 'uint256)
+  ("\\bstring\\b" '%string 'string)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %unsigned-integer-type %string
+#+END_SRC
+
 ** TODO Modifier-definition
 ** TODO Fallback-function-definition
 ** TODO Receive-function-definition
@@ -1062,9 +1130,6 @@ identifier-path, поэтому нам понадобится раскрываю
 ** TODO Enum-definition
 ** TODO User-defined-value-type-definition
 ** TODO State-variable-declaration
-
-
-
 ** TODO Event-definition
 ** TODO Error-definition
 ** TODO Using-directive
