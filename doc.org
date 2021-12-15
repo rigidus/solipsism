@@ -167,26 +167,33 @@ solidity-конструкциями и ожидаю получить дерев�
               (reverse test-files))))
 
   ;; run-tests
-  ;; (map-subdir-files
-  ;;  "./tests"
-  ;;  #'(lambda (file)
-  ;;      (print file)
-  ;;      (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
-  ;;        (print (parse-with-lexer clj-lex *sol-parser*)))))
+  (defun test-all ()
+    (map-subdir-files
+     "./tests"
+     #'(lambda (file)
+         (print file)
+         (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
+           (print (parse-with-lexer clj-lex *sol-parser*))))))
 
   ;; Вариант для тестирования конкретного файла
-  (funcall #'(lambda (file)
-               (print file)
-               (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
-                 (print (parse-with-lexer clj-lex *sol-parser*))))
-           #P"/home/rigidus/src/solipsism/tests/test_library_definition.sol")
+  (defun test-file (pathname)
+    (funcall #'(lambda (file)
+                 (print file)
+                 (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
+                   (print (parse-with-lexer clj-lex *sol-parser*))))
+             pathname))
 
   ;; Вариант для тестирования тестового контракта
-  ;; (funcall #'(lambda (file)
-  ;;              (print file)
-  ;;              (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
-  ;;                (print (parse-with-lexer clj-lex *sol-parser*))))
-  ;;          #P"/home/rigidus/src/solipsism/test_contract.sol")
+  (defun test-contract-file (pathname)
+    (funcall #'(lambda (file)
+                 (print file)
+                 (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
+                   (print (parse-with-lexer clj-lex *sol-parser*))))
+             pathname))
+
+  (test-all)
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_library_definition.sol")
+  ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -422,7 +429,6 @@ identifier, он может совпасть с практически любы�
       %%FUNC_DEFINITION_STUB%%
   }
 #+END_SRC
-
 ** TODO Interface-definition
 ** Library-definition
 
@@ -477,6 +483,9 @@ identifier, он может совпасть с практически любы�
 #+END_SRC
 
 ** TODO constructor-definition
+
+Тут потребуется генерировать код так же как в FuncDefinition
+
 ** FuncDefinition
 
 Я использую Виртовскую диаграмму, описывающую фунцию отсюда:
@@ -819,31 +828,28 @@ Retlist представляет из себя два возможных вар�
                       (push (append (list item) ret) res))
                 res))))
 
-  (let* ((in '(
-              %visibility
-              %state-mutability
-              %modifier-invocation
-              %virtual
-              %override-specifier
-              ))
-         (res (remove-duplicates (accommodations in) :test #'equal)))
-    ;; (length res))
-    (loop for item in res do
-          (let ((short-list (mapcar #'(lambda (item)
-                                        (substring (symbol-name item) 1 4))
-                                    item)))
-            (princ (format "(%s\n  #'(lambda %s\n      %s\n"
-                           (mapconcat #'(lambda (it)
-                                          (symbol-name it))
-                                      item " ")
-                           short-list
-                           (concat "`("
-                            (mapconcat #'(lambda (item)
-                                           (concat " :"
-                                            (substring (symbol-name item) 1) " ,"
-                                            (substring (symbol-name item) 1 4) " "))
-                                       item "")
-                            ")))"))))))
+  (defun gen-accmd (in)
+    (let ((res (remove-duplicates (accommodations in) :test #'equal)))
+      ;; (length res))
+      (loop for item in res do
+            (let ((short-list (mapcar #'(lambda (item)
+                                          (substring (symbol-name item) 1 4))
+                                      item)))
+              (princ (format "(%s\n  #'(lambda %s\n      %s\n"
+                             (mapconcat #'(lambda (it)
+                                            (symbol-name it))
+                                        item " ")
+                             short-list
+                             (concat "`("
+                                     (mapconcat #'(lambda (item)
+                                                    (concat " :"
+                                                            (substring (symbol-name item) 1) " ,"
+                                                            (substring (symbol-name item) 1 4) " "))
+                                                item "")
+                                     ")))")))))))
+
+  (gen-accmd
+   '(%visibility %state-mutability %modifier-invocation %virtual %override-specifier))
 #+END_SRC
 
 Начнем с visibility. Есть четыре варианта, которые мы должны добавить в
@@ -1056,6 +1062,9 @@ identifier-path, поэтому нам понадобится раскрываю
 ** TODO Enum-definition
 ** TODO User-defined-value-type-definition
 ** TODO State-variable-declaration
+
+
+
 ** TODO Event-definition
 ** TODO Error-definition
 ** TODO Using-directive
@@ -1065,6 +1074,11 @@ identifier-path, поэтому нам понадобится раскрываю
 ** TODO User-defined-value-type-definition
 ** TODO Error-definition
 ** TODO Using-directive
+** TODO Constant-variable-declaration
+** TODO Struct-Definition
+** TODO Enum-Definition
+** TODO User-defined-value-type-definition
+** TODO Error-Definition
 ** Block
 
 Block может быть:
