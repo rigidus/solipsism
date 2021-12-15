@@ -1074,7 +1074,7 @@ A type name can be an elementary type, a function type, a mapping type, a user-d
    ;; bool
    (%string #'(lambda (par) `(:string par)))
    ;; bytes
-   ;; signed-integer-type
+   (%signed-integer-type #'(lambda (par) `(:signed-integer-type par)))
    (%unsigned-integer-type #'(lambda (par) `(:unsigned-integer-type par)))
    ;; fixed-bytes
    ;; fixed
@@ -1116,11 +1116,44 @@ A type name can be an elementary type, a function type, a mapping type, a user-d
   ("\\buint240\\b" '%unsigned-integer-type 'uint240)
   ("\\buint248\\b" '%unsigned-integer-type 'uint248)
   ("\\buint256\\b" '%unsigned-integer-type 'uint256)
+  ("\\bint\\b" '%signed-integer-type 'int)
+  ("\\bint8\\b" '%signed-integer-type 'int8)
+  ("\\bint16\\b" '%signed-integer-type 'int16)
+  ("\\bint24\\b" '%signed-integer-type 'int24)
+  ("\\bint32\\b" '%signed-integer-type 'int32)
+  ("\\bint40\\b" '%signed-integer-type 'int40)
+  ("\\bint48\\b" '%signed-integer-type 'int48)
+  ("\\bint56\\b" '%signed-integer-type 'int56)
+  ("\\bint64\\b" '%signed-integer-type 'int64)
+  ("\\bint72\\b" '%signed-integer-type 'int72)
+  ("\\bint80\\b" '%signed-integer-type 'int80)
+  ("\\bint88\\b" '%signed-integer-type 'int88)
+  ("\\bint96\\b" '%signed-integer-type 'int96)
+  ("\\bint104\\b" '%signed-integer-type 'int104)
+  ("\\bint112\\b" '%signed-integer-type 'int112)
+  ("\\bint120\\b" '%signed-integer-type 'int120)
+  ("\\bint128\\b" '%signed-integer-type 'int128)
+  ("\\bint136\\b" '%signed-integer-type 'int136)
+  ("\\bint144\\b" '%signed-integer-type 'int144)
+  ("\\bint152\\b" '%signed-integer-type 'int152)
+  ("\\bint160\\b" '%signed-integer-type 'int160)
+  ("\\bint168\\b" '%signed-integer-type 'int168)
+  ("\\bint176\\b" '%signed-integer-type 'int176)
+  ("\\bint184\\b" '%signed-integer-type 'int184)
+  ("\\bint192\\b" '%signed-integer-type 'int192)
+  ("\\bint200\\b" '%signed-integer-type 'int200)
+  ("\\bint208\\b" '%signed-integer-type 'int208)
+  ("\\bint216\\b" '%signed-integer-type 'int216)
+  ("\\bint224\\b" '%signed-integer-type 'int224)
+  ("\\bint232\\b" '%signed-integer-type 'int232)
+  ("\\bint240\\b" '%signed-integer-type 'int240)
+  ("\\bint248\\b" '%signed-integer-type 'int248)
+  ("\\bint256\\b" '%signed-integer-type 'int256)
   ("\\bstring\\b" '%string 'string)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %unsigned-integer-type %string
+  %unsigned-integer-type %signed-integer-type %string
 #+END_SRC
 
 ** TODO Modifier-definition
