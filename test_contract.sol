@@ -23,359 +23,359 @@ library Strings {
         // Inspired by OraclizeAPI's implementation - MIT licence
         // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
 
-        /* if (value == 0) { */
-        /*     return "0"; */
-        /* } */
+        if (value == 0) {
+            return "0";
+        }
         uint256 temp = value;
         uint256 digits;
-        /* while (temp != 0) { */
-        /*     digits++; */
-        /*     temp /= 10; */
-        /* } */
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
         /* bytes memory buffer = new bytes(digits); */
-        /* while (value != 0) { */
-        /*     digits -= 1; */
-        /*     buffer[digits] = bytes1(uint8(48 + uint256(value % 10))); */
-        /*     value /= 10; */
-        /* } */
+        while (value != 0) {
+            digits -= 1;
+            /* buffer[digits] = bytes1(uint8(48 + uint256(value % 10))); */
+            value /= 10;
+        }
         /* return string(buffer); */
     }
 
     /**
      * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation.
      */
-    /* function toHexString(uint256 value) internal pure returns (string memory) { */
-        /* if (value == 0) { */
-        /*     return "0x00"; */
-        /* } */
-        /* uint256 temp = value; */
-        /* uint256 length = 0; */
-        /* while (temp != 0) { */
-        /*     length++; */
-        /*     temp >>= 8; */
-        /* } */
-        /* return toHexString(value, length); */
-    /* } */
+    function toHexString(uint256 value) internal pure returns (string memory) {
+        if (value == 0) {
+            return "0x00";
+        }
+        uint256 temp = value;
+        uint256 length = 0;
+        while (temp != 0) {
+            length++;
+            temp >>= 8;
+        }
+        return toHexString(value, length);
+    }
 
-    /* /\** */
-    /*  * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation with fixed length. */
-    /*  *\/ */
-    /* function toHexString(uint256 value, uint256 length) internal pure returns (string memory) { */
-    /*     bytes memory buffer = new bytes(2 * length + 2); */
-    /*     buffer[0] = "0"; */
-    /*     buffer[1] = "x"; */
-    /*     for (uint256 i = 2 * length + 1; i > 1; --i) { */
-    /*         buffer[i] = alphabet[value & 0xf]; */
-    /*         value >>= 4; */
-    /*     } */
-    /*     require(value == 0, "Strings: hex length insufficient"); */
-    /*     return string(buffer); */
-    /* } */
+    /**
+     * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation with fixed length.
+     */
+    function toHexString(uint256 value, uint256 length) internal pure returns (string memory) {
+        /* bytes memory buffer = new bytes(2 * length + 2); */
+        /* buffer[0] = "0"; */
+        /* buffer[1] = "x"; */
+        for (uint256 i = 2 * length + 1; i > 1; --i) {
+            /* buffer[i] = alphabet[value & 0xf]; */
+            value >>= 4;
+        }
+        /* require(value == 0, "Strings: hex length insufficient"); */
+        /* return string(buffer); */
+    }
 
 }
 
-/* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/EnumerableMap.sol */
+// File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/EnumerableMap.sol
 
 
 
 
-/* pragma solidity ^0.8.0; */
+pragma solidity ^0.8.0;
 
-/* /\** */
-/*  * @dev Library for managing an enumerable variant of Solidity's */
-/*  * https://solidity.readthedocs.io/en/latest/types.html#mapping-types[`mapping`] */
-/*  * type. */
-/*  * */
-/*  * Maps have the following properties: */
-/*  * */
-/*  * - Entries are added, removed, and checked for existence in constant time */
-/*  * (O(1)). */
-/*  * - Entries are enumerated in O(n). No guarantees are made on the ordering. */
-/*  * */
-/*  * ``` */
-/*  * contract Example { */
-/*  *     // Add the library methods */
-/*  *     using EnumerableMap for EnumerableMap.UintToAddressMap; */
-/*  * */
-/*  *     // Declare a set state variable */
-/*  *     EnumerableMap.UintToAddressMap private myMap; */
-/*  * } */
-/*  * ``` */
-/*  * */
-/*  * As of v3.0.0, only maps of type `uint256 -> address` (`UintToAddressMap`) are */
-/*  * supported. */
-/*  *\/ */
-/* library EnumerableMap { */
-/*     // To implement this library for multiple types with as little code */
-/*     // repetition as possible, we write it in terms of a generic Map type with */
-/*     // bytes32 keys and values. */
-/*     // The Map implementation uses private functions, and user-facing */
-/*     // implementations (such as Uint256ToAddressMap) are just wrappers around */
-/*     // the underlying Map. */
-/*     // This means that we can only create new EnumerableMaps for types that fit */
-/*     // in bytes32. */
+/**
+ * @dev Library for managing an enumerable variant of Solidity's
+ * https://solidity.readthedocs.io/en/latest/types.html#mapping-types[`mapping`]
+ * type.
+ *
+ * Maps have the following properties:
+ *
+ * - Entries are added, removed, and checked for existence in constant time
+ * (O(1)).
+ * - Entries are enumerated in O(n). No guarantees are made on the ordering.
+ *
+ * ```
+ * contract Example {
+ *     // Add the library methods
+ *     using EnumerableMap for EnumerableMap.UintToAddressMap;
+ *
+ *     // Declare a set state variable
+ *     EnumerableMap.UintToAddressMap private myMap;
+ * }
+ * ```
+ *
+ * As of v3.0.0, only maps of type `uint256 -> address` (`UintToAddressMap`) are
+ * supported.
+ */
+library EnumerableMap {
+    // To implement this library for multiple types with as little code
+    // repetition as possible, we write it in terms of a generic Map type with
+    // bytes32 keys and values.
+    // The Map implementation uses private functions, and user-facing
+    // implementations (such as Uint256ToAddressMap) are just wrappers around
+    // the underlying Map.
+    // This means that we can only create new EnumerableMaps for types that fit
+    // in bytes32.
 
-/*     struct MapEntry { */
-/*         bytes32 _key; */
-/*         bytes32 _value; */
-/*     } */
+    /* struct MapEntry { */
+    /*     bytes32 _key; */
+    /*     bytes32 _value; */
+    /* } */
 
-/*     struct Map { */
-/*         // Storage of map keys and values */
-/*         MapEntry[] _entries; */
+    /* struct Map { */
+    /*     // Storage of map keys and values */
+    /*     MapEntry[] _entries; */
 
-/*         // Position of the entry defined by a key in the `entries` array, plus 1 */
-/*         // because index 0 means a key is not in the map. */
-/*         mapping (bytes32 => uint256) _indexes; */
-/*     } */
+    /*     // Position of the entry defined by a key in the `entries` array, plus 1 */
+    /*     // because index 0 means a key is not in the map. */
+    /*     mapping (bytes32 => uint256) _indexes; */
+    /* } */
 
-/*     /\** */
-/*      * @dev Adds a key-value pair to a map, or updates the value for an existing */
-/*      * key. O(1). */
-/*      * */
-/*      * Returns true if the key was added to the map, that is if it was not */
-/*      * already present. */
-/*      *\/ */
-/*     function _set(Map storage map, bytes32 key, bytes32 value) private returns (bool) { */
-/*         // We read and store the key's index to prevent multiple reads from the same storage slot */
-/*         uint256 keyIndex = map._indexes[key]; */
+    /**
+     * @dev Adds a key-value pair to a map, or updates the value for an existing
+     * key. O(1).
+     *
+     * Returns true if the key was added to the map, that is if it was not
+     * already present.
+     */
+    /* function _set(Map storage map, bytes32 key, bytes32 value) private returns (bool) { */
+    /*     // We read and store the key's index to prevent multiple reads from the same storage slot */
+    /*     uint256 keyIndex = map._indexes[key]; */
 
-/*         if (keyIndex == 0) { // Equivalent to !contains(map, key) */
-/*             map._entries.push(MapEntry({ _key: key, _value: value })); */
-/*             // The entry is stored at length-1, but we add 1 to all indexes */
-/*             // and use 0 as a sentinel value */
-/*             map._indexes[key] = map._entries.length; */
-/*             return true; */
-/*         } else { */
-/*             map._entries[keyIndex - 1]._value = value; */
-/*             return false; */
-/*         } */
-/*     } */
+    /*     if (keyIndex == 0) { // Equivalent to !contains(map, key) */
+    /*         map._entries.push(MapEntry({ _key: key, _value: value })); */
+    /*         // The entry is stored at length-1, but we add 1 to all indexes */
+    /*         // and use 0 as a sentinel value */
+    /*         map._indexes[key] = map._entries.length; */
+    /*         return true; */
+    /*     } else { */
+    /*         map._entries[keyIndex - 1]._value = value; */
+    /*         return false; */
+    /*     } */
+    /* } */
 
-/*     /\** */
-/*      * @dev Removes a key-value pair from a map. O(1). */
-/*      * */
-/*      * Returns true if the key was removed from the map, that is if it was present. */
-/*      *\/ */
-/*     function _remove(Map storage map, bytes32 key) private returns (bool) { */
-/*         // We read and store the key's index to prevent multiple reads from the same storage slot */
-/*         uint256 keyIndex = map._indexes[key]; */
+    /**
+     * @dev Removes a key-value pair from a map. O(1).
+     *
+     * Returns true if the key was removed from the map, that is if it was present.
+     */
+    /* function _remove(Map storage map, bytes32 key) private returns (bool) { */
+    /*     // We read and store the key's index to prevent multiple reads from the same storage slot */
+    /*     uint256 keyIndex = map._indexes[key]; */
 
-/*         if (keyIndex != 0) { // Equivalent to contains(map, key) */
-/*             // To delete a key-value pair from the _entries array in O(1), we swap the entry to delete with the last one */
-/*             // in the array, and then remove the last entry (sometimes called as 'swap and pop'). */
-/*             // This modifies the order of the array, as noted in {at}. */
+    /*     if (keyIndex != 0) { // Equivalent to contains(map, key) */
+    /*         // To delete a key-value pair from the _entries array in O(1), we swap the entry to delete with the last one */
+    /*         // in the array, and then remove the last entry (sometimes called as 'swap and pop'). */
+    /*         // This modifies the order of the array, as noted in {at}. */
 
-/*             uint256 toDeleteIndex = keyIndex - 1; */
-/*             uint256 lastIndex = map._entries.length - 1; */
+    /*         uint256 toDeleteIndex = keyIndex - 1; */
+    /*         uint256 lastIndex = map._entries.length - 1; */
 
-/*             // When the entry to delete is the last one, the swap operation is unnecessary. However, since this occurs */
-/*             // so rarely, we still do the swap anyway to avoid the gas cost of adding an 'if' statement. */
+    /*         // When the entry to delete is the last one, the swap operation is unnecessary. However, since this occurs */
+    /*         // so rarely, we still do the swap anyway to avoid the gas cost of adding an 'if' statement. */
 
-/*             MapEntry storage lastEntry = map._entries[lastIndex]; */
+    /*         MapEntry storage lastEntry = map._entries[lastIndex]; */
 
-/*             // Move the last entry to the index where the entry to delete is */
-/*             map._entries[toDeleteIndex] = lastEntry; */
-/*             // Update the index for the moved entry */
-/*             map._indexes[lastEntry._key] = toDeleteIndex + 1; // All indexes are 1-based */
+    /*         // Move the last entry to the index where the entry to delete is */
+    /*         map._entries[toDeleteIndex] = lastEntry; */
+    /*         // Update the index for the moved entry */
+    /*         map._indexes[lastEntry._key] = toDeleteIndex + 1; // All indexes are 1-based */
 
-/*             // Delete the slot where the moved entry was stored */
-/*             map._entries.pop(); */
+    /*         // Delete the slot where the moved entry was stored */
+    /*         map._entries.pop(); */
 
-/*             // Delete the index for the deleted slot */
-/*             delete map._indexes[key]; */
+    /*         // Delete the index for the deleted slot */
+    /*         delete map._indexes[key]; */
 
-/*             return true; */
-/*         } else { */
-/*             return false; */
-/*         } */
-/*     } */
+    /*         return true; */
+    /*     } else { */
+    /*         return false; */
+    /*     } */
+    /* } */
 
-/*     /\** */
-/*      * @dev Returns true if the key is in the map. O(1). */
-/*      *\/ */
-/*     function _contains(Map storage map, bytes32 key) private view returns (bool) { */
-/*         return map._indexes[key] != 0; */
-/*     } */
+    /**
+     * @dev Returns true if the key is in the map. O(1).
+     */
+    /* function _contains(Map storage map, bytes32 key) private view returns (bool) { */
+    /*     return map._indexes[key] != 0; */
+    /* } */
 
-/*     /\** */
-/*      * @dev Returns the number of key-value pairs in the map. O(1). */
-/*      *\/ */
-/*     function _length(Map storage map) private view returns (uint256) { */
-/*         return map._entries.length; */
-/*     } */
+    /**
+     * @dev Returns the number of key-value pairs in the map. O(1).
+     */
+    /* function _length(Map storage map) private view returns (uint256) { */
+    /*     return map._entries.length; */
+    /* } */
 
-/*    /\** */
-/*     * @dev Returns the key-value pair stored at position `index` in the map. O(1). */
-/*     * */
-/*     * Note that there are no guarantees on the ordering of entries inside the */
-/*     * array, and it may change when more entries are added or removed. */
-/*     * */
-/*     * Requirements: */
-/*     * */
-/*     * - `index` must be strictly less than {length}. */
-/*     *\/ */
-/*     function _at(Map storage map, uint256 index) private view returns (bytes32, bytes32) { */
-/*         require(map._entries.length > index, "EnumerableMap: index out of bounds"); */
+   /**
+    * @dev Returns the key-value pair stored at position `index` in the map. O(1).
+    *
+    * Note that there are no guarantees on the ordering of entries inside the
+    * array, and it may change when more entries are added or removed.
+    *
+    * Requirements:
+    *
+    * - `index` must be strictly less than {length}.
+    */
+    /* function _at(Map storage map, uint256 index) private view returns (bytes32, bytes32) { */
+    /*     require(map._entries.length > index, "EnumerableMap: index out of bounds"); */
 
-/*         MapEntry storage entry = map._entries[index]; */
-/*         return (entry._key, entry._value); */
-/*     } */
+    /*     MapEntry storage entry = map._entries[index]; */
+    /*     return (entry._key, entry._value); */
+    /* } */
 
-/*     /\** */
-/*      * @dev Tries to returns the value associated with `key`.  O(1). */
-/*      * Does not revert if `key` is not in the map. */
-/*      *\/ */
-/*     function _tryGet(Map storage map, bytes32 key) private view returns (bool, bytes32) { */
-/*         uint256 keyIndex = map._indexes[key]; */
-/*         if (keyIndex == 0) return (false, 0); // Equivalent to contains(map, key) */
-/*         return (true, map._entries[keyIndex - 1]._value); // All indexes are 1-based */
-/*     } */
+    /**
+     * @dev Tries to returns the value associated with `key`.  O(1).
+     * Does not revert if `key` is not in the map.
+     */
+    /* function _tryGet(Map storage map, bytes32 key) private view returns (bool, bytes32) { */
+    /*     uint256 keyIndex = map._indexes[key]; */
+    /*     if (keyIndex == 0) return (false, 0); // Equivalent to contains(map, key) */
+    /*     return (true, map._entries[keyIndex - 1]._value); // All indexes are 1-based */
+    /* } */
 
-/*     /\** */
-/*      * @dev Returns the value associated with `key`.  O(1). */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - `key` must be in the map. */
-/*      *\/ */
-/*     function _get(Map storage map, bytes32 key) private view returns (bytes32) { */
-/*         uint256 keyIndex = map._indexes[key]; */
-/*         require(keyIndex != 0, "EnumerableMap: nonexistent key"); // Equivalent to contains(map, key) */
-/*         return map._entries[keyIndex - 1]._value; // All indexes are 1-based */
-/*     } */
+    /**
+     * @dev Returns the value associated with `key`.  O(1).
+     *
+     * Requirements:
+     *
+     * - `key` must be in the map.
+     */
+    /* function _get(Map storage map, bytes32 key) private view returns (bytes32) { */
+    /*     uint256 keyIndex = map._indexes[key]; */
+    /*     require(keyIndex != 0, "EnumerableMap: nonexistent key"); // Equivalent to contains(map, key) */
+    /*     return map._entries[keyIndex - 1]._value; // All indexes are 1-based */
+    /* } */
 
-/*     /\** */
-/*      * @dev Same as {_get}, with a custom error message when `key` is not in the map. */
-/*      * */
-/*      * CAUTION: This function is deprecated because it requires allocating memory for the error */
-/*      * message unnecessarily. For custom revert reasons use {_tryGet}. */
-/*      *\/ */
-/*     function _get(Map storage map, bytes32 key, string memory errorMessage) private view returns (bytes32) { */
-/*         uint256 keyIndex = map._indexes[key]; */
-/*         require(keyIndex != 0, errorMessage); // Equivalent to contains(map, key) */
-/*         return map._entries[keyIndex - 1]._value; // All indexes are 1-based */
-/*     } */
+    /**
+     * @dev Same as {_get}, with a custom error message when `key` is not in the map.
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {_tryGet}.
+     */
+    /* function _get(Map storage map, bytes32 key, string memory errorMessage) private view returns (bytes32) { */
+    /*     uint256 keyIndex = map._indexes[key]; */
+    /*     require(keyIndex != 0, errorMessage); // Equivalent to contains(map, key) */
+    /*     return map._entries[keyIndex - 1]._value; // All indexes are 1-based */
+    /* } */
 
-/*     // UintToAddressMap */
+    // UintToAddressMap
 
-/*     struct UintToAddressMap { */
-/*         Map _inner; */
-/*     } */
+    /* struct UintToAddressMap { */
+    /*     Map _inner; */
+    /* } */
 
-/*     /\** */
-/*      * @dev Adds a key-value pair to a map, or updates the value for an existing */
-/*      * key. O(1). */
-/*      * */
-/*      * Returns true if the key was added to the map, that is if it was not */
-/*      * already present. */
-/*      *\/ */
-/*     function set(UintToAddressMap storage map, uint256 key, address value) internal returns (bool) { */
-/*         return _set(map._inner, bytes32(key), bytes32(uint256(uint160(value)))); */
-/*     } */
+    /**
+     * @dev Adds a key-value pair to a map, or updates the value for an existing
+     * key. O(1).
+     *
+     * Returns true if the key was added to the map, that is if it was not
+     * already present.
+     */
+    /* function set(UintToAddressMap storage map, uint256 key, address value) internal returns (bool) { */
+    /*     return _set(map._inner, bytes32(key), bytes32(uint256(uint160(value)))); */
+    /* } */
 
-/*     /\** */
-/*      * @dev Removes a value from a set. O(1). */
-/*      * */
-/*      * Returns true if the key was removed from the map, that is if it was present. */
-/*      *\/ */
-/*     function remove(UintToAddressMap storage map, uint256 key) internal returns (bool) { */
-/*         return _remove(map._inner, bytes32(key)); */
-/*     } */
+    /**
+     * @dev Removes a value from a set. O(1).
+     *
+     * Returns true if the key was removed from the map, that is if it was present.
+     */
+    /* function remove(UintToAddressMap storage map, uint256 key) internal returns (bool) { */
+    /*     return _remove(map._inner, bytes32(key)); */
+    /* } */
 
-/*     /\** */
-/*      * @dev Returns true if the key is in the map. O(1). */
-/*      *\/ */
-/*     function contains(UintToAddressMap storage map, uint256 key) internal view returns (bool) { */
-/*         return _contains(map._inner, bytes32(key)); */
-/*     } */
+    /**
+     * @dev Returns true if the key is in the map. O(1).
+     */
+    /* function contains(UintToAddressMap storage map, uint256 key) internal view returns (bool) { */
+    /*     return _contains(map._inner, bytes32(key)); */
+    /* } */
 
-/*     /\** */
-/*      * @dev Returns the number of elements in the map. O(1). */
-/*      *\/ */
-/*     function length(UintToAddressMap storage map) internal view returns (uint256) { */
-/*         return _length(map._inner); */
-/*     } */
+    /**
+     * @dev Returns the number of elements in the map. O(1).
+     */
+    /* function length(UintToAddressMap storage map) internal view returns (uint256) { */
+    /*     return _length(map._inner); */
+    /* } */
 
-/*    /\** */
-/*     * @dev Returns the element stored at position `index` in the set. O(1). */
-/*     * Note that there are no guarantees on the ordering of values inside the */
-/*     * array, and it may change when more values are added or removed. */
-/*     * */
-/*     * Requirements: */
-/*     * */
-/*     * - `index` must be strictly less than {length}. */
-/*     *\/ */
-/*     function at(UintToAddressMap storage map, uint256 index) internal view returns (uint256, address) { */
-/*         (bytes32 key, bytes32 value) = _at(map._inner, index); */
-/*         return (uint256(key), address(uint160(uint256(value)))); */
-/*     } */
+   /**
+    * @dev Returns the element stored at position `index` in the set. O(1).
+    * Note that there are no guarantees on the ordering of values inside the
+    * array, and it may change when more values are added or removed.
+    *
+    * Requirements:
+    *
+    * - `index` must be strictly less than {length}.
+    */
+    /* function at(UintToAddressMap storage map, uint256 index) internal view returns (uint256, address) { */
+    /*     (bytes32 key, bytes32 value) = _at(map._inner, index); */
+    /*     return (uint256(key), address(uint160(uint256(value)))); */
+    /* } */
 
-/*     /\** */
-/*      * @dev Tries to returns the value associated with `key`.  O(1). */
-/*      * Does not revert if `key` is not in the map. */
-/*      * */
-/*      * _Available since v3.4._ */
-/*      *\/ */
-/*     function tryGet(UintToAddressMap storage map, uint256 key) internal view returns (bool, address) { */
-/*         (bool success, bytes32 value) = _tryGet(map._inner, bytes32(key)); */
-/*         return (success, address(uint160(uint256(value)))); */
-/*     } */
+    /**
+     * @dev Tries to returns the value associated with `key`.  O(1).
+     * Does not revert if `key` is not in the map.
+     *
+     * _Available since v3.4._
+     */
+    /* function tryGet(UintToAddressMap storage map, uint256 key) internal view returns (bool, address) { */
+    /*     (bool success, bytes32 value) = _tryGet(map._inner, bytes32(key)); */
+    /*     return (success, address(uint160(uint256(value)))); */
+    /* } */
 
-/*     /\** */
-/*      * @dev Returns the value associated with `key`.  O(1). */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - `key` must be in the map. */
-/*      *\/ */
-/*     function get(UintToAddressMap storage map, uint256 key) internal view returns (address) { */
-/*         return address(uint160(uint256(_get(map._inner, bytes32(key))))); */
-/*     } */
+    /**
+     * @dev Returns the value associated with `key`.  O(1).
+     *
+     * Requirements:
+     *
+     * - `key` must be in the map.
+     */
+    /* function get(UintToAddressMap storage map, uint256 key) internal view returns (address) { */
+    /*     return address(uint160(uint256(_get(map._inner, bytes32(key))))); */
+    /* } */
 
-/*     /\** */
-/*      * @dev Same as {get}, with a custom error message when `key` is not in the map. */
-/*      * */
-/*      * CAUTION: This function is deprecated because it requires allocating memory for the error */
-/*      * message unnecessarily. For custom revert reasons use {tryGet}. */
-/*      *\/ */
-/*     function get(UintToAddressMap storage map, uint256 key, string memory errorMessage) internal view returns (address) { */
-/*         return address(uint160(uint256(_get(map._inner, bytes32(key), errorMessage)))); */
-/*     } */
-/* } */
+    /**
+     * @dev Same as {get}, with a custom error message when `key` is not in the map.
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {tryGet}.
+     */
+    /* function get(UintToAddressMap storage map, uint256 key, string memory errorMessage) internal view returns (address) { */
+    /*     return address(uint160(uint256(_get(map._inner, bytes32(key), errorMessage)))); */
+    /* } */
+}
 
 /* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/EnumerableSet.sol */
 
 
 
 
-/* pragma solidity ^0.8.0; */
+pragma solidity ^0.8.0;
 
-/* /\** */
-/*  * @dev Library for managing */
-/*  * https://en.wikipedia.org/wiki/Set_(abstract_data_type)[sets] of primitive */
-/*  * types. */
-/*  * */
-/*  * Sets have the following properties: */
-/*  * */
-/*  * - Elements are added, removed, and checked for existence in constant time */
-/*  * (O(1)). */
-/*  * - Elements are enumerated in O(n). No guarantees are made on the ordering. */
-/*  * */
-/*  * ``` */
-/*  * contract Example { */
-/*  *     // Add the library methods */
-/*  *     using EnumerableSet for EnumerableSet.AddressSet; */
-/*  * */
-/*  *     // Declare a set state variable */
-/*  *     EnumerableSet.AddressSet private mySet; */
-/*  * } */
-/*  * ``` */
-/*  * */
-/*  * As of v3.3.0, sets of type `bytes32` (`Bytes32Set`), `address` (`AddressSet`) */
-/*  * and `uint256` (`UintSet`) are supported. */
-/*  *\/ */
-/* library EnumerableSet { */
+/**
+ * @dev Library for managing
+ * https://en.wikipedia.org/wiki/Set_(abstract_data_type)[sets] of primitive
+ * types.
+ *
+ * Sets have the following properties:
+ *
+ * - Elements are added, removed, and checked for existence in constant time
+ * (O(1)).
+ * - Elements are enumerated in O(n). No guarantees are made on the ordering.
+ *
+ * ```
+ * contract Example {
+ *     // Add the library methods
+ *     using EnumerableSet for EnumerableSet.AddressSet;
+ *
+ *     // Declare a set state variable
+ *     EnumerableSet.AddressSet private mySet;
+ * }
+ * ```
+ *
+ * As of v3.3.0, sets of type `bytes32` (`Bytes32Set`), `address` (`AddressSet`)
+ * and `uint256` (`UintSet`) are supported.
+ */
+library EnumerableSet {
 /*     // To implement this library for multiple types with as little code */
 /*     // repetition as possible, we write it in terms of a generic Set type with */
 /*     // bytes32 values. */
@@ -643,19 +643,19 @@ library Strings {
 /*     function at(UintSet storage set, uint256 index) internal view returns (uint256) { */
 /*         return uint256(_at(set._inner, index)); */
 /*     } */
-/* } */
+}
 
-/* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/Address.sol */
-
-
+// File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/Address.sol
 
 
-/* pragma solidity ^0.8.0; */
 
-/* /\** */
-/*  * @dev Collection of functions related to the address type */
-/*  *\/ */
-/* library Address { */
+
+pragma solidity ^0.8.0;
+
+/**
+ * @dev Collection of functions related to the address type
+ */
+library Address {
 /*     /\** */
 /*      * @dev Returns true if `account` is a contract. */
 /*      * */
@@ -836,12 +836,12 @@ library Strings {
 /*             } */
 /*         } */
 /*     } */
-/* } */
+}
 
-/* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/introspection/ERC165.sol */
+// File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/introspection/ERC165.sol
 
 
-/* pragma solidity ^0.8.0; */
+pragma solidity ^0.8.0;
 
 /* /\** */
 /*  * @dev Interface of the ERC165 standard, as defined in the */
@@ -864,19 +864,19 @@ library Strings {
 /*     function supportsInterface(bytes4 interfaceId) external view returns (bool); */
 /* } */
 
-/* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol */
+// File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol
 
 
-/* pragma solidity ^0.8.0; */
+pragma solidity ^0.8.0;
 
 
-/* /\** */
-/*  * @dev Implementation of the {IERC165} interface. */
-/*  * */
-/*  * Contracts may inherit from this and call {_registerInterface} to declare */
-/*  * their support of an interface. */
-/*  *\/ */
-/* abstract contract ERC165 is IERC165 { */
+/**
+ * @dev Implementation of the {IERC165} interface.
+ *
+ * Contracts may inherit from this and call {_registerInterface} to declare
+ * their support of an interface.
+ */
+abstract contract ERC165 is IERC165 {
 /*     /\** */
 /*      * @dev Mapping of interface ids to whether or not it's supported. */
 /*      *\/ */
@@ -912,14 +912,14 @@ library Strings {
 /*         require(interfaceId != 0xffffffff, "ERC165: invalid interface id"); */
 /*         _supportedInterfaces[interfaceId] = true; */
 /*     } */
-/* } */
+}
 
-/* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol */
-
-
+// File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol
 
 
-/* pragma solidity ^0.8.0; */
+
+
+pragma solidity ^0.8.0;
 
 
 /* /\** */
@@ -1047,7 +1047,7 @@ library Strings {
 /* } */
 
 
-/* pragma solidity ^0.8.0; */
+pragma solidity ^0.8.0;
 
 /* /\** */
 /*  * @title ERC721 token receiver interface */
@@ -1072,7 +1072,7 @@ library Strings {
 
 
 
-/* pragma solidity ^0.8.0; */
+pragma solidity ^0.8.0;
 
 
 /* /\** */
@@ -1104,7 +1104,7 @@ library Strings {
 
 
 
-/* pragma solidity ^0.8.0; */
+pragma solidity ^0.8.0;
 
 
 /* /\** */
@@ -1129,50 +1129,46 @@ library Strings {
 /*     function tokenURI(uint256 tokenId) external view returns (string memory); */
 /* } */
 
-/* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/introspection/IERC165.sol */
+// File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/introspection/IERC165.sol
 
 
 
-/* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/Context.sol */
-
-
-
-
-/* pragma solidity ^0.8.0; */
-
-/* /\* */
-/*  * @dev Provides information about the current execution context, including the */
-/*  * sender of the transaction and its data. While these are generally available */
-/*  * via msg.sender and msg.data, they should not be accessed in such a direct */
-/*  * manner, since when dealing with GSN meta-transactions the account sending and */
-/*  * paying for execution may not be the actual sender (as far as an application */
-/*  * is concerned). */
-/*  * */
-/*  * This contract is only required for intermediate, library-like contracts. */
-/*  *\/ */
-/* abstract contract Context { */
-/*     function _msgSender() internal view virtual returns (address) { */
-/*         return msg.sender; */
-/*     } */
-
-/*     function _msgData() internal view virtual returns (bytes calldata) { */
-/*         this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691 */
-/*         return msg.data; */
-/*     } */
-/* } */
-
-
-
-/* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol */
+// File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/Context.sol
 
 
 
 
-/* pragma solidity ^0.8.0; */
+pragma solidity ^0.8.0;
+
+/*
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with GSN meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    /* function _msgSender() internal view virtual returns (address) { */
+    /*     return msg.sender; */
+    /* } */
+
+    function _msgData() internal view virtual returns (bytes calldata) {
+        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
+        return msg.data;
+    }
+}
+
+
+
+// File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol
 
 
 
 
+pragma solidity ^0.8.0;
 
 
 
@@ -1180,11 +1176,15 @@ library Strings {
 
 
 
-/* /\** */
-/*  * @title ERC721 Non-Fungible Token Standard basic implementation */
-/*  * @dev see https://eips.ethereum.org/EIPS/eip-721 */
-/*  *\/ */
-/* contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable { */
+
+
+
+
+/**
+ * @title ERC721 Non-Fungible Token Standard basic implementation
+ * @dev see https://eips.ethereum.org/EIPS/eip-721
+ */
+contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 /*     using Address for address; */
 /*     using EnumerableSet for EnumerableSet.UintSet; */
 /*     using EnumerableMap for EnumerableMap.UintToAddressMap; */
@@ -1621,30 +1621,30 @@ library Strings {
 /*      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks]. */
 /*      *\/ */
 /*     function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual { } */
-/* } */
+}
 
 
 
-/* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/access/Ownable.sol */
+// File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/access/Ownable.sol
 
 
 
 
-/* pragma solidity ^0.8.0; */
+pragma solidity ^0.8.0;
 
-/* /\** */
-/*  * @dev Contract module which provides a basic access control mechanism, where */
-/*  * there is an account (an owner) that can be granted exclusive access to */
-/*  * specific functions. */
-/*  * */
-/*  * By default, the owner account will be the one that deploys the contract. This */
-/*  * can later be changed with {transferOwnership}. */
-/*  * */
-/*  * This module is used through inheritance. It will make available the modifier */
-/*  * `onlyOwner`, which can be applied to your functions to restrict their use to */
-/*  * the owner. */
-/*  *\/ */
-/* abstract contract Ownable is Context { */
+/**
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+ *
+ * By default, the owner account will be the one that deploys the contract. This
+ * can later be changed with {transferOwnership}.
+ *
+ * This module is used through inheritance. It will make available the modifier
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
+ */
+abstract contract Ownable is Context {
 /*     address private _owner; */
 
 /*     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner); */
@@ -1696,26 +1696,26 @@ library Strings {
 /*         emit OwnershipTransferred(_owner, newOwner); */
 /*         _owner = newOwner; */
 /*     } */
-/* } */
+}
 
-/* // File: https://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/math/SafeMath.sol */
-
-
+// File: https://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/math/SafeMath.sol
 
 
-/* pragma solidity ^0.8.0; */
 
-/* // CAUTION */
-/* // This version of SafeMath should only be used with Solidity 0.8 or later, */
-/* // because it relies on the compiler's built in overflow checks. */
 
-/* /\** */
-/*  * @dev Wrappers over Solidity's arithmetic operations. */
-/*  * */
-/*  * NOTE: `SafeMath` is no longer needed starting with Solidity 0.8. The compiler */
-/*  * now has built in overflow checking. */
-/*  *\/ */
-/* library SafeMath { */
+pragma solidity ^0.8.0;
+
+// CAUTION
+// This version of SafeMath should only be used with Solidity 0.8 or later,
+// because it relies on the compiler's built in overflow checks.
+
+/**
+ * @dev Wrappers over Solidity's arithmetic operations.
+ *
+ * NOTE: `SafeMath` is no longer needed starting with Solidity 0.8. The compiler
+ * now has built in overflow checking.
+ */
+library SafeMath {
 /*     /\** */
 /*      * @dev Returns the addition of two unsigned integers, with an overflow flag. */
 /*      * */
@@ -1918,7 +1918,7 @@ library Strings {
 /*             return a % b; */
 /*         } */
 /*     } */
-/* } */
+}
 
 
 
