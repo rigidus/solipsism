@@ -435,6 +435,9 @@ contract), например с etherscan.io.
 отдельно использовать поиск по файлу не путаясь в сходно называемых но
 по смыслу различных вхождениях.
 
+[TODO:gmm] - Commented call-arg-list rule
+[TODO:gmm] - Commented from, error, revert
+
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%ctract-def
    ;; empty contract
@@ -446,21 +449,30 @@ contract), например с etherscan.io.
                   `(:contract ,id :contents ,cbec)))
    ;; abstract empty contract
    (%abstract %contract %identifier |%{| |%}|
-              #'(lambda (ab ctract id l-brak r-brak) `(:contract ,id)))
+              #'(lambda (ab ctract id l-brak r-brak) `(:contract ,id :abstract t)))
    ;; abstract with contract-body
    (%abstract %contract %identifier |%{| %ctract-body-elt-contents |%}|
               #'(lambda (ab ctract id l-brak cbec r-brak)
-                  `(:contract ,id :contents ,cbec)))
-
+                  `(:contract ,id :abstract t :contents ,cbec)))
+   ;; INCHERITANCE
    ;; empty inheritance contract
    (%contract %identifier %is %inher-spec-list |%{| |%}|
               #'(lambda (ctract id is isl l-brak r-brak)
                   `(:contract ,id :inher ,isl)))
-   )
-  ;; todo: inheritance with contract-body
-  ;; todo: abstract empty inheritance contract
-  ;; todo: abstract inheritance with contract-body
+   ;; inheritance with contract-body
+   (%contract %identifier %is %inher-spec-list |%{| %ctract-body-elt-contents |%}|
+              #'(lambda (ctract id is isl l-brak cbec r-brak)
+                  `(:contract ,id :inher ,isl :contents ,cbec)))
+   ;; abstract empty inheritance contract
+   (%abstract %contract %identifier %is %inher-spec-list |%{| |%}|
+              #'(lambda (ab ctract id is isl l-brak r-brak)
+                  `(:contract ,id :abstract t :inher ,isl)))
+   ;; abstract inheritance with contract-body
+   (%abstract %contract %identifier %is %inher-spec-list |%{| %ctract-body-elt-contents |%}|
+              #'(lambda (ab ctract id is isl l-brak cbec r-brak)
+                  `(:contract ,id :abstract t :inher ,isl :contents ,cbec)))
 
+   )
   (%inher-spec-list
    (%inher-spec #'(lambda (ic) `(:inher-spec-last ,ic)))
    (%inher-spec |%,| %inher-spec-list
@@ -468,7 +480,7 @@ contract), например с etherscan.io.
    )
   (%inher-spec
    (%ident-path #'(lambda (ip) `(:ident-path ,ip)))
-   ;; (%identifier-path %call-arg-list
+   ;; (%identifier-path %call-arg-list ;; NB: call-arg-list
    ;;                   #'(lambda (ip al) `(:identifier-path ,ip :call-arg-list ,al)))
    )
   (%ident-path
@@ -516,7 +528,7 @@ contract), например с etherscan.io.
   contract test_empty_ctract_def
   {
   }
-  abstract contract test_empty_ctract_def
+  abstract contract test_empty_abstract_ctract_def
   {
   }
   contract test_body_abstract_ctract_def
@@ -536,6 +548,60 @@ contract), например с etherscan.io.
   contract test_empty_inheritance_ctract_def is super.puper , another.super.ctract
   {
   }
+  contract test_body_inheritance_ctract_def is super.puper , another.super.ctract
+  {
+      function simple_func () ;
+  }
+  abstract contract test_empty_abstract_inheritance_ctract_def is super.puper
+  {
+  }
+  abstract contract test_body_abstract_inheritance_ctract_def is super.puper
+  {
+      function simple_func () ;
+  }
+#+END_SRC
+
+** START CallArgumentList
+
+Arguments when calling a function or a similar callable object. The
+arguments are either given as comma separated list or as map of named
+arguments.
+
+NB: Использует опережающее правило %expr
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%call-arg-list
+   (|%(| |%)| #'(lambda (lb rb) `(:call-arg-list nil)))
+   (|%(| %call-arg-expr |%)| #'(lambda (lb ex rb) `(:call-arg-list ,ex)))
+   (|%(| |%{|  |%}| |%)|
+         #'(lambda (lb lc rc rb) `(:call-arg-list-empty nil)))
+   (|%(| |%{| %call-arg-obj |%}| |%)|
+         #'(lambda (lb lc ob rc rb) `(:call-arg-list ,ob)))
+   )
+  (%call-arg-expr
+   (%expr #'(lambda (a) `(:call-arg-expr-last ,a)))
+   (%expr |%,| %call-arg-expr
+          #'(lambda (ex cm nx)
+              `(:call-arg-expr-head ,ex :call-arg-expr-rest ,nx)))
+   )
+  (%call-arg-obj
+   (%identifier |%:| %expr #'(lambda (id cm ex)
+                               `(:call-arg-obj-last ,id :call-expr ,ex)))
+   (%identifier |%:| %expr |%,| %call-arg-obj
+                #'(lambda (id cm ex sc rt)
+                    `(:call-arg-obj-head ,id :call-expr ,ex
+                      :call-arg-obj-head ,rt)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  (":" '|%:| '|:|)
+  ("\\(" '|%(| '|(|)
+  ("\\)" '|%)| '|)|)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  |%:| |%(| |%)|
 #+END_SRC
 
 ** START ContractBodyElement
@@ -630,15 +696,13 @@ parlist):
 Добавим терминалы:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %function |%(| |%)| |%;|
+  %function |%;|
 #+END_SRC
 
 и их распознавание в лексер:
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
   ("\\bfunction\\b" '%function 'function)
-  ("\\(" '|%(| '|(|)
-  ("\\)" '|%)| '|)|)
   (";" '|%;| '|;|)
 #+END_SRC
 
@@ -1025,7 +1089,7 @@ Retlist представляет из себя два возможных вар�
 **** ModifuerInvocation
 
 Следующий модификатор - modifier-invocation. Он тянет за собой
-call-agument-list, поэтому нам понадобится раскрывающее правило:
+call-argument-list, поэтому нам понадобится раскрывающее правило:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%modifier-invocation
@@ -1974,45 +2038,6 @@ Block может быть:
 ***** TODO yul-for-statement
 ***** TODO yul-switch-statementleavebreakcontinue
 ***** TODO yul-function-definition
-
-** Call-argument-list
-
-Arguments when calling a function or a similar callable object. The
-arguments are either given as comma separated list or as map of named
-arguments.
-
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%call-arg-list
-   (|%(| |%)| #'(lambda (lb rb) `(:call-arg-list nil)))
-   (|%(| %call-arg-expr |%)| #'(lambda (lb ex rb) `(:call-arg-list ,ex)))
-   (|%(| |%{|  |%}| |%)|
-         #'(lambda (lb lc rc rb) `(:call-arg-list-empty nil)))
-   (|%(| |%{| %call-arg-obj |%}| |%)|
-         #'(lambda (lb lc ob rc rb) `(:call-arg-list ,ob)))
-   )
-  (%call-arg-expr
-   (%expr #'(lambda (a) `(:call-arg-expr-last ,a)))
-   (%expr |%,| %call-arg-expr
-          #'(lambda (ex cm nx)
-              `(:call-arg-expr-head ,ex :call-arg-expr-rest ,nx)))
-   )
-  (%call-arg-obj
-   (%identifier |%:| %expr #'(lambda (id cm ex)
-                               `(:call-arg-obj-last ,id :call-expr ,ex)))
-   (%identifier |%:| %expr |%,| %call-arg-obj
-                #'(lambda (id cm ex sc rt)
-                    `(:call-arg-obj-head ,id :call-expr ,ex
-                      :call-arg-obj-head ,rt)))
-   )
-#+END_SRC
-
-#+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  (":" '|%:| '|:|)
-#+END_SRC
-
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%:|
-#+END_SRC
 
 ** COMMENT START Expression
 
