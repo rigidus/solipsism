@@ -26,7 +26,7 @@ library Strings {
         /* if (value == 0) { */
         /*     return "0"; */
         /* } */
-        /* uint256 temp = value; */
+        uint256 temp = value;
         uint256 digits;
         /* while (temp != 0) { */
         /*     digits++; */
@@ -1923,81 +1923,80 @@ library Strings {
 
 
 
-/* //SACTAVATARS START */
-/* pragma solidity ^0.8.0; */
-/* contract SactAvatars is ERC721, Ownable { */
-/*     using SafeMath for uint256; */
-/*     uint public constant MAX_AVATARS = 9000; */
-/*     bool public hasSaleStarted = false; */
+//SACTAVATARS START
+pragma solidity ^0.8.0;
+contract SactAvatars is ERC721, Ownable {
+   /*  using SafeMath for uint256; */
+   /*  uint public constant MAX_AVATARS = 9000; */
+   /*  bool public hasSaleStarted = false; */
 
-/*     string public METADATA_PROVENANCE_HASH = ""; */
-
-
-
-/*     constructor() ERC721("Sact Avatars","SAVATAR")  { */
-/*         setBaseURI("https://cafeswap.finance/api/sactavatars/"); */
-/*         feeReceiver = payable(msg.sender); */
-/*         _safeMint(msg.sender,0); */
-/*     } */
+   /*  string public METADATA_PROVENANCE_HASH = ""; */
 
 
 
-
-/*     function tokensOfOwner(address _owner) external view returns(uint256[] memory ) { */
-/*         uint256 tokenCount = balanceOf(_owner); */
-/*         if (tokenCount == 0) { */
-/*             // Return an empty array */
-/*             return new uint256[](0); */
-/*         } else { */
-/*             uint256[] memory result = new uint256[](tokenCount); */
-/*             uint256 index; */
-/*             for (index = 0; index < tokenCount; index++) { */
-/*                 result[index] = tokenOfOwnerByIndex(_owner, index); */
-/*             } */
-/*             return result; */
-/*         } */
-/*     } */
-
-/*     function calculatePrice() public view returns (uint256) { */
-/*         require(hasSaleStarted == true, "Sale hasn't started"); */
-/*         require(totalSupply() < MAX_AVATARS, "Sale has already ended"); */
-/*         return 50000000000000000; //0.05BNB */
-/*     } */
+   /*  constructor() ERC721("Sact Avatars","SAVATAR")  { */
+   /*      setBaseURI("https://cafeswap.finance/api/sactavatars/"); */
+   /*      feeReceiver = payable(msg.sender); */
+   /*      _safeMint(msg.sender,0); */
+   /*  } */
 
 
-/*    function summonAvatar(uint256 maxAvatars) public payable { */
-/*         require(totalSupply() < MAX_AVATARS, "Sale has already ended"); */
-/*         require(maxAvatars > 0 && maxAvatars <= 20, "You can craft minimum 1, maximum 20 avatars"); */
-/*         require(totalSupply().add(maxAvatars) <= MAX_AVATARS, "Exceeds max tupply"); */
-/*         require(msg.value >= calculatePrice().mul(maxAvatars), "Ether value sent is below the price"); */
-
-/*         for (uint i = 0; i < maxAvatars; i++) { */
-/*             uint mintIndex = totalSupply(); */
-/*             _safeMint(msg.sender, mintIndex); */
-/*         } */
-/*     } */
-
-/*     // ONLYOWNER FUNCTIONS */
-
-/*     function setProvenanceHash(string memory _hash) public onlyOwner { */
-/*         METADATA_PROVENANCE_HASH = _hash; */
-/*     } */
-
-/*     function setBaseURI(string memory baseURI) public onlyOwner { */
-/*         _setBaseURI(baseURI); */
-/*     } */
-
-/*     function startDrop() public onlyOwner { */
-/*         hasSaleStarted = true; */
-/*     } */
-
-/*     function pauseDrop() public onlyOwner { */
-/*         hasSaleStarted = false; */
-/*     } */
-
-/*     function withdrawAll() public payable onlyOwner { */
-/*         require(payable(msg.sender).send(address(this).balance)); */
-/*     } */
 
 
-/* } */
+    /* function tokensOfOwner(address _owner) external view returns(uint256[] memory ) { */
+   /*      uint256 tokenCount = balanceOf(_owner); */
+   /*      if (tokenCount == 0) { */
+   /*          // Return an empty array */
+   /*          return new uint256[](0); */
+   /*      } else { */
+   /*          uint256[] memory result = new uint256[](tokenCount); */
+   /*          uint256 index; */
+   /*          for (index = 0; index < tokenCount; index++) { */
+   /*              result[index] = tokenOfOwnerByIndex(_owner, index); */
+   /*          } */
+   /*          return result; */
+   /*      } */
+    /* } */
+
+    function calculatePrice() public view returns (uint256) {
+   /*      require(hasSaleStarted == true, "Sale hasn't started"); */
+   /*      require(totalSupply() < MAX_AVATARS, "Sale has already ended"); */
+   /*      return 50000000000000000; //0.05BNB */
+    }
+
+
+   /* function summonAvatar(uint256 maxAvatars) public payable { */
+   /*      require(totalSupply() < MAX_AVATARS, "Sale has already ended"); */
+   /*      require(maxAvatars > 0 && maxAvatars <= 20, "You can craft minimum 1, maximum 20 avatars"); */
+   /*      require(totalSupply().add(maxAvatars) <= MAX_AVATARS, "Exceeds max tupply"); */
+   /*      require(msg.value >= calculatePrice().mul(maxAvatars), "Ether value sent is below the price"); */
+
+   /*      for (uint i = 0; i < maxAvatars; i++) { */
+   /*          uint mintIndex = totalSupply(); */
+   /*          _safeMint(msg.sender, mintIndex); */
+   /*      } */
+   /*  } */
+
+   /*  // ONLYOWNER FUNCTIONS */
+
+   /*  function setProvenanceHash(string memory _hash) public onlyOwner { */
+   /*      METADATA_PROVENANCE_HASH = _hash; */
+   /*  } */
+
+   /*  function setBaseURI(string memory baseURI) public onlyOwner { */
+   /*      _setBaseURI(baseURI); */
+   /*  } */
+
+   /*  function startDrop() public onlyOwner { */
+   /*      hasSaleStarted = true; */
+   /*  } */
+
+   /*  function pauseDrop() public onlyOwner { */
+   /*      hasSaleStarted = false; */
+   /*  } */
+
+    /* function withdrawAll() public payable onlyOwner { */
+   /*      require(payable(msg.sender).send(address(this).balance)); */
+    /* } */
+
+}
