@@ -452,13 +452,41 @@ contract), например с etherscan.io.
               #'(lambda (ab ctract id l-brak cbec r-brak)
                   `(:contract ,id :contents ,cbec)))
 
+   ;; empty inheritance contract
+   (%contract %identifier %is %inher-spec-list |%{| |%}|
+              #'(lambda (ctract id is isl l-brak r-brak)
+                  `(:contract ,id :inher ,isl)))
+   )
+  ;; todo: inheritance with contract-body
+  ;; todo: abstract empty inheritance contract
+  ;; todo: abstract inheritance with contract-body
+
+  (%inher-spec-list
+   (%inher-spec #'(lambda (ic) `(:inher-spec-last ,ic)))
+   (%inher-spec |%,| %inher-spec-list
+                #'(lambda (ic cm isl) `(:inher-spec-head ,ic :inher-spec-rest ,isl)))
+   )
+  (%inher-spec
+   (%ident-path #'(lambda (ip) `(:ident-path ,ip)))
+   ;; (%identifier-path %call-arg-list
+   ;;                   #'(lambda (ip al) `(:identifier-path ,ip :call-arg-list ,al)))
+   )
+  (%ident-path
+   (%ident #'(lambda (id) `(:ident-last ,id)))
+   (%ident |%.| %ident-path #'(lambda (id dot ip) `(:ident-head ,id :ident-rest ,ip)))
+   )
+  (%ident
+   (%identifier #'(lambda (id) `(:identifier ,id)))
+   ;; (%from #'(lambda (fr) `(:from ,fr)))
+   ;; (%error #'(lambda (er) `(:error ,er)))
+   ;; (%revert #'(lambda (rv) `(:revert ,rv)))
    )
 #+END_SRC
 
 Добавим терминалы
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %contract %abstract %identifier |%{| |%}|
+  %contract %abstract %identifier %is |%.| |%,| |%{| |%}|
 #+END_SRC
 
 и их распознавание в лексер:
@@ -466,8 +494,11 @@ contract), например с etherscan.io.
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
   ("\\bcontract\\b" '%contract 'contract)
   ("\\babstract\\b" '%abstract 'abstract)
-  ("{" '|%{| '{)
-  ("}" '|%}| '})
+  ("\\bis\\b" '%is 'is)
+  ("\\." '|%.| '|%.|)
+  (","   '|%,| '|,|)
+  ("{"   '|%{| '{)
+  ("}"   '|%}| '})
 #+END_SRC
 
 Неспецифичный токен identifier должен быть добавлен в конец лексера
@@ -495,6 +526,15 @@ contract), например с etherscan.io.
   abstract contract test_body_abstract_ctract_def
   {
       function simple_func () ;
+  }
+  contract test_empty_inheritance_ctract_def is super
+  {
+  }
+  contract test_empty_inheritance_ctract_def is super.puper
+  {
+  }
+  contract test_empty_inheritance_ctract_def is super.puper , another.super.ctract
+  {
   }
 #+END_SRC
 
@@ -631,20 +671,7 @@ parlist):
    )
 #+END_SRC
 
-В Solidity параметры разделяются запятыми, поэтому нужно добавить в
-лексер соответствующую лексему:
-
-#+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("," '|%,| '|,|)
-#+END_SRC
-
-И добавить ее в список терминалов
-
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%,|
-#+END_SRC
-
-На этом этапе можно сделать тест, содержащий функцию с одним
+Теперь можно сделать тест, содержащий функцию с одним
 параметром, который определен только как тип
 
 #+BEGIN_SRC solidity :tangle tests/test_func_with_param.sol :mkdirp yes :noweb yes
@@ -1023,18 +1050,6 @@ call-agument-list, поэтому нам понадобится раскрыва
    )
 #+END_SRC
 
-Теперь надо добавить |%.| в список лексем
-
-#+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\." '|%.| '|%.|)
-#+END_SRC
-
-и терминалов
-
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %|.|
-#+END_SRC
-
 Тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_mod_inv.sol :mkdirp yes :noweb yes
@@ -1077,7 +1092,7 @@ identifier-path, поэтому нам понадобится раскрываю
    )
 #+END_SRC
 
-Теперь надо добавить |%.| в список лексем
+Теперь надо добавить |%,| в список лексем
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
   ("\\," '|%,| '|%,|)
@@ -1086,7 +1101,7 @@ identifier-path, поэтому нам понадобится раскрываю
 и терминалов
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %|,|
+  |%,|
 #+END_SRC
 
 Теперь надо добавить |%override| в список лексем
