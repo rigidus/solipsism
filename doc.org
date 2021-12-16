@@ -191,12 +191,14 @@ solidity-конструкциями и ожидаю получить дерев�
                    (print (parse-with-lexer clj-lex *sol-parser*))))
              pathname))
 
-  (test-all)
-  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_library_definition.sol")
+  ;; (test-all)
+  (test-file #P"/home/rigidus/src/solipsism/tests/test_lib_def.sol")
+  (test-file #P"/home/rigidus/src/solipsism/tests/test_ctract_def.sol")
+  (test-file #P"/home/rigidus/src/solipsism/tests/test_ctract_body_elt.sol")
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/tests/test_state_var_decl.sol")
 
-  ;;; Вариант для получения списка всех лексем конкретного файла
+    ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
   ;;        (contents (read-file-into-string file))
   ;;        (clj (sol-lexer contents)))
@@ -367,6 +369,57 @@ identifier, он может совпасть с практически любы�
   pragma solidity ^0.8.0;
 #+END_SRC
 
+** Library-definition
+
+Определение библиотеки проще чем определение контракта, поэтому начнем
+с него. Состоит из ключевого слова "library", идентификатора и
+необязательного contract-body-elt в фигурных скобках.
+(https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.libraryDefinition)
+
+Так как contract-body-elt-ов может быть несколько - выносим их в
+рекурсивное правило ctract-body-elt-contents, которое будем
+использовать и в параграфе [[*ContractDefinition][ContractDefinition]]
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%lib-def
+   (%library %identifier |%{| |%}|
+             #'(lambda (library id l-brak r-brak)
+                 `(:library ,id :contents :empty)))
+   (%library %identifier |%{| %ctract-body-elt-contents |%}|
+             #'(lambda (library id l-brak bdy r-brak)
+                 `(:library ,id :contents ,bdy))))
+  (%ctract-body-elt-contents
+   (%ctract-body-elt #'(lambda (x) `(:ctract-body-elt-last ,x)))
+   (%ctract-body-elt %ctract-body-elt-contents
+                       #'(lambda (x y) `(:ctract-body-elt-head ,x :ctract-body-elt-rest ,y)))
+   )
+#+END_SRC
+
+Добавим терминалы
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %library
+#+END_SRC
+
+и их распознавание в лексер:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\blibrary\\b" '%library 'library)
+#+END_SRC
+
+Тест использует опережающее определение функции:
+
+#+BEGIN_SRC solidity :tangle tests/test_lib_def.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  library test_library_definition
+  {
+  }
+  library test_library_definition
+  {
+      function simple_func () ;
+  }
+#+END_SRC
+
 ** START ContractDefinition
 
 В одном файле может быть много определений контракта, особенно если мы
@@ -384,28 +437,35 @@ contract), например с etherscan.io.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%ctract-def
+   ;; empty contract
    (%contract %identifier |%{| |%}|
-            #'(lambda (ctract id l-brak r-brak) `(:contract ,id)))
-   (%contract %identifier |%{| %ctract-def-contents |%}|
-            #'(lambda (ctract id l-brak contents r-brak)
-                `(:contract ,id :contents ,contents)))
-   )
-  (%ctract-contents
-   (%func-def #'(lambda (fd) `(:func-last ,fd)))
-   (%func-def %ctract-contents  #'(lambda (fd cc) `(:func-head ,fd :func-rest ,cc)))
+              #'(lambda (ctract id l-brak r-brak) `(:contract ,id)))
+   ;; with contract-body
+   (%contract %identifier |%{| %ctract-body-elt-contents |%}|
+              #'(lambda (ctract id l-brak cbec r-brak)
+                  `(:contract ,id :contents ,cbec)))
+   ;; abstract empty contract
+   (%abstract %contract %identifier |%{| |%}|
+              #'(lambda (ab ctract id l-brak r-brak) `(:contract ,id)))
+   ;; abstract with contract-body
+   (%abstract %contract %identifier |%{| %ctract-body-elt-contents |%}|
+              #'(lambda (ab ctract id l-brak cbec r-brak)
+                  `(:contract ,id :contents ,cbec)))
+
    )
 #+END_SRC
 
 Добавим терминалы
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %contract %identifier |%{| |%}|
+  %contract %abstract %identifier |%{| |%}|
 #+END_SRC
 
 и их распознавание в лексер:
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
   ("\\bcontract\\b" '%contract 'contract)
+  ("\\babstract\\b" '%abstract 'abstract)
   ("{" '|%{| '{)
   ("}" '|%}| '})
 #+END_SRC
@@ -418,51 +478,23 @@ contract), например с etherscan.io.
   ("\\b[a-zA-Z$_]+[a-zA-Z0-9$_]*\\b" '%identifier $@)
 #+END_SRC
 
-Тест проверяет общую рамочную конструкцию контракта
+Тест (использует опережающее определение функции):
 
 #+BEGIN_SRC solidity :tangle tests/test_ctract_def.sol :mkdirp yes :noweb yes
   <<test_pragma>>
-  contract test_contract_definition
+  contract test_empty_ctract_def
   {
-
   }
-#+END_SRC
-
-** Library-definition
-
-Определение библиотеки очень похоже на определение контракта.
-
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%lib-def
-   (%library %identifier |%{| |%}|
-             #'(lambda (library id l-brak r-brak)
-                 `(:library ,id :contents :empty)))
-   (%library %identifier |%{| %lib-contents |%}|
-             #'(lambda (library id l-brak body-elt r-brak)
-                 `(:library ,id :contents ,body-elt))))
-  (%lib-contents
-   (%ctract-body-elt #'(lambda (x) `(:ctract-body-elt-last ,x)))
-   (%ctract-body-elt %lib-contents
-                       #'(lambda (x y) `(:ctract-body-elt-head ,x :ctract-body-elt-rest ,y)))
-   )
-#+END_SRC
-
-Добавим терминалы
-
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %library
-#+END_SRC
-
-и их распознавание в лексер:
-
-#+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\blibrary\\b" '%library 'library)
-#+END_SRC
-
-#+BEGIN_SRC solidity :tangle tests/test_lib_def.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
-  library test_library_definition
+  abstract contract test_empty_ctract_def
   {
+  }
+  contract test_body_abstract_ctract_def
+  {
+      function simple_func () ;
+  }
+  abstract contract test_body_abstract_ctract_def
+  {
+      function simple_func () ;
   }
 #+END_SRC
 
@@ -485,8 +517,8 @@ contract), например с etherscan.io.
    )
 #+END_SRC
 
-NB: Опережающий тест, использует конструкции, определенные в следующих
-параграфах.
+NB: Опережающий тест, использует определение функции, из следующих
+параграфов.
 
 #+BEGIN_SRC solidity :tangle tests/test_ctract_body_elt.sol :mkdirp yes :noweb yes
   <<test_pragma>>
@@ -497,7 +529,7 @@ NB: Опережающий тест, использует конструкции
   }
   library test_library_definition
   {
-      function simple_func () ;
+      function func_3 () ;
   }
 #+END_SRC
 
