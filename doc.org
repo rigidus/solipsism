@@ -207,6 +207,7 @@ solidity-конструкциями и ожидаю получить дерев�
   (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_state_mutability.sol")
   (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_virtual.sol")
   (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
+  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_override.sol")
 
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_block.sol")
 
@@ -454,7 +455,7 @@ NB: Правило IndentifierPath вынесено в параграф [[*Ident
 что на него есть ссылки из других параграфов
 
 [TODO:gmm] - Commented call-arg-list rule
-[TODO:gmm] - Commented from, error, revert
+[TODO:gmm] - Commented from, error, revert in IdentifierPath
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%ctract-def
@@ -1118,43 +1119,13 @@ call-argument-list, поэтому нам понадобится раскрыв�
 **** OverrideSpecifier
 
 Следующий модификатор - override-specifier. Он тянет за собой
-identifier-path, поэтому нам понадобится раскрывающее правило:
+multi-identifier-path, поэтому нам понадобится раскрывающее правило:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%override-specifier
-   (%override #'(lambda (ovr)
-                  (declare (ignore ovr))
-                  `(:override nil)))
-   (%override |%(| %identifier-path-with-comma |%)|
-              #'(lambda (ovr lb id-path rb)
-                  (declare (ignore ovr) (ignore lb) (ignore rb))
-                  `(:override ,id-path)))
+   (%override #'(lambda (ovr) `(:override nil)))
+   (%override |%(| %multi-ident-path |%)| #'(lambda (ovr lb mip rb) `(:override ,mip)))
    )
-#+END_SRC
-
-%identifier-path-with-comma может быть одним идентифактором илиз набором
-из идентификаторов, разделенных точками:
-
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%identifier-path-with-comma
-   (%identifier #'(lambda (id) `(:id ,id)))
-   (%identifier |%,| %identifier-path-with-comma
-                #'(lambda (id-head dot id-rest)
-                    (declare (ignore dot))
-                    `(:id-head ,id-head :id-rest ,id-rest)))
-   )
-#+END_SRC
-
-Теперь надо добавить |%,| в список лексем
-
-#+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\," '|%,| '|%,|)
-#+END_SRC
-
-и терминалов
-
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%,|
 #+END_SRC
 
 Теперь надо добавить |%override| в список лексем
@@ -1176,11 +1147,11 @@ identifier-path, поэтому нам понадобится раскрываю
   contract test_fn_override
   {
       function fn_1 (uint p_one) override returns (uint r_one) ;
-      function fn_1 (uint p_one) override(Base1, Base2) returns (uint r_one) ;
+      function fn_1 (uint p_one) override(Base1, Obj.Base2) returns (uint r_one) ;
   }
 #+END_SRC
 
-** START IdentifierPath
+** IdentifierPath
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%ident-path
@@ -1194,6 +1165,10 @@ identifier-path, поэтому нам понадобится раскрываю
    ;; (%from #'(lambda (fr) `(:from ,fr)))
    ;; (%error #'(lambda (er) `(:error ,er)))
    ;; (%revert #'(lambda (rv) `(:revert ,rv)))
+   )
+  (%multi-ident-path
+   (%ident-path #'(lambda (id) `(:id ,id)))
+   (%ident-path |%,| %multi-ident-path #'(lambda (id cm mip) `(:id-head ,id :id-rest ,mip)))
    )
 #+END_SRC
 
