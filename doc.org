@@ -203,6 +203,12 @@ solidity-конструкциями и ожидаю получить дерев�
   (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_prms_type_loc.sol")
   (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_prms_type_loc_id.sol")
   (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_returns.sol")
+  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_visibility.sol")
+  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_state_mutability.sol")
+  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_virtual.sol")
+  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
+
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_block.sol")
 
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/tests/test_state_var_decl.sol")
@@ -444,6 +450,9 @@ contract), например с etherscan.io.
 отдельно использовать поиск по файлу не путаясь в сходно называемых но
 по смыслу различных вхождениях.
 
+NB: Правило IndentifierPath вынесено в параграф [[*IdentifierPath][IdentifierPath]] потому
+что на него есть ссылки из других параграфов
+
 [TODO:gmm] - Commented call-arg-list rule
 [TODO:gmm] - Commented from, error, revert
 
@@ -488,18 +497,8 @@ contract), например с etherscan.io.
    )
   (%inher-spec
    (%ident-path #'(lambda (ip) `(:ident-path ,ip)))
-   ;; (%identifier-path %call-arg-list ;; NB: call-arg-list
-   ;;                   #'(lambda (ip al) `(:identifier-path ,ip :call-arg-list ,al)))
-   )
-  (%ident-path
-   (%ident #'(lambda (id) `(:ident-last ,id)))
-   (%ident |%.| %ident-path #'(lambda (id dot ip) `(:ident-head ,id :ident-rest ,ip)))
-   )
-  (%ident
-   (%identifier #'(lambda (id) `(:identifier ,id)))
-   ;; (%from #'(lambda (fr) `(:from ,fr)))
-   ;; (%error #'(lambda (er) `(:error ,er)))
-   ;; (%revert #'(lambda (rv) `(:revert ,rv)))
+   ;; (%ident-path %call-arg-list ;; NB: call-arg-list
+   ;;              #'(lambda (ip al) `(:identifier-path ,ip :call-arg-list ,al)))
    )
 #+END_SRC
 
@@ -679,9 +678,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionD
 parlist):
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%function %identifier %parlist |%;|
-         #'(lambda (fun id parlist blk)
-             `(:fun ,id :parlist ,parlist)))
   (%function %identifier %parlist %block
          #'(lambda (fun id parlist blk)
              `(:fun ,id :parlist ,parlist :block ,blk)))
@@ -692,7 +688,7 @@ parlist):
 
 #+BEGIN_SRC lisp :noweb yes :noweb-ref grammar_rules
   (%parlist
-   (|%(| |%)| #'(lambda (l-brak r-brak) `(:param-list nil)))
+   (|%(| |%)| #'(lambda (lb rb) `(:param-list nil)))
    <<non_empty_parameter_list>>
    )
 #+END_SRC
@@ -895,12 +891,9 @@ returns, которое надо добавить в лексер:
 Теперь нам необходимо расширить ~func-def~ с помощью retlist:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%function %identifier %parlist %retlist |%;|
-             #'(lambda (fun id parlist retlist blk)
-                 `(:fun ,id :parlist ,parlist :retlist ,retlist)))
   (%function %identifier %parlist %retlist %block
-             #'(lambda (fun id parlist retlist blk)
-                 `(:fun ,id :parlist ,parlist :retlist ,retlist :block ,blk)))
+             #'(lambda (fn id pl rl blk)
+                 `(:fun ,id :parlist ,pl :retlist ,rl :block ,blk)))
 #+END_SRC
 
 Retlist представляет из себя два возможных варианта - с пустым списком
@@ -909,9 +902,9 @@ Retlist представляет из себя два возможных вар�
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%retlist
-   (%returns |%(| |%)| #'(lambda (ret l-brak r-brak) `(:retlist nil)))
+   (%returns |%(| |%)| #'(lambda (rt lb rb) `(:retlist nil)))
    (%returns |%(| %param-list |%)|
-             #'(lambda (ret l-brak retlist r-brak) `(:retlist ,retlist)))
+             #'(lambda (rt lb rl rb) `(:retlist ,rl)))
    )
 #+END_SRC
 
@@ -927,7 +920,7 @@ Retlist представляет из себя два возможных вар�
   }
 #+END_SRC
 
-*** COMMENT Fmeta
+*** Fmeta
 
 Следующая важная часть - это то, что в определении функции может
 находиться между параметрами функции и возвращаемыми значениями. Там
@@ -942,9 +935,6 @@ Retlist представляет из себя два возможных вар�
 необязательны, поэтому лучше их вынести в отдельное мета-правило:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%function %identifier %parlist %fmeta %retlist |%;|
-         #'(lambda (fun id parlist fmeta retlist blk)
-             `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist)))
   (%function %identifier %parlist %fmeta %retlist %block
          #'(lambda (fun id parlist fmeta retlist blk)
              `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
@@ -1011,8 +1001,8 @@ Retlist представляет из себя два возможных вар�
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
   ("\\binternal\\b" '%visibility 'internal)
   ("\\bexternal\\b" '%visibility 'external)
-  ("\\bprivate\\b" '%visibility 'private)
-  ("\\bpublic\\b" '%visibility 'public)
+  ("\\bprivate\\b"  '%visibility 'private)
+  ("\\bpublic\\b"   '%visibility 'public)
 #+END_SRC
 
 %visibility - это терминал, его надо добавить в список терминалов:
@@ -1098,31 +1088,16 @@ Retlist представляет из себя два возможных вар�
   }
 #+END_SRC
 
-**** ModifuerInvocation
+**** ModifierInvocation
 
 Следующий модификатор - modifier-invocation. Он тянет за собой
 call-argument-list, поэтому нам понадобится раскрывающее правило:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%modifier-invocation
-   (%identifier-path-with-dot %parlist
-                      #'(lambda (idpath args) `(:id-path ,idpath :args ,args)))
-   )
-#+END_SRC
-
-[TODO:gmm] %call-argument-list это что-то сложное, поэтому пока представим
-его как %parlist
-
-%identifier-path-with-dot может быть одним идентифактором илиз набором из
-идентификаторов, разделенных точками:
-
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%identifier-path-with-dot
-   (%identifier #'(lambda (id) `(:id ,id)))
-   (%identifier |%.| %identifier-path-with-dot
-                #'(lambda (id-head dot id-rest)
-                    (declare (ignore dot))
-                    `(:id-head ,id-head :id-rest ,id-rest)))
+   (%ident-path #'(lambda (ip) `(:ident-path ,ip)))
+   (%ident-path %call-arg-list
+                #'(lambda (ip args) `(:id-path ,ip :args ,args)))
    )
 #+END_SRC
 
@@ -1132,6 +1107,8 @@ call-argument-list, поэтому нам понадобится раскрыв�
   <<test_pragma>>
   contract test_fn_mod_inv
   {
+      function fn_1 (uint p_one) isOk returns (uint r_one) ;
+      function fn_1 (uint p_one) Obj.isOk returns (uint r_one) ;
       function fn_1 (uint p_one) isOk() returns (uint r_one) ;
       function fn_2 (uint p_one) Obj.isOk() returns (uint r_one) ;
       function fn_3 (uint p_one) One.Two.isOk() returns (uint r_one) ;
@@ -1201,6 +1178,23 @@ identifier-path, поэтому нам понадобится раскрываю
       function fn_1 (uint p_one) override returns (uint r_one) ;
       function fn_1 (uint p_one) override(Base1, Base2) returns (uint r_one) ;
   }
+#+END_SRC
+
+** START IdentifierPath
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%ident-path
+   (%ident #'(lambda (id) `(:ident-last ,id)))
+   (%ident |%.| %ident-path
+                #'(lambda (id-head dot id-rest)
+                    `(:ident-head ,id-head :ident-rest ,id-rest)))
+   )
+  (%ident
+   (%identifier #'(lambda (id) `(:id ,id)))
+   ;; (%from #'(lambda (fr) `(:from ,fr)))
+   ;; (%error #'(lambda (er) `(:error ,er)))
+   ;; (%revert #'(lambda (rv) `(:revert ,rv)))
+   )
 #+END_SRC
 
 ** START TypeName
@@ -1337,7 +1331,7 @@ type.
   %unsigned-integer-type %signed-integer-type %fixed-bytes %string
 #+END_SRC
 
-** COMMENT Block
+** Block
 
 Block может быть:
 - пустыми фигурными скобками
@@ -1346,11 +1340,15 @@ Block может быть:
   фигурные скобки, поэтому тут требуется снова применить трюк с
   оборачивающим contents-правилом.
 
+Также я слегка срежу углы, разрешив блоку быть просто точкой с
+запятой, это упростит правила и нарушит только некоторые частные
+инварианты, например таких блоков не должно быть в конструкциях
+конструктора, try и catch, но для статического анализа это некритично
+
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%block
-   (|%{| |%}| #'(lambda (l-brak r-brak)
-                  (print "dbg: empty-blk")
-                  `(:empty-blk 'empty)))
+   (|%;| #'(lambda (sc) `(:non-blk nil)))
+   (|%{| |%}| #'(lambda (l-brak r-brak) `(:empty-blk nil)))
    (|%{| %stmnt |%}| #'(lambda (l-brak stmnt r-brak) `(:stmnt ,stmnt)))
    (|%{| %unchecked-block-contents |%}|
          #'(lambda (l-brak cont r-brak) `(:unchecked-blk-contents ,cont)))
