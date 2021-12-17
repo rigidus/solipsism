@@ -37,7 +37,7 @@ library Strings {
             /* buffer[digits] = bytes1(uint8(48 + uint256(value % 10))); */
             value /= 10;
         }
-        /* return string(buffer); */
+        return string(buffer);
     }
 
     /**
@@ -61,14 +61,14 @@ library Strings {
      */
     function toHexString(uint256 value, uint256 length) internal pure returns (string memory) {
         /* bytes memory buffer = new bytes(2 * length + 2); */
-        /* buffer[0] = "0"; */
-        /* buffer[1] = "x"; */
+        buffer[0] = "0";
+        buffer[1] = "x";
         for (uint256 i = 2 * length + 1; i > 1; --i) {
             /* buffer[i] = alphabet[value & 0xf]; */
             value >>= 4;
         }
         /* require(value == 0, "Strings: hex length insufficient"); */
-        /* return string(buffer); */
+        return string(buffer);
     }
 
 }
@@ -343,7 +343,7 @@ library EnumerableMap {
     /* } */
 }
 
-/* // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/EnumerableSet.sol */
+// File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/EnumerableSet.sol
 
 
 
@@ -375,14 +375,14 @@ pragma solidity ^0.8.0;
  * and `uint256` (`UintSet`) are supported.
  */
 library EnumerableSet {
-/*     // To implement this library for multiple types with as little code */
-/*     // repetition as possible, we write it in terms of a generic Set type with */
-/*     // bytes32 values. */
-/*     // The Set implementation uses private functions, and user-facing */
-/*     // implementations (such as AddressSet) are just wrappers around the */
-/*     // underlying Set. */
-/*     // This means that we can only create new EnumerableSets for types that fit */
-/*     // in bytes32. */
+    // To implement this library for multiple types with as little code
+    // repetition as possible, we write it in terms of a generic Set type with
+    // bytes32 values.
+    // The Set implementation uses private functions, and user-facing
+    // implementations (such as AddressSet) are just wrappers around the
+    // underlying Set.
+    // This means that we can only create new EnumerableSets for types that fit
+    // in bytes32.
 
 /*     struct Set { */
 /*         // Storage of set values */
@@ -655,23 +655,23 @@ pragma solidity ^0.8.0;
  * @dev Collection of functions related to the address type
  */
 library Address {
-/*     /\** */
-/*      * @dev Returns true if `account` is a contract. */
-/*      * */
-/*      * [IMPORTANT] */
-/*      * ==== */
-/*      * It is unsafe to assume that an address for which this function returns */
-/*      * false is an externally-owned account (EOA) and not a contract. */
-/*      * */
-/*      * Among others, `isContract` will return false for the following */
-/*      * types of addresses: */
-/*      * */
-/*      *  - an externally-owned account */
-/*      *  - a contract in construction */
-/*      *  - an address where a contract will be created */
-/*      *  - an address where a contract lived, but was destroyed */
-/*      * ==== */
-/*      *\/ */
+    /**
+     * @dev Returns true if `account` is a contract.
+     *
+     * [IMPORTANT]
+     * ====
+     * It is unsafe to assume that an address for which this function returns
+     * false is an externally-owned account (EOA) and not a contract.
+     *
+     * Among others, `isContract` will return false for the following
+     * types of addresses:
+     *
+     *  - an externally-owned account
+     *  - a contract in construction
+     *  - an address where a contract will be created
+     *  - an address where a contract lived, but was destroyed
+     * ====
+     */
 /*     function isContract(address account) internal view returns (bool) { */
 /*         // This method relies on extcodesize, which returns 0 for contracts in */
 /*         // construction, since the code is only stored at the end of the */
@@ -842,15 +842,15 @@ library Address {
 
 pragma solidity ^0.8.0;
 
-/* /\** */
-/*  * @dev Interface of the ERC165 standard, as defined in the */
-/*  * https://eips.ethereum.org/EIPS/eip-165[EIP]. */
-/*  * */
-/*  * Implementers can declare support of contract interfaces, which can then be */
-/*  * queried by others ({ERC165Checker}). */
-/*  * */
-/*  * For an implementation, see {ERC165}. */
-/*  *\/ */
+/**
+ * @dev Interface of the ERC165 standard, as defined in the
+ * https://eips.ethereum.org/EIPS/eip-165[EIP].
+ *
+ * Implementers can declare support of contract interfaces, which can then be
+ * queried by others ({ERC165Checker}).
+ *
+ * For an implementation, see {ERC165}.
+ */
 /* interface IERC165 { */
 /*     /\** */
 /*      * @dev Returns true if this contract implements the interface defined by */
@@ -876,9 +876,9 @@ pragma solidity ^0.8.0;
  * their support of an interface.
  */
 abstract contract ERC165 is IERC165 {
-/*     /\** */
-/*      * @dev Mapping of interface ids to whether or not it's supported. */
-/*      *\/ */
+    /**
+     * @dev Mapping of interface ids to whether or not it's supported.
+     */
 /*     mapping(bytes4 => bool) private _supportedInterfaces; */
 
 /*     constructor () { */
@@ -887,30 +887,31 @@ abstract contract ERC165 is IERC165 {
 /*         _registerInterface(type(IERC165).interfaceId); */
 /*     } */
 
-/*     /\** */
-/*      * @dev See {IERC165-supportsInterface}. */
-/*      * */
-/*      * Time complexity O(1), guaranteed to always use less than 30 000 gas. */
-/*      *\/ */
-/*     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) { */
-/*         return _supportedInterfaces[interfaceId]; */
-/*     } */
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     *
+     * Time complexity O(1), guaranteed to always use less than 30 000 gas.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return _supportedInterfaces[interfaceId];
+    }
 
-/*     /\** */
-/*      * @dev Registers the contract as an implementer of the interface defined by */
-/*      * `interfaceId`. Support of the actual ERC165 interface is automatic and */
-/*      * registering its interface id is not required. */
-/*      * */
-/*      * See {IERC165-supportsInterface}. */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - `interfaceId` cannot be the ERC165 invalid interface (`0xffffffff`). */
-/*      *\/ */
+    /**
+     * @dev Registers the contract as an implementer of the interface defined by
+     * `interfaceId`. Support of the actual ERC165 interface is automatic and
+     * registering its interface id is not required.
+     *
+     * See {IERC165-supportsInterface}.
+     *
+     * Requirements:
+     *
+     * - `interfaceId` cannot be the ERC165 invalid interface (`0xffffffff`).
+     */
 /*     function _registerInterface(bytes4 interfaceId) internal virtual { */
 /*         require(interfaceId != 0xffffffff, "ERC165: invalid interface id"); */
 /*         _supportedInterfaces[interfaceId] = true; */
 /*     } */
+
 }
 
 // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol
@@ -1150,9 +1151,9 @@ pragma solidity ^0.8.0;
  * This contract is only required for intermediate, library-like contracts.
  */
 abstract contract Context {
-    /* function _msgSender() internal view virtual returns (address) { */
-    /*     return msg.sender; */
-    /* } */
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
 
     function _msgData() internal view virtual returns (bytes calldata) {
         this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
@@ -1254,12 +1255,12 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
 
 
 
-/*     /\** */
-/*      * @dev See {IERC721-ownerOf}. */
-/*      *\/ */
-/*     function ownerOf(uint256 tokenId) public view virtual override returns (address) { */
-/*         return _tokenOwners.get(tokenId, "ERC721: owner query for nonexistent token"); */
-/*     } */
+    /**
+     * @dev See {IERC721-ownerOf}.
+     */
+    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
+        return _tokenOwners.get(tokenId, "ERC721: owner query for nonexistent token");
+    }
 
     /**
      * @dev See {IERC721Metadata-name}.
