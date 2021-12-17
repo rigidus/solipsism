@@ -1411,11 +1411,11 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %constant
+  %immutable
 #+END_SRC
 
 Для получения всех возможных перестановок ~visibility~,
-~override-specifier~ ~constant~ и ~immutable~ я объединю их в
+~override-specifier~, ~constant~ и ~immutable~ я объединю их в
 нетерминал ~vmeta~ и буду использовать генератор перестановок, который
 написан в разделе [[*Fmeta][Fmeta]]
 
@@ -1456,6 +1456,7 @@ Block может быть:
       bytes16 tmpvar ;
       bytes32 tmpvar2 = 1 ;
       bytes16 private constant alfa = 1 ;
+      bytes16 private constant alfa = '' ;
       /* bytes16 private constant alphabet = "0123456789abcdef"; */
   }
 #+END_SRC
@@ -2147,7 +2148,7 @@ Block может быть:
    ;; ...
    (%ident #'(lambda (id) `(:expr-ident ,id)))
    ;; ...
-   (%lit #'(lambda (x) `(:expr ,x)))
+   (%lit #'(lambda (lit) `(:expr ,lit)))
    ;; ...
    )
   (%idex-contents
@@ -2297,20 +2298,47 @@ Block может быть:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%lit
-   ;; (%str-lit #'(lambda (lt)
-   ;;               `(:expr-lit ,vt :name ,vn)))/
-   (%num-lit #'(lambda (lt)
-                 `(:lit ,lt)))
-   ;; (%bool-lit #'(lambda (lt)
-   ;;                `(:expr-bool-lit ,lt)))
-   ;; (%hex-str-litl #'(lambda (lt)
-   ;;                    `(:expr-hex-str-lit ,lt)))
-   ;; (%unicode-str-lit #'(lambda (lt)
-   ;;            `(:expr-unicode-str-lit ,lt))).
+   (%str-lit #'(lambda (lt) `(:str-lit ,lt)))
+   (%num-lit #'(lambda (lt) `(:num-lit ,lt)))
+   ;; (%bool-lit #'(lambda (lt) `(:bool-lit ,lt)))
+   ;; (%hexstr-litl #'(lambda (lt) `(:hexstr-lit ,lt)))
+   ;; (%unicodestr-lit #'(lambda (lt) `(:unicodestr-lit ,lt)))
    )
 #+END_SRC
 
 **** TODO String-literal
+
+[TODO:gmm] - В [[https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.NonEmptyStringLiteral][диаграмме]] указано что в непустых строковых литералах
+могут чередоваться printable и escape-sentence, но я пока делаю проще
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%str-lit
+   (%non-empty-st-lit #'(lambda (lt) `(:non-empty-str-lit ,lt)))
+   (%empty-str-lit     #'(lambda (lt) `(:empty-str-lit ,lt)))
+   )
+  (%empty-str-lit
+   (|%"| |%"| #'(lambda (x) `(empty-str-lit |%"|)))
+   (|%'| |%'| #'(lambda (x) `(empty-str-lit |%"|)))
+   )
+  (%non-empty-str-lit
+   (|%"| %double-quoted-printable |%"| #'(lambda (x) `(empty-str-lit |%"|)))
+   (|%"| %escape-sequence |%"| #'(lambda (x) `(empty-str-lit |%"|)))
+   (|%'| %single-quoted-printable |%'| #'(lambda (x) `(empty-str-lit |%"|)))
+   (|%'| %escape-sequence |%"| #'(lambda (x) `(empty-str-lit |%"|)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
+  ("'" '|%'| '|%'|)
+  ("\"" '|%"| '|%"|)
+  ("[\u0020-\u0026\u0028-\u005B\u005D-\u007E]" '%single-quoted-printable $@)
+  ("[\u0020-\u0026\u0028-\u005B\u005D-\u007E]" '%double-quoted-printable $@)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %single-quoted-printable %double-quoted-printable '|%"| '|%'|
+#+END_SRC
+
 **** TODO Number-literal
 
 Числовые литералы могут быть либо десятичными либо шестнадцатиричными,
