@@ -2298,8 +2298,9 @@ Block может быть:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%lit
-   (%str-lit #'(lambda (lt) `(:str-lit ,lt)))
    (%num-lit #'(lambda (lt) `(:num-lit ,lt)))
+   (%str-lit #'(lambda (lt) `(:str-lit ,lt)))
+   ;; (%single-quoted-printable-empty #'(lambda (lt) `(:str-lit-nb ,lt)))
    ;; (%bool-lit #'(lambda (lt) `(:bool-lit ,lt)))
    ;; (%hexstr-litl #'(lambda (lt) `(:hexstr-lit ,lt)))
    ;; (%unicodestr-lit #'(lambda (lt) `(:unicodestr-lit ,lt)))
@@ -2313,30 +2314,39 @@ Block может быть:
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%str-lit
-   (%non-empty-st-lit #'(lambda (lt) `(:non-empty-str-lit ,lt)))
-   (%empty-str-lit     #'(lambda (lt) `(:empty-str-lit ,lt)))
+   (%empty-str #'(lambda (lt) `(:str-lit "")))
    )
-  (%empty-str-lit
-   (|%"| |%"| #'(lambda (x) `(empty-str-lit |%"|)))
-   (|%'| |%'| #'(lambda (x) `(empty-str-lit |%"|)))
-   )
-  (%non-empty-str-lit
-   (|%"| %double-quoted-printable |%"| #'(lambda (x) `(empty-str-lit |%"|)))
-   (|%"| %escape-sequence |%"| #'(lambda (x) `(empty-str-lit |%"|)))
-   (|%'| %single-quoted-printable |%'| #'(lambda (x) `(empty-str-lit |%"|)))
-   (|%'| %escape-sequence |%"| #'(lambda (x) `(empty-str-lit |%"|)))
-   )
-#+END_SRC
+  ;;  (%non-empty-st-lit  #'(lambda (lt) `(:non-empty-str-lit ,lt)))
+  ;;  (%empty-str-lit     #'(lambda (lt) `(:empty-str-lit ,lt)))
 
+  ;; (%empty-str-lit
+  ;;  (%double-quoted-printable-empty #'(lambda (x) `(empty-str-lit |%"|)))
+  ;;  (%single-quoted-printable-empty #'(lambda (x) `(empty-str-lit |%'|)))
+  ;;  )
+  ;; (%non-empty-str-lit
+  ;;  (%double-quoted-printable #'(lambda (x) `(str-lit ,x)))
+  ;;  (%single-quoted-printable #'(lambda (x) `(str-lit ,x)))
+  ;;  ;; (|%"| %escape-sequence |%"| #'(lambda (x) `(str-lit |%"|)))
+  ;;  ;; (|%'| %escape-sequence |%"| #'(lambda (x) `(str-lit |%"|)))
+  ;;  )
+#+END_SRC
+***** Empty
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ("'" '|%'| '|%'|)
-  ("\"" '|%"| '|%"|)
-  ("[\u0020-\u0026\u0028-\u005B\u005D-\u007E]" '%single-quoted-printable $@)
-  ("[\u0020-\u0026\u0028-\u005B\u005D-\u007E]" '%double-quoted-printable $@)
+  ;; ("\'[\u0020-\u0026\u0028-\u005B\u005D-\u007E]+\'" '%single-quoted-printable $@)
+  ;; ("\"[\u0020-\u0026\u0028-\u005B\u005D-\u007E]+\"" '%double-quoted-printable $@)
+  ("\'\'" '%single-quoted-printable-empty $@)
+  ("\"\"" '%double-quoted-printable-empty $@)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %single-quoted-printable %double-quoted-printable '|%"| '|%'|
+  %single-quoted-printable-empty %double-quoted-printable-empty
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%empty-str
+   (%single-quoted-printable-empty #'(lambda (es) `(:emp-str ,es)))
+   (%double-quoted-printable-empty #'(lambda (es) `(:emp-str ,es)))
+   )
 #+END_SRC
 
 **** TODO Number-literal
