@@ -192,27 +192,28 @@ solidity-конструкциями и ожидаю получить дерев�
              pathname))
 
   ;; (test-all)
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_lib_def.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_ctract_def.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_ctract_body_elt.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_simple_func_def.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_func_with_param.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_func_with_params.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_prm_type_id.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_prms_type_id.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_prms_type_loc.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_prms_type_loc_id.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_returns.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_visibility.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_state_mutability.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_virtual.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_override.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_lib_def.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_ctract_def.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_ctract_body_elt.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_simple_func_def.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_func_with_param.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_func_with_params.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_prm_type_id.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_prms_type_id.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_prms_type_loc.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_prms_type_loc_id.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_returns.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_visibility.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_state_mutability.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_virtual.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_override.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_block.sol")
+  (test-file #P"/home/rigidus/src/solipsism/tests/test_state_var_decl.sol")
 
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_block.sol")
-
-  (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
-  ;; (test-contract-file #P"/home/rigidus/src/solipsism/tests/test_state_var_decl.sol")
+  ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
+  ;; ;
+                                          ; (test-contract-file #P"/home/rigidus/src/solipsism/tests/test_state_var_decl.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -1390,29 +1391,72 @@ Block может быть:
 ** TODO User-defined-value-type-definition
 ** START State-variable-declaration
 
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
+Между именем типа и идентификатором может находиться следующее:
+- public
+- private
+- internal
+- constant
+- override-specifier
+- immutable
+
+При этом public, private и ~internal~ уже входят в нетерминал
+~visibility~ (еще входит ~external~, но этим можно пренебречь), а
+~override-specifier~ описан в параграфе [[*OverrideSpecifier][OverrideSpecifier]]. Так что
+остается нетерминал ~constant~, опреденный в параграфе
+[[*Constant-variable-declaration][Constant-variable-declaration]] и нетерминал ~immutable~, который стоит
+сразу же добавить в лексер и список терминалов:
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bimmutable\\b" '%immutable 'immutable)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %constant
+#+END_SRC
+
+Для получения всех возможных перестановок ~visibility~,
+~override-specifier~ ~constant~ и ~immutable~ я объединю их в
+нетерминал ~vmeta~ и буду использовать генератор перестановок, который
+написан в разделе [[*Fmeta][Fmeta]]
+
+#+BEGIN_SRC lisp :noweb yes :noweb-ref grammar_rules
   (%state-variable-declaration
    (%type-name %identifier |%;|
                #'(lambda (tn id sc)
-                   `(:state-variable-declaration ,id :type-name ,tn)))
+                   `(:state-var-decl ,id :type-name ,tn)))
    (%type-name %identifier |%=| %expr |%;|
                #'(lambda (tn id eq ex sc)
-                   `(:state-variable-declaration ,id :type-name ,tn :initval ,ex)))
-   ;; (%type-name %access-kind %identifier |%=| %expr |%;|
-   ;;             #'(lambda (tn ct id rq ex sc)
-   ;;                 `(:constant-variable-declaration ,id :type-name tn :val %expr)))
+                   `(:state-var-decl ,id :type-name ,tn :initval ,ex)))
+   (%type-name %vmeta %identifier |%;|
+               #'(lambda (tn ak id sc)
+                   `(:const-var-decl ,id :type-name ,tn :access ,ak)))
+   (%type-name %vmeta %identifier |%=| %expr |%;|
+               #'(lambda (tn ak id rq ex sc)
+                   `(:const-var-decl ,id :type-name ,tn :val ,ex :access ,ak)))
+   )
+  (%vmeta
+   <<vmeta_combination()>>
    )
 #+END_SRC
+
+Формируем комбинации:
+
+#+NAME: vmeta_combination
+#+BEGIN_SRC elisp :results output
+  (require 'cl)
+  (gen-accmd '(%visibility %constant %override-specifier %immutable))
+#+END_SRC
+
+Тест
 
 #+BEGIN_SRC solidity :tangle tests/test_state_var_decl.sol :mkdirp yes :noweb yes
   <<test_pragma>>
   library test_library_definition
   {
-      /* bytes16 private constant alphabet = "0123456789abcdef"; */
       bytes16 tmpvar ;
       bytes32 tmpvar2 = 1 ;
-
-      function simple_func () ;
+      bytes16 private constant alfa = 1 ;
+      /* bytes16 private constant alphabet = "0123456789abcdef"; */
   }
 #+END_SRC
 
