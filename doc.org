@@ -209,11 +209,9 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_override.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_block.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_state_var_decl.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_state_var_decl.sol")
 
-  ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
-  ;; ;
-                                          ; (test-contract-file #P"/home/rigidus/src/solipsism/tests/test_state_var_decl.sol")
+  (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -1152,7 +1150,7 @@ multi-identifier-path, поэтому нам понадобится раскры
   }
 #+END_SRC
 
-** IdentifierPath
+** IdentifierPath and Identifier
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%ident-path
@@ -1457,7 +1455,8 @@ Block может быть:
       bytes32 tmpvar2 = 1 ;
       bytes16 private constant alfa = 1 ;
       bytes16 private constant alfa = '' ;
-      /* bytes16 private constant alphabet = "0123456789abcdef"; */
+      bytes16 private constant alphabet = "0123456789abcdef";
+      bytes16 private constant alphabet = '0123456789abcdef';
   }
 #+END_SRC
 
@@ -2151,7 +2150,7 @@ Block может быть:
    (%lit #'(lambda (lit) `(:expr ,lit)))
    ;; ...
    )
-  (%idex-contents
+  (%idex-contents ;; TODO: Кажется это multi-ident-path
    (%idex #'(lambda (idex) `(:idex-last ,idex)))
    (%idex |%,| %idex-contents #'(lambda (idex c rest) `(:idex-head ,idex :idex-rest ,rest)))
    )
@@ -2293,14 +2292,12 @@ Block может быть:
 
 *** TODO Tuple-expression
 *** TODO Inline-array-expression
-*** TODO Identifier
-*** TODO Literal
+*** START Literal
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%lit
    (%num-lit #'(lambda (lt) `(:num-lit ,lt)))
    (%str-lit #'(lambda (lt) `(:str-lit ,lt)))
-   ;; (%single-quoted-printable-empty #'(lambda (lt) `(:str-lit-nb ,lt)))
    ;; (%bool-lit #'(lambda (lt) `(:bool-lit ,lt)))
    ;; (%hexstr-litl #'(lambda (lt) `(:hexstr-lit ,lt)))
    ;; (%unicodestr-lit #'(lambda (lt) `(:unicodestr-lit ,lt)))
@@ -2310,30 +2307,17 @@ Block может быть:
 **** TODO String-literal
 
 [TODO:gmm] - В [[https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.NonEmptyStringLiteral][диаграмме]] указано что в непустых строковых литералах
-могут чередоваться printable и escape-sentence, но я пока делаю проще
+могут чередоваться printable и escape-sentence, но я пока делаю проще.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%str-lit
-   (%empty-str #'(lambda (lt) `(:str-lit "")))
+   (%empty-str #'(lambda (lt) `(:str-lit ,lt)))
+   (%non-empty-str #'(lambda (lt) `(:str-lit ,lt)))
    )
-  ;;  (%non-empty-st-lit  #'(lambda (lt) `(:non-empty-str-lit ,lt)))
-  ;;  (%empty-str-lit     #'(lambda (lt) `(:empty-str-lit ,lt)))
-
-  ;; (%empty-str-lit
-  ;;  (%double-quoted-printable-empty #'(lambda (x) `(empty-str-lit |%"|)))
-  ;;  (%single-quoted-printable-empty #'(lambda (x) `(empty-str-lit |%'|)))
-  ;;  )
-  ;; (%non-empty-str-lit
-  ;;  (%double-quoted-printable #'(lambda (x) `(str-lit ,x)))
-  ;;  (%single-quoted-printable #'(lambda (x) `(str-lit ,x)))
-  ;;  ;; (|%"| %escape-sequence |%"| #'(lambda (x) `(str-lit |%"|)))
-  ;;  ;; (|%'| %escape-sequence |%"| #'(lambda (x) `(str-lit |%"|)))
-  ;;  )
 #+END_SRC
+
 ***** Empty
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ;; ("\'[\u0020-\u0026\u0028-\u005B\u005D-\u007E]+\'" '%single-quoted-printable $@)
-  ;; ("\"[\u0020-\u0026\u0028-\u005B\u005D-\u007E]+\"" '%double-quoted-printable $@)
   ("\'\'" '%single-quoted-printable-empty $@)
   ("\"\"" '%double-quoted-printable-empty $@)
 #+END_SRC
@@ -2346,6 +2330,24 @@ Block может быть:
   (%empty-str
    (%single-quoted-printable-empty #'(lambda (es) `(:emp-str ,es)))
    (%double-quoted-printable-empty #'(lambda (es) `(:emp-str ,es)))
+   )
+#+END_SRC
+
+***** NonEmpty
+
+#+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
+  ("\'[\u0020-\u0026\u0028-\u005B\u005D-\u007E]+\'" '%single-quoted-printable $@)
+  ("\"[\u0020-\u0026\u0028-\u005B\u005D-\u007E]+\"" '%double-quoted-printable $@)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %single-quoted-printable %double-quoted-printable
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%non-empty-str
+   (%single-quoted-printable #'(lambda (es) `(:str ,es)))
+   (%double-quoted-printable #'(lambda (es) `(:str ,es)))
    )
 #+END_SRC
 
