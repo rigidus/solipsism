@@ -1177,6 +1177,8 @@ A type name can be an elementary type, a function type, a mapping
 type, a user-defined type (e.g. a contract or struct) or an array
 type.
 
+NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
+
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%type-name
    (%elt-type-name #'(lambda (par) `(:elt-type-name ,par)))
@@ -1188,7 +1190,7 @@ type.
    )
 #+END_SRC
 
-** START ElementaryTypeName
+** ElementaryTypeName
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%elt-type-name
