@@ -1197,7 +1197,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
 /*     mapping(uint256 => Price) public Bazaar; */
 /*     event Bought(uint256 tokenId, uint256 value); */
 /*     event ForSale(uint256 id, uint256 price); */
-/*     address payable feeReceiver; */
+    address payable feeReceiver;
 /*     // Mapping from holder address to their (enumerable) set of owned tokens */
 /*     mapping (address => EnumerableSet.UintSet) private _holderTokens; */
 

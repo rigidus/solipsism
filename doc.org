@@ -1179,24 +1179,29 @@ type.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%type-name
-   (%elementary-type-name #'(lambda (par) `(:elementary-type-name ,par)))
+   (%elt-type-name #'(lambda (par) `(:elt-type-name ,par)))
    ;; (%function-type-name #'(lambda (par) `(:function-type-name ,par)))
    ;; (%mapping-type #'(lambda (par) `(:mapping-type ,par)))
    ;; (%identifier-path #'(lambda (par) `(:identifier-path ,par)))
    (%type-name |%[| %expr |%]|
                #'(lambda (par lb ex rb) `(:type-name-expr ,par :expr ,ex)))
    )
-  (%elementary-type-name
-   ;; address
-   ;; address payable
-   ;; bool
+#+END_SRC
+
+** START ElementaryTypeName
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%elt-type-name
+   (%address #'(lambda (ad) `(:address ad)))
+   (%address %payable #'(lambda (ad pa) `(:address-payable nil)))
+   (%bool #'(lambda (par) `(:bool ,par)))
    (%string #'(lambda (par) `(:string ,par)))
    (%bytes  #'(lambda (par) `(:bytes  ,par)))
    (%signed-integer-type #'(lambda (par) `(:signed-integer-type ,par)))
    (%unsigned-integer-type #'(lambda (par) `(:unsigned-integer-type ,par)))
    (%fixed-bytes #'(lambda (par) `(:fixed-bytes ,par)))
-   ;; fixed
-   ;; ufixed
+   (%fixed #'(lambda (par) `(:fixed ,par)))
+   (%ufixed #'(lambda (par) `(:fixed ,par)))
    )
 #+END_SRC
 
@@ -1299,12 +1304,18 @@ type.
   ("\\bbytes30\\b" '%fixed-bytes 'bytes30)
   ("\\bbytes31\\b" '%fixed-bytes 'bytes31)
   ("\\bbytes32\\b" '%fixed-bytes 'bytes32)
-  ("\\bstring\\b" '%string 'string)
-  ("\\bbytes\\b"  '%bytes  'bytes)
+  ("\\bstring\\b"   '%string  'string)
+  ("\\bbytes\\b"    '%bytes   'bytes)
+  ("\\bfixed\\b"    '%fixed   'fixed)
+  ("\\bufixed\\b"   '%ufixed  'ufixed)
+  ("\\bbool\\b"     '%bool    'bool)
+  ("\\baddress\\b"  '%address 'address)
+  ("\\payable\\b"   '%payable 'payable)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %unsigned-integer-type %signed-integer-type %fixed-bytes %string %bytes
+  %unsigned-integer-type %signed-integer-type %fixed-bytes %string
+  %bytes %fixed %ufixed %bool %address %payable
 #+END_SRC
 
 ** Block
@@ -2148,7 +2159,7 @@ Block может быть:
    (%ident #'(lambda (id) `(:expr-ident ,id)))
    ;; ...
    (%lit #'(lambda (lit) `(:expr ,lit)))
-   ;; ...
+   (%elt-type-name #'(lambda (etn) `(:elt-type-name ,etn)))
    )
   (%idex-contents ;; TODO: Кажется это multi-ident-path
    (%idex #'(lambda (idex) `(:idex-last ,idex)))
