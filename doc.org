@@ -1271,13 +1271,13 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
   )
 #+END_SRC
 
-
 #+BEGIN_SRC solidity :tangle tests/test_fn_type_name.sol :mkdirp yes :noweb yes
   pragma solidity ^0.8.0;
   library Strings {
-      function test(uint256 value) internal pure returns (string memory) {
-          bytes memory buffer = new bytes(digits);
+      function test() {
+          bytes memory buffer =  new bytes(digits);
       }
+  }
 #+END_SRC
 
 ** ElementaryTypeName
@@ -2245,8 +2245,9 @@ Block может быть:
    (%expr |%*=|    %expr #'(lambda (e1 op e2) `(:expr-mul-eq   ,e1 :arg ,e2)))
    (%expr |%/=|    %expr #'(lambda (e1 op e2) `(:expr-div-eq   ,e1 :arg ,e2)))
    (%expr |%%=|    %expr #'(lambda (e1 op e2) `(:expr-mod-eq   ,e1 :arg ,e2)))
-   (%new %type-name #'(lambda (tn) `(:new ,tn)))
-   ;; ...
+   (%new %type-name #'(lambda (new tn) `(:new ,tn)))
+
+   ;; todo:typle expr
    (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
    (%ident #'(lambda (id) `(:expr-ident ,id)))
    (%lit #'(lambda (lit) `(:expr ,lit)))
@@ -2316,13 +2317,15 @@ Block может быть:
   ("\\]" '|%]| '|]|)
   ("\\." '|%.| '|.|)
 
+  ("\\bnew\\b" '%new 'new)
+
   ;; (cl-ppcre:all-matches-as-strings
   ;;  "[|]{1}"
   ;;  "a|b");
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%[| |%]| |.| %addr %type |%++| |%--| |%!| |%~| %delete |%-| |%*| |%**| |%/| |%%| |%+| |%-| |%>>>| |%>>| |%<<| |%&| |%^| |%pipe| |%<| |%>| |%<=| |%>=| |%==| |%=| |%!=| |%&&| |%pipepipe| |%?| |%pipe=| |%^=| |%&=| |%<<=| |%>>=| |%>>>=| |%+=| |%-=| |%*=| |%/=| |%%=|
+  |%[| |%]| |.| %addr %type |%++| |%--| |%!| |%~| %delete |%-| |%*| |%**| |%/| |%%| |%+| |%-| |%>>>| |%>>| |%<<| |%&| |%^| |%pipe| |%<| |%>| |%<=| |%>=| |%==| |%=| |%!=| |%&&| |%pipepipe| |%?| |%pipe=| |%^=| |%&=| |%<<=| |%>>=| |%>>>=| |%+=| |%-=| |%*=| |%/=| |%%=| %new
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_expr_idx_stmnt.sol :mkdirp yes :noweb yes
