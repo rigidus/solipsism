@@ -212,7 +212,9 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_state_var_decl.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_inline_arr_expr.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_non_empty_str.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_type_name.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_type_name.sol")
+
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
 
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
 
@@ -579,22 +581,16 @@ arguments.
 
 NB: Используется в ContractDefinitions (но пока закомменитровано)
 
-NB: Использует опережающее правило %expr
+NB: Использует опережающие правила %expr, %expr-comma-list
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%call-arg-list
    (|%(| |%)| #'(lambda (lb rb) `(:call-arg-list nil)))
-   (|%(| %call-arg-expr |%)| #'(lambda (lb ex rb) `(:call-arg-list ,ex)))
+   (|%(| %expr-comma-list |%)| #'(lambda (lb ex rb) `(:call-arg-list ,ex)))
    (|%(| |%{|  |%}| |%)|
          #'(lambda (lb lc rc rb) `(:call-arg-list-empty nil)))
    (|%(| |%{| %call-arg-obj |%}| |%)|
          #'(lambda (lb lc ob rc rb) `(:call-arg-list ,ob)))
-   )
-  (%call-arg-expr
-   (%expr #'(lambda (a) `(:call-arg-expr-last ,a)))
-   (%expr |%,| %call-arg-expr
-          #'(lambda (ex cm nx)
-              `(:call-arg-expr-head ,ex :call-arg-expr-rest ,nx)))
    )
   (%call-arg-obj
    (%identifier |%:| %expr #'(lambda (id cm ex)
@@ -614,6 +610,18 @@ NB: Использует опережающее правило %expr
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
   |%:| |%(| |%)|
+#+END_SRC
+** ExprCommaList
+
+Перечисление выражений через запятую - составная часть многих нетерминалов. Используется в параграфах (Expression, [[*Inline-array-expression][Inline-array-expression]])
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%expr-comma-list
+   (%expr #'(lambda (a) `(:expr-comma-list-last ,a)))
+   (%expr |%,| %expr-comma-list
+          #'(lambda (ex cm nx)
+              `(:expr-comma-list-head ,ex :expr-comma-list-rest ,nx)))
+   )
 #+END_SRC
 
 ** START ContractBodyElement
@@ -2246,8 +2254,7 @@ Block может быть:
    (%expr |%/=|    %expr #'(lambda (e1 op e2) `(:expr-div-eq   ,e1 :arg ,e2)))
    (%expr |%%=|    %expr #'(lambda (e1 op e2) `(:expr-mod-eq   ,e1 :arg ,e2)))
    (%new %type-name #'(lambda (new tn) `(:new ,tn)))
-
-   ;; todo:typle expr
+   (%tuple-expression #'(lambda (te) `(:expr-tuple ,te)))
    (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
    (%ident #'(lambda (id) `(:expr-ident ,id)))
    (%lit #'(lambda (lit) `(:expr ,lit)))
@@ -2260,7 +2267,9 @@ Block может быть:
   (%idex
    (%identifier |%:| %expr #'(lambda (id cm ex) `(:idex-last ,id :expr ,ex)))
    )
-
+  (%tuple-expression
+   (|%(| %expr-comma-list |%)| #'(lambda (lb ecl rb) `(:tuple ,ecl)))
+   )
 #+END_SRC
 
 Здесь важен порядок разбора токенов (составные типа "!=" должны идти
@@ -2391,20 +2400,17 @@ Block может быть:
           321 *= 123 ;
           321 /= 123 ;
           321 %= 123 ;
+          new bytes ;
+          (1, 2) ;
       }
   }
 #+END_SRC
 
-*** TODO Tuple-expression
 *** Inline-array-expression
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%inline-array-expr
-   (|%[| %expr-list |%]| #'(lambda (lb ex rb) `(:inline-array-expr ,ex)))
-   )
-  (%expr-list
-   (%expr #'(lambda (ex) `(:expr-last ,ex)))
-   (%expr %expr-list #'(lambda (ex el) `(:expr-head ,ex :expr-rest ,el)))
+   (|%[| %expr-comma-list |%]| #'(lambda (lb ex rb) `(:inline-array-expr ,ex)))
    )
 #+END_SRC
 
@@ -2415,7 +2421,8 @@ Block может быть:
   contract test_fn_override
   {
       function fn_1 (uint p_one) override returns (uint r_one) {
-          alfa = buffer[0];
+          alfa = buffer[0] ;
+          names = ["Alice", "Bob", "Carol"] ;
       }
   }
 #+END_SRC
