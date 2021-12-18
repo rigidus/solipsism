@@ -1205,25 +1205,25 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
                   `(:func-type-name nil :param-list ,pl)))
    (%function |%(| |%)| %visibility
               #'(lambda (fu lb rb vi)
-                  `(:func-type-name nil :visibility ,vi))
+                  `(:func-type-name nil :visibility ,vi)))
    (%function |%(| %param-list |%)| %visibility
               #'(lambda (fu lb pl rb vi)
                   `(:func-type-name nil :param-list ,pl :visibility ,vi)))
    (%function |%(| |%)| %state-mutability
               #'(lambda (fu lb rb sm)
-                  `(:func-type-name nil :state-mutability ,sm))
+                  `(:func-type-name nil :state-mutability ,sm)))
    (%function |%(| %param-list |%)| %state-mutability
               #'(lambda (fu lb pl rb sm)
                   `(:func-type-name nil :param-list ,pl :state-mutability ,sm)))
    (%function |%(| |%)| %visibility %state-mutability
               #'(lambda (fu lb rb vi sm)
-                  `(:func-type-name nil :visibility ,vi :state-mutability ,sm))
+                  `(:func-type-name nil :visibility ,vi :state-mutability ,sm)))
    (%function |%(| %param-list |%)| %visibility %state-mutability
               #'(lambda (fu lb pl rb vi sm)
                   `(:func-type-name nil :param-list ,pl :visibility ,vi :state-mutability ,sm)))
    (%function |%(| |%)| %state-mutability %visibility
               #'(lambda (fu lb rb sm vi)
-                  `(:func-type-name nil :visibility ,vi :state-mutability ,sm))
+                  `(:func-type-name nil :visibility ,vi :state-mutability ,sm)))
    (%function |%(| %param-list |%)| %state-mutability %visibility
               #'(lambda (fu lb pl rb sm vi)
                   `(:func-type-name nil :param-list ,pl :visibility ,vi :state-mutability ,sm)))
@@ -1239,7 +1239,7 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
    (%function |%(| |%)| %visibility %returns |%(| %param-list |%)|
               #'(lambda (fu lb rb vi rt lb2 pl2 rb2)
                   `(:func-type-name nil :visibility ,vi
-                  :returns ,pl2))
+                    :returns ,pl2)))
    (%function |%(| %param-list |%)| %visibility %returns |%(| %param-list |%)|
               #'(lambda (fu lb pl rb vi rt lb2 pl2 rb2)
                   `(:func-type-name nil :param-list ,pl :visibility ,vi
@@ -1247,7 +1247,7 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
    (%function |%(| |%)| %state-mutability %returns |%(| %param-list |%)|
               #'(lambda (fu lb rb sm rt lb2 pl2 rb2)
                   `(:func-type-name nil :state-mutability ,sm
-                  :returns ,pl2))
+                    :returns ,pl2)))
    (%function |%(| %param-list |%)| %state-mutability %returns |%(| %param-list |%)|
               #'(lambda (fu lb pl rb sm rt lb2 pl2 rb2)
                   `(:func-type-name nil :param-list ,pl :state-mutability ,sm
@@ -1255,7 +1255,7 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
    (%function |%(| |%)| %visibility %state-mutability %returns |%(| %param-list |%)|
               #'(lambda (fu lb rb vi sm rt lb2 pl2 rb2)
                   `(:func-type-name nil :visibility ,vi :state-mutability ,sm
-                  :returns ,pl2))
+                    :returns ,pl2)))
    (%function |%(| %param-list |%)| %visibility %state-mutability %returns |%(| %param-list |%)|
               #'(lambda (fu lb pl rb vi sm rt lb2 pl2 rb2)
                   `(:func-type-name nil :param-list ,pl :visibility ,vi :state-mutability ,sm
@@ -1263,11 +1263,12 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
    (%function |%(| |%)| %state-mutability %visibility %returns |%(| %param-list |%)|
               #'(lambda (fu lb rb sm vi rt lb2 pl2 rb2)
                   `(:func-type-name nil :visibility ,vi :state-mutability ,sm
-                  :returns ,pl2))
+                    :returns ,pl2)))
    (%function |%(| %param-list |%)| %state-mutability %visibility %returns |%(| %param-list |%)|
               #'(lambda (fu lb pl rb sm vi rt lb2 pl2 rb2)
                   `(:func-type-name nil :param-list ,pl :visibility ,vi :state-mutability ,sm
                     :returns ,pl2)))
+  )
 #+END_SRC
 
 
