@@ -950,6 +950,9 @@ Retlist представляет из себя два возможных вар�
              #'(lambda (fun id parlist fmeta retlist blk)
                  `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
                    :block ,blk)))
+  (%function %identifier %parlist %fmeta %block
+             #'(lambda (fun id parlist fmeta blk)
+                 `(:fun ,id :parlist ,parlist :fmeta ,fmeta :block ,blk)))
 #+END_SRC
 
 Эта мета правило является рамочным правилом для всех выше перечисленных
@@ -1030,6 +1033,7 @@ Retlist представляет из себя два возможных вар�
   {
       function fn_1 (uint p_one, int p_two) external returns (uint r_one) ;
       function fn_2 (uint p_one, int p_two) internal returns (uint r_one) ;
+      function fn_2 (uint p_one, int p_two) internal ;
   }
 #+END_SRC
 

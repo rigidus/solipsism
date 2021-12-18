@@ -60,7 +60,7 @@ library Strings {
      * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation with fixed length.
      */
     function toHexString(uint256 value, uint256 length) internal pure returns (string memory) {
-        /* bytes memory buffer = new bytes(2 * length + 2); */
+        bytes memory buffer = new bytes(2 * length + 2);
         buffer[0] = "0";
         buffer[1] = "x";
         for (uint256 i = 2 * length + 1; i > 1; --i) {
@@ -672,169 +672,169 @@ library Address {
      *  - an address where a contract lived, but was destroyed
      * ====
      */
-/*     function isContract(address account) internal view returns (bool) { */
-/*         // This method relies on extcodesize, which returns 0 for contracts in */
-/*         // construction, since the code is only stored at the end of the */
-/*         // constructor execution. */
+    function isContract(address account) internal view returns (bool) {
+        // This method relies on extcodesize, which returns 0 for contracts in
+        // construction, since the code is only stored at the end of the
+        // constructor execution.
 
-/*         uint256 size; */
-/*         // solhint-disable-next-line no-inline-assembly */
-/*         assembly { size := extcodesize(account) } */
-/*         return size > 0; */
-/*     } */
+        uint256 size;
+        // solhint-disable-next-line no-inline-assembly
+        /* assembly { size := extcodesize(account) } */
+        return size > 0;
+    }
 
-/*     /\** */
-/*      * @dev Replacement for Solidity's `transfer`: sends `amount` wei to */
-/*      * `recipient`, forwarding all available gas and reverting on errors. */
-/*      * */
-/*      * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost */
-/*      * of certain opcodes, possibly making contracts go over the 2300 gas limit */
-/*      * imposed by `transfer`, making them unable to receive funds via */
-/*      * `transfer`. {sendValue} removes this limitation. */
-/*      * */
-/*      * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more]. */
-/*      * */
-/*      * IMPORTANT: because control is transferred to `recipient`, care must be */
-/*      * taken to not create reentrancy vulnerabilities. Consider using */
-/*      * {ReentrancyGuard} or the */
-/*      * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern]. */
-/*      *\/ */
-/*     function sendValue(address payable recipient, uint256 amount) internal { */
-/*         require(address(this).balance >= amount, "Address: insufficient balance"); */
+    /**
+     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
+     * `recipient`, forwarding all available gas and reverting on errors.
+     *
+     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
+     * of certain opcodes, possibly making contracts go over the 2300 gas limit
+     * imposed by `transfer`, making them unable to receive funds via
+     * `transfer`. {sendValue} removes this limitation.
+     *
+     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].
+     *
+     * IMPORTANT: because control is transferred to `recipient`, care must be
+     * taken to not create reentrancy vulnerabilities. Consider using
+     * {ReentrancyGuard} or the
+     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
+     */
+    function sendValue(address payable recipient, uint256 amount) internal {
+        /* require(address(this).balance >= amount, "Address: insufficient balance"); */
 
-/*         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value */
-/*         (bool success, ) = recipient.call{ value: amount }(""); */
-/*         require(success, "Address: unable to send value, recipient may have reverted"); */
-/*     } */
+        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
+        (bool success, ) = recipient.call{ value: amount }("");
+        /* require(success, "Address: unable to send value, recipient may have reverted"); */
+    }
 
-/*     /\** */
-/*      * @dev Performs a Solidity function call using a low level `call`. A */
-/*      * plain`call` is an unsafe replacement for a function call: use this */
-/*      * function instead. */
-/*      * */
-/*      * If `target` reverts with a revert reason, it is bubbled up by this */
-/*      * function (like regular Solidity function calls). */
-/*      * */
-/*      * Returns the raw returned data. To convert to the expected return value, */
-/*      * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`]. */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - `target` must be a contract. */
-/*      * - calling `target` with `data` must not revert. */
-/*      * */
-/*      * _Available since v3.1._ */
-/*      *\/ */
-/*     function functionCall(address target, bytes memory data) internal returns (bytes memory) { */
-/*       return functionCall(target, data, "Address: low-level call failed"); */
-/*     } */
+    /**
+     * @dev Performs a Solidity function call using a low level `call`. A
+     * plain`call` is an unsafe replacement for a function call: use this
+     * function instead.
+     *
+     * If `target` reverts with a revert reason, it is bubbled up by this
+     * function (like regular Solidity function calls).
+     *
+     * Returns the raw returned data. To convert to the expected return value,
+     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
+     *
+     * Requirements:
+     *
+     * - `target` must be a contract.
+     * - calling `target` with `data` must not revert.
+     *
+     * _Available since v3.1._
+     */
+    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
+      return functionCall(target, data, "Address: low-level call failed");
+    }
 
-/*     /\** */
-/*      * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with */
-/*      * `errorMessage` as a fallback revert reason when `target` reverts. */
-/*      * */
-/*      * _Available since v3.1._ */
-/*      *\/ */
-/*     function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) { */
-/*         return functionCallWithValue(target, data, 0, errorMessage); */
-/*     } */
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with
+     * `errorMessage` as a fallback revert reason when `target` reverts.
+     *
+     * _Available since v3.1._
+     */
+    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+        return functionCallWithValue(target, data, 0, errorMessage);
+    }
 
-/*     /\** */
-/*      * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], */
-/*      * but also transferring `value` wei to `target`. */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - the calling contract must have an ETH balance of at least `value`. */
-/*      * - the called Solidity function must be `payable`. */
-/*      * */
-/*      * _Available since v3.1._ */
-/*      *\/ */
-/*     function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) { */
-/*         return functionCallWithValue(target, data, value, "Address: low-level call with value failed"); */
-/*     } */
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but also transferring `value` wei to `target`.
+     *
+     * Requirements:
+     *
+     * - the calling contract must have an ETH balance of at least `value`.
+     * - the called Solidity function must be `payable`.
+     *
+     * _Available since v3.1._
+     */
+    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
+        return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
+    }
 
-/*     /\** */
-/*      * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but */
-/*      * with `errorMessage` as a fallback revert reason when `target` reverts. */
-/*      * */
-/*      * _Available since v3.1._ */
-/*      *\/ */
-/*     function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) { */
-/*         require(address(this).balance >= value, "Address: insufficient balance for call"); */
-/*         require(isContract(target), "Address: call to non-contract"); */
+    /**
+     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but
+     * with `errorMessage` as a fallback revert reason when `target` reverts.
+     *
+     * _Available since v3.1._
+     */
+    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
+        /* require(address(this).balance >= value, "Address: insufficient balance for call"); */
+        /* require(isContract(target), "Address: call to non-contract"); */
 
-/*         // solhint-disable-next-line avoid-low-level-calls */
-/*         (bool success, bytes memory returndata) = target.call{ value: value }(data); */
-/*         return _verifyCallResult(success, returndata, errorMessage); */
-/*     } */
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, bytes memory returndata) = target.call{ value: value }(data);
+        return _verifyCallResult(success, returndata, errorMessage);
+    }
 
-/*     /\** */
-/*      * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], */
-/*      * but performing a static call. */
-/*      * */
-/*      * _Available since v3.3._ */
-/*      *\/ */
-/*     function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) { */
-/*         return functionStaticCall(target, data, "Address: low-level static call failed"); */
-/*     } */
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but performing a static call.
+     *
+     * _Available since v3.3._
+     */
+    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
+        return functionStaticCall(target, data, "Address: low-level static call failed");
+    }
 
-/*     /\** */
-/*      * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`], */
-/*      * but performing a static call. */
-/*      * */
-/*      * _Available since v3.3._ */
-/*      *\/ */
-/*     function functionStaticCall(address target, bytes memory data, string memory errorMessage) internal view returns (bytes memory) { */
-/*         require(isContract(target), "Address: static call to non-contract"); */
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
+     * but performing a static call.
+     *
+     * _Available since v3.3._
+     */
+    function functionStaticCall(address target, bytes memory data, string memory errorMessage) internal view returns (bytes memory) {
+        /* require(isContract(target), "Address: static call to non-contract"); */
 
-/*         // solhint-disable-next-line avoid-low-level-calls */
-/*         (bool success, bytes memory returndata) = target.staticcall(data); */
-/*         return _verifyCallResult(success, returndata, errorMessage); */
-/*     } */
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, bytes memory returndata) = target.staticcall(data);
+        return _verifyCallResult(success, returndata, errorMessage);
+    }
 
-/*     /\** */
-/*      * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], */
-/*      * but performing a delegate call. */
-/*      * */
-/*      * _Available since v3.4._ */
-/*      *\/ */
-/*     function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) { */
-/*         return functionDelegateCall(target, data, "Address: low-level delegate call failed"); */
-/*     } */
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but performing a delegate call.
+     *
+     * _Available since v3.4._
+     */
+    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
+        return functionDelegateCall(target, data, "Address: low-level delegate call failed");
+    }
 
-/*     /\** */
-/*      * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`], */
-/*      * but performing a delegate call. */
-/*      * */
-/*      * _Available since v3.4._ */
-/*      *\/ */
-/*     function functionDelegateCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) { */
-/*         require(isContract(target), "Address: delegate call to non-contract"); */
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
+     * but performing a delegate call.
+     *
+     * _Available since v3.4._
+     */
+    function functionDelegateCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+        /* require(isContract(target), "Address: delegate call to non-contract"); */
 
-/*         // solhint-disable-next-line avoid-low-level-calls */
-/*         (bool success, bytes memory returndata) = target.delegatecall(data); */
-/*         return _verifyCallResult(success, returndata, errorMessage); */
-/*     } */
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, bytes memory returndata) = target.delegatecall(data);
+        return _verifyCallResult(success, returndata, errorMessage);
+    }
 
-/*     function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage) private pure returns(bytes memory) { */
-/*         if (success) { */
-/*             return returndata; */
-/*         } else { */
-/*             // Look for revert reason and bubble it up if present */
-/*             if (returndata.length > 0) { */
-/*                 // The easiest way to bubble the revert reason is using memory via assembly */
+    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage) private pure returns(bytes memory) {
+        if (success) {
+            return returndata;
+        } else {
+            // Look for revert reason and bubble it up if present
+            if (returndata.length > 0) {
+                // The easiest way to bubble the revert reason is using memory via assembly
 
-/*                 // solhint-disable-next-line no-inline-assembly */
-/*                 assembly { */
-/*                     let returndata_size := mload(returndata) */
-/*                     revert(add(32, returndata), returndata_size) */
-/*                 } */
-/*             } else { */
-/*                 revert(errorMessage); */
-/*             } */
-/*         } */
-/*     } */
+                /* // solhint-disable-next-line no-inline-assembly */
+                /* assembly { */
+                /*     let returndata_size := mload(returndata) */
+                /*     revert(add(32, returndata), returndata_size) */
+                /* } */
+            } else {
+                /* revert(errorMessage); */
+            }
+        }
+    }
 }
 
 // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/introspection/ERC165.sol
@@ -907,10 +907,10 @@ abstract contract ERC165 is IERC165 {
      *
      * - `interfaceId` cannot be the ERC165 invalid interface (`0xffffffff`).
      */
-/*     function _registerInterface(bytes4 interfaceId) internal virtual { */
+    function _registerInterface(bytes4 interfaceId) internal virtual {
 /*         require(interfaceId != 0xffffffff, "ERC165: invalid interface id"); */
-/*         _supportedInterfaces[interfaceId] = true; */
-/*     } */
+        _supportedInterfaces[interfaceId] = true;
+    }
 
 }
 
@@ -1237,19 +1237,19 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
 /*         _registerInterface(type(IERC721Enumerable).interfaceId); */
 /*     } */
 
-/*     /\** */
-/*      * @dev See {IERC721-balanceOf}. */
-/*      *\/ */
-/*     function balanceOf(address owner) public view virtual override returns (uint256) { */
-/*         require(owner != address(0), "ERC721: balance query for the zero address"); */
-/*         return _holderTokens[owner].length(); */
-/*     } */
+    /**
+     * @dev See {IERC721-balanceOf}.
+     */
+    function balanceOf(address owner) public view virtual override returns (uint256) {
+        /* require(owner != address(0), "ERC721: balance query for the zero address"); */
+        return _holderTokens[owner].length();
+    }
 
 
-/*     function _cancelSale(uint256 id) internal { */
-/*         delete Bazaar[id].price; */
-/*         Bazaar[id].state = TokenState.Neutral; */
-/*     } */
+    function _cancelSale(uint256 id) internal {
+        delete Bazaar[id].price;
+        Bazaar[id].state = TokenState.Neutral;
+    }
 
 
 
@@ -1276,26 +1276,26 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
         return _symbol;
     }
 
-/*     /\** */
-/*      * @dev See {IERC721Metadata-tokenURI}. */
-/*      *\/ */
-/*     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) { */
-/*         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token"); */
+    /**
+     * @dev See {IERC721Metadata-tokenURI}.
+     */
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        /* require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token"); */
 
-/*         string memory _tokenURI = _tokenURIs[tokenId]; */
-/*         string memory base = baseURI(); */
+        string memory _tokenURI = _tokenURIs[tokenId];
+        string memory base = baseURI();
 
-/*         // If there is no base URI, return the token URI. */
-/*         if (bytes(base).length == 0) { */
-/*             return _tokenURI; */
-/*         } */
-/*         // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked). */
-/*         if (bytes(_tokenURI).length > 0) { */
-/*             return string(abi.encodePacked(base, _tokenURI)); */
-/*         } */
-/*         // If there is a baseURI but no tokenURI, concatenate the tokenID to the baseURI. */
-/*         return string(abi.encodePacked(base, tokenId.toString())); */
-/*     } */
+        // If there is no base URI, return the token URI.
+        if (bytes(base).length == 0) {
+            return _tokenURI;
+        }
+        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
+        if (bytes(_tokenURI).length > 0) {
+            return string(abi.encodePacked(base, _tokenURI));
+        }
+        // If there is a baseURI but no tokenURI, concatenate the tokenID to the baseURI.
+        return string(abi.encodePacked(base, tokenId.toString()));
+    }
 
     /**
     * @dev Returns the base URI set via {_setBaseURI}. This will be
@@ -1332,16 +1332,16 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
     /**
      * @dev See {IERC721-approve}.
      */
-    /* function approve(address to, uint256 tokenId) public virtual override { */
-/*         address owner = ERC721.ownerOf(tokenId); */
+    function approve(address to, uint256 tokenId) public virtual override {
+        address owner = ERC721.ownerOf(tokenId);
 /*         require(to != owner, "ERC721: approval to current owner"); */
 
 /*         require(_msgSender() == owner || ERC721.isApprovedForAll(owner, _msgSender()), */
 /*             "ERC721: approve caller is not owner nor approved for all" */
 /*         ); */
 
-        /* _approve(to, tokenId); */
-    /* } */
+        _approve(to, tokenId);
+    }
 
     /**
      * @dev See {IERC721-getApproved}.
@@ -1355,12 +1355,12 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
     /**
      * @dev See {IERC721-setApprovalForAll}.
      */
-/*     function setApprovalForAll(address operator, bool approved) public virtual override { */
+    function setApprovalForAll(address operator, bool approved) public virtual override {
 /*         require(operator != _msgSender(), "ERC721: approve to caller"); */
 
-/*         _operatorApprovals[_msgSender()][operator] = approved; */
-/*         emit ApprovalForAll(_msgSender(), operator, approved); */
-/*     } */
+        _operatorApprovals[_msgSender()][operator] = approved;
+        emit ApprovalForAll(_msgSender(), operator, approved);
+    }
 
     /**
      * @dev See {IERC721-isApprovedForAll}.
@@ -1372,27 +1372,27 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
     /**
      * @dev See {IERC721-transferFrom}.
      */
-    /* function transferFrom(address from, address to, uint256 tokenId) public virtual override { */
-/*         //solhint-disable-next-line max-line-length */
-/*         require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved"); */
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
+        //solhint-disable-next-line max-line-length
+        /* require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved"); */
 
-/*         _transfer(from, to, tokenId); */
-    /* } */
+        _transfer(from, to, tokenId);
+    }
 
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-    /* function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override { */
-    /*     safeTransferFrom(from, to, tokenId, ""); */
-    /* } */
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
+        safeTransferFrom(from, to, tokenId, "");
+    }
 
-/*     /\** */
-/*      * @dev See {IERC721-safeTransferFrom}. */
-/*      *\/ */
-/*     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public virtual override { */
-/*         require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved"); */
-/*         _safeTransfer(from, to, tokenId, _data); */
-/*     } */
+    /**
+     * @dev See {IERC721-safeTransferFrom}.
+     */
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public virtual override {
+        /* require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved"); */
+        _safeTransfer(from, to, tokenId, _data);
+    }
 
     /**
      * @dev Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
@@ -1412,10 +1412,10 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      *
      * Emits a {Transfer} event.
      */
-/*     function _safeTransfer(address from, address to, uint256 tokenId, bytes memory _data) internal virtual { */
-/*         _transfer(from, to, tokenId); */
+    function _safeTransfer(address from, address to, uint256 tokenId, bytes memory _data) internal virtual {
+        _transfer(from, to, tokenId);
 /*         require(_checkOnERC721Received(from, to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer"); */
-/*     } */
+    }
 
     /**
      * @dev Returns whether `tokenId` exists.
@@ -1436,34 +1436,34 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      *
      * - `tokenId` must exist.
      */
-    /* function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) { */
+    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
     /*     require(_exists(tokenId), "ERC721: operator query for nonexistent token"); */
-    /*     address owner = ERC721.ownerOf(tokenId); */
-    /*     return (spender == owner || getApproved(tokenId) == spender || ERC721.isApprovedForAll(owner, spender)); */
-    /* } */
+        address owner = ERC721.ownerOf(tokenId);
+        return (spender == owner || getApproved(tokenId) == spender || ERC721.isApprovedForAll(owner, spender));
+    }
 
-/*     /\** */
-/*      * @dev Safely mints `tokenId` and transfers it to `to`. */
-/*      * */
-/*      * Requirements: */
-/*      d* */
-/*      * - `tokenId` must not exist. */
-/*      * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer. */
-/*      * */
-/*      * Emits a {Transfer} event. */
-/*      *\/ */
-/*     function _safeMint(address to, uint256 tokenId) internal virtual { */
-/*         _safeMint(to, tokenId, ""); */
-/*     } */
+    /**
+     * @dev Safely mints `tokenId` and transfers it to `to`.
+     *
+     * Requirements:
+     d*
+     * - `tokenId` must not exist.
+     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
+     *
+     * Emits a {Transfer} event.
+     */
+    function _safeMint(address to, uint256 tokenId) internal virtual {
+        _safeMint(to, tokenId, "");
+    }
 
     /**
      * @dev Same as {xref-ERC721-_safeMint-address-uint256-}[`_safeMint`], with an additional `data` parameter which is
      * forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
      */
-    /* function _safeMint(address to, uint256 tokenId, bytes memory _data) internal virtual { */
-    /*     _mint(to, tokenId); */
-    /*     /\* require(_checkOnERC721Received(address(0), to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer"); *\/ */
-    /* } */
+    function _safeMint(address to, uint256 tokenId, bytes memory _data) internal virtual {
+        _mint(to, tokenId);
+        /* require(_checkOnERC721Received(address(0), to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer"); */
+    }
 
     /**
      * @dev Mints `tokenId` and transfers it to `to`.
@@ -1477,18 +1477,18 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      *
      * Emits a {Transfer} event.
      */
-/*     function _mint(address to, uint256 tokenId) internal virtual { */
+    function _mint(address to, uint256 tokenId) internal virtual {
 /*         require(to != address(0), "ERC721: mint to the zero address"); */
 /*         require(!_exists(tokenId), "ERC721: token already minted"); */
 
-/*         _beforeTokenTransfer(address(0), to, tokenId); */
+        _beforeTokenTransfer(address(0), to, tokenId);
 
-/*         _holderTokens[to].add(tokenId); */
+        _holderTokens[to].add(tokenId);
 
-/*         _tokenOwners.set(tokenId, to); */
+        _tokenOwners.set(tokenId, to);
 
-/*         emit Transfer(address(0), to, tokenId); */
-/*     } */
+        emit Transfer(address(0), to, tokenId);
+    }
 
     /**
      * @dev Destroys `tokenId`.
@@ -1500,25 +1500,25 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      *
      * Emits a {Transfer} event.
      */
-/*     function _burn(uint256 tokenId) internal virtual { */
-/*         address owner = ERC721.ownerOf(tokenId); // internal owner */
+    function _burn(uint256 tokenId) internal virtual {
+        address owner = ERC721.ownerOf(tokenId); // internal owner
 
-/*         _beforeTokenTransfer(owner, address(0), tokenId); */
+        _beforeTokenTransfer(owner, address(0), tokenId);
 
-/*         // Clear approvals */
-/*         _approve(address(0), tokenId); */
+        // Clear approvals
+        _approve(address(0), tokenId);
 
-/*         // Clear metadata (if any) */
-/*         if (bytes(_tokenURIs[tokenId]).length != 0) { */
-/*             delete _tokenURIs[tokenId]; */
-/*         } */
+        // Clear metadata (if any)
+        if (bytes(_tokenURIs[tokenId]).length != 0) {
+            delete _tokenURIs[tokenId];
+        }
 
-/*         _holderTokens[owner].remove(tokenId); */
+        _holderTokens[owner].remove(tokenId);
 
-/*         _tokenOwners.remove(tokenId); */
+        _tokenOwners.remove(tokenId);
 
-/*         emit Transfer(owner, address(0), tokenId); */
-/*     } */
+        /* emit Transfer(owner, address(0), tokenId); */
+    }
 
     /**
      * @dev Transfers `tokenId` from `from` to `to`.
@@ -1531,96 +1531,96 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      *
      * Emits a {Transfer} event.
      */
-/*     function _transfer(address from, address to, uint256 tokenId) internal virtual { */
-/*         require(ERC721.ownerOf(tokenId) == from, "ERC721: transfer of token that is not own"); // internal owner */
-/*         require(to != address(0), "ERC721: transfer to the zero address"); */
+    function _transfer(address from, address to, uint256 tokenId) internal virtual {
+        /* require(ERC721.ownerOf(tokenId) == from, "ERC721: transfer of token that is not own"); // internal owner */
+        /* require(to != address(0), "ERC721: transfer to the zero address"); */
 
-/*         _beforeTokenTransfer(from, to, tokenId); */
+        _beforeTokenTransfer(from, to, tokenId);
 
-/*         // Clear approvals from the previous owner */
-/*         _approve(address(0), tokenId); */
+        // Clear approvals from the previous owner
+        _approve(address(0), tokenId);
 
-/*         _holderTokens[from].remove(tokenId); */
-/*         _holderTokens[to].add(tokenId); */
+        _holderTokens[from].remove(tokenId);
+        _holderTokens[to].add(tokenId);
 
-/*         _tokenOwners.set(tokenId, to); */
-/*         _cancelSale(tokenId); */
-/*         emit Transfer(from, to, tokenId); */
-/*     } */
+        _tokenOwners.set(tokenId, to);
+        _cancelSale(tokenId);
+        /* emit Transfer(from, to, tokenId); */
+    }
 
-/*     /\** */
-/*      * @dev Sets `_tokenURI` as the tokenURI of `tokenId`. */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - `tokenId` must exist. */
-/*      *\/ */
-/*     function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal virtual { */
-/*         require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token"); */
-/*         _tokenURIs[tokenId] = _tokenURI; */
-/*     } */
+    /**
+     * @dev Sets `_tokenURI` as the tokenURI of `tokenId`.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     */
+    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal virtual {
+        /* require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token"); */
+        _tokenURIs[tokenId] = _tokenURI;
+    }
 
-/*     /\** */
-/*      * @dev Internal function to set the base URI for all token IDs. It is */
-/*      * automatically added as a prefix to the value returned in {tokenURI}, */
-/*      * or to the token ID if {tokenURI} is empty. */
-/*      *\/ */
-/*     function _setBaseURI(string memory baseURI_) internal virtual { */
-/*         _baseURI = baseURI_; */
-/*     } */
+    /**
+     * @dev Internal function to set the base URI for all token IDs. It is
+     * automatically added as a prefix to the value returned in {tokenURI},
+     * or to the token ID if {tokenURI} is empty.
+     */
+    function _setBaseURI(string memory baseURI_) internal virtual {
+        _baseURI = baseURI_;
+    }
 
-/*     /\** */
-/*      * @dev Internal function to invoke {IERC721Receiver-onERC721Received} on a target address. */
-/*      * The call is not executed if the target address is not a contract. */
-/*      * */
-/*      * @param from address representing the previous owner of the given token ID */
-/*      * @param to target address that will receive the tokens */
-/*      * @param tokenId uint256 ID of the token to be transferred */
-/*      * @param _data bytes optional data to send along with the call */
-/*      * @return bool whether the call correctly returned the expected magic value */
-/*      *\/ */
-/*     function _checkOnERC721Received(address from, address to, uint256 tokenId, bytes memory _data) */
-/*         private returns (bool) */
-/*     { */
-/*         if (to.isContract()) { */
-/*             try IERC721Receiver(to).onERC721Received(_msgSender(), from, tokenId, _data) returns (bytes4 retval) { */
-/*                 return retval == IERC721Receiver(to).onERC721Received.selector; */
-/*             } catch (bytes memory reason) { */
-/*                 if (reason.length == 0) { */
-/*                     revert("ERC721: transfer to non ERC721Receiver implementer"); */
-/*                 } else { */
-/*                     // solhint-disable-next-line no-inline-assembly */
-/*                     assembly { */
-/*                         revert(add(32, reason), mload(reason)) */
-/*                     } */
-/*                 } */
-/*             } */
-/*         } else { */
-/*             return true; */
-/*         } */
-/*     } */
+    /**
+     * @dev Internal function to invoke {IERC721Receiver-onERC721Received} on a target address.
+     * The call is not executed if the target address is not a contract.
+     *
+     * @param from address representing the previous owner of the given token ID
+     * @param to target address that will receive the tokens
+     * @param tokenId uint256 ID of the token to be transferred
+     * @param _data bytes optional data to send along with the call
+     * @return bool whether the call correctly returned the expected magic value
+     */
+    function _checkOnERC721Received(address from, address to, uint256 tokenId, bytes memory _data)
+        private returns (bool)
+    {
+        if (to.isContract()) {
+            /* try IERC721Receiver(to).onERC721Received(_msgSender(), from, tokenId, _data) returns (bytes4 retval) { */
+                return retval == IERC721Receiver(to).onERC721Received.selector;
+            /* } catch (bytes memory reason) { */
+                if (reason.length == 0) {
+                    /* revert("ERC721: transfer to non ERC721Receiver implementer"); */
+                } else {
+                    /* // solhint-disable-next-line no-inline-assembly */
+                    /* assembly { */
+                    /*     revert(add(32, reason), mload(reason)) */
+                    /* } */
+                }
+            /* } */
+        } else {
+            return true;
+        }
+    }
 
-/*     function _approve(address to, uint256 tokenId) private { */
-/*         _tokenApprovals[tokenId] = to; */
-/*         emit Approval(ERC721.ownerOf(tokenId), to, tokenId); // internal owner */
-/*     } */
+    function _approve(address to, uint256 tokenId) private {
+        _tokenApprovals[tokenId] = to;
+        /* emit Approval(ERC721.ownerOf(tokenId), to, tokenId); // internal owner */
+    }
 
-/*     /\** */
-/*      * @dev Hook that is called before any token transfer. This includes minting */
-/*      * and burning. */
-/*      * */
-/*      * Calling conditions: */
-/*      * */
-/*      * - When `from` and `to` are both non-zero, ``from``'s `tokenId` will be */
-/*      * transferred to `to`. */
-/*      * - When `from` is zero, `tokenId` will be minted for `to`. */
-/*      * - When `to` is zero, ``from``'s `tokenId` will be burned. */
-/*      * - `from` cannot be the zero address. */
-/*      * - `to` cannot be the zero address. */
-/*      * */
-/*      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks]. */
-/*      *\/ */
-    /* function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual { } */
+    /**
+     * @dev Hook that is called before any token transfer. This includes minting
+     * and burning.
+     *
+     * Calling conditions:
+     *
+     * - When `from` and `to` are both non-zero, ``from``'s `tokenId` will be
+     * transferred to `to`.
+     * - When `from` is zero, `tokenId` will be minted for `to`.
+     * - When `to` is zero, ``from``'s `tokenId` will be burned.
+     * - `from` cannot be the zero address.
+     * - `to` cannot be the zero address.
+     *
+     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+     */
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual { }
 }
 
 
@@ -1675,27 +1675,27 @@ abstract contract Ownable is Context {
 /*         _; */
 /*     } */
 
-/*     /\** */
-/*      * @dev Leaves the contract without owner. It will not be possible to call */
-/*      * `onlyOwner` functions anymore. Can only be called by the current owner. */
-/*      * */
-/*      * NOTE: Renouncing ownership will leave the contract without an owner, */
-/*      * thereby removing any functionality that is only available to the owner. */
-/*      *\/ */
-/*     function renounceOwnership() public virtual onlyOwner { */
-/*         emit OwnershipTransferred(_owner, address(0)); */
-/*         _owner = address(0); */
-/*     } */
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        /* emit OwnershipTransferred(_owner, address(0)); */
+        _owner = address(0);
+    }
 
-/*     /\** */
-/*      * @dev Transfers ownership of the contract to a new account (`newOwner`). */
-/*      * Can only be called by the current owner. */
-/*      *\/ */
-/*     function transferOwnership(address newOwner) public virtual onlyOwner { */
-/*         require(newOwner != address(0), "Ownable: new owner is the zero address"); */
-/*         emit OwnershipTransferred(_owner, newOwner); */
-/*         _owner = newOwner; */
-/*     } */
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        /* require(newOwner != address(0), "Ownable: new owner is the zero address"); */
+        /* emit OwnershipTransferred(_owner, newOwner); */
+        _owner = newOwner;
+    }
 }
 
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/math/SafeMath.sol
@@ -1716,208 +1716,208 @@ pragma solidity ^0.8.0;
  * now has built in overflow checking.
  */
 library SafeMath {
-/*     /\** */
-/*      * @dev Returns the addition of two unsigned integers, with an overflow flag. */
-/*      * */
-/*      * _Available since v3.4._ */
-/*      *\/ */
-/*     function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) { */
-/*         unchecked { */
-/*             uint256 c = a + b; */
-/*             if (c < a) return (false, 0); */
-/*             return (true, c); */
-/*         } */
-/*     } */
+    /**
+     * @dev Returns the addition of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            uint256 c = a + b;
+            if (c < a) return (false, 0);
+            return (true, c);
+        }
+    }
 
-/*     /\** */
-/*      * @dev Returns the substraction of two unsigned integers, with an overflow flag. */
-/*      * */
-/*      * _Available since v3.4._ */
-/*      *\/ */
-/*     function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) { */
-/*         unchecked { */
-/*             if (b > a) return (false, 0); */
-/*             return (true, a - b); */
-/*         } */
-/*     } */
+    /**
+     * @dev Returns the substraction of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b > a) return (false, 0);
+            return (true, a - b);
+        }
+    }
 
-/*     /\** */
-/*      * @dev Returns the multiplication of two unsigned integers, with an overflow flag. */
-/*      * */
-/*      * _Available since v3.4._ */
-/*      *\/ */
-/*     function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) { */
-/*         unchecked { */
-/*             // Gas optimization: this is cheaper than requiring 'a' not being zero, but the */
-/*             // benefit is lost if 'b' is also tested. */
-/*             // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522 */
-/*             if (a == 0) return (true, 0); */
-/*             uint256 c = a * b; */
-/*             if (c / a != b) return (false, 0); */
-/*             return (true, c); */
-/*         } */
-/*     } */
+    /**
+     * @dev Returns the multiplication of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+            // benefit is lost if 'b' is also tested.
+            // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+            if (a == 0) return (true, 0);
+            uint256 c = a * b;
+            if (c / a != b) return (false, 0);
+            return (true, c);
+        }
+    }
 
-/*     /\** */
-/*      * @dev Returns the division of two unsigned integers, with a division by zero flag. */
-/*      * */
-/*      * _Available since v3.4._ */
-/*      *\/ */
-/*     function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) { */
-/*         unchecked { */
-/*             if (b == 0) return (false, 0); */
-/*             return (true, a / b); */
-/*         } */
-/*     } */
+    /**
+     * @dev Returns the division of two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b == 0) return (false, 0);
+            return (true, a / b);
+        }
+    }
 
-/*     /\** */
-/*      * @dev Returns the remainder of dividing two unsigned integers, with a division by zero flag. */
-/*      * */
-/*      * _Available since v3.4._ */
-/*      *\/ */
-/*     function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) { */
-/*         unchecked { */
-/*             if (b == 0) return (false, 0); */
-/*             return (true, a % b); */
-/*         } */
-/*     } */
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b == 0) return (false, 0);
+            return (true, a % b);
+        }
+    }
 
-/*     /\** */
-/*      * @dev Returns the addition of two unsigned integers, reverting on */
-/*      * overflow. */
-/*      * */
-/*      * Counterpart to Solidity's `+` operator. */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - Addition cannot overflow. */
-/*      *\/ */
-/*     function add(uint256 a, uint256 b) internal pure returns (uint256) { */
-/*         return a + b; */
-/*     } */
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     *
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a + b;
+    }
 
-/*     /\** */
-/*      * @dev Returns the subtraction of two unsigned integers, reverting on */
-/*      * overflow (when the result is negative). */
-/*      * */
-/*      * Counterpart to Solidity's `-` operator. */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - Subtraction cannot overflow. */
-/*      *\/ */
-/*     function sub(uint256 a, uint256 b) internal pure returns (uint256) { */
-/*         return a - b; */
-/*     } */
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a - b;
+    }
 
-/*     /\** */
-/*      * @dev Returns the multiplication of two unsigned integers, reverting on */
-/*      * overflow. */
-/*      * */
-/*      * Counterpart to Solidity's `*` operator. */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - Multiplication cannot overflow. */
-/*      *\/ */
-/*     function mul(uint256 a, uint256 b) internal pure returns (uint256) { */
-/*         return a * b; */
-/*     } */
+    /**
+     * @dev Returns the multiplication of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `*` operator.
+     *
+     * Requirements:
+     *
+     * - Multiplication cannot overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a * b;
+    }
 
-/*     /\** */
-/*      * @dev Returns the integer division of two unsigned integers, reverting on */
-/*      * division by zero. The result is rounded towards zero. */
-/*      * */
-/*      * Counterpart to Solidity's `/` operator. */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - The divisor cannot be zero. */
-/*      *\/ */
-/*     function div(uint256 a, uint256 b) internal pure returns (uint256) { */
-/*         return a / b; */
-/*     } */
+    /**
+     * @dev Returns the integer division of two unsigned integers, reverting on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator.
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a / b;
+    }
 
-/*     /\** */
-/*      * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo), */
-/*      * reverting when dividing by zero. */
-/*      * */
-/*      * Counterpart to Solidity's `%` operator. This function uses a `revert` */
-/*      * opcode (which leaves remaining gas untouched) while Solidity uses an */
-/*      * invalid opcode to revert (consuming all remaining gas). */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - The divisor cannot be zero. */
-/*      *\/ */
-/*     function mod(uint256 a, uint256 b) internal pure returns (uint256) { */
-/*         return a % b; */
-/*     } */
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a % b;
+    }
 
-/*     /\** */
-/*      * @dev Returns the subtraction of two unsigned integers, reverting with custom message on */
-/*      * overflow (when the result is negative). */
-/*      * */
-/*      * CAUTION: This function is deprecated because it requires allocating memory for the error */
-/*      * message unnecessarily. For custom revert reasons use {trySub}. */
-/*      * */
-/*      * Counterpart to Solidity's `-` operator. */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - Subtraction cannot overflow. */
-/*      *\/ */
-/*     function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) { */
-/*         unchecked { */
-/*             require(b <= a, errorMessage); */
-/*             return a - b; */
-/*         } */
-/*     } */
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
+     * overflow (when the result is negative).
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {trySub}.
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        unchecked {
+            require(b <= a, errorMessage);
+            return a - b;
+        }
+    }
 
-/*     /\** */
-/*      * @dev Returns the integer division of two unsigned integers, reverting with custom message on */
-/*      * division by zero. The result is rounded towards zero. */
-/*      * */
-/*      * Counterpart to Solidity's `%` operator. This function uses a `revert` */
-/*      * opcode (which leaves remaining gas untouched) while Solidity uses an */
-/*      * invalid opcode to revert (consuming all remaining gas). */
-/*      * */
-/*      * Counterpart to Solidity's `/` operator. Note: this function uses a */
-/*      * `revert` opcode (which leaves remaining gas untouched) while Solidity */
-/*      * uses an invalid opcode to revert (consuming all remaining gas). */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - The divisor cannot be zero. */
-/*      *\/ */
-/*     function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) { */
-/*         unchecked { */
-/*             require(b > 0, errorMessage); */
-/*             return a / b; */
-/*         } */
-/*     } */
+    /**
+     * @dev Returns the integer division of two unsigned integers, reverting with custom message on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        unchecked {
+            /* require(b > 0, errorMessage); */
+            return a / b;
+        }
+    }
 
-/*     /\** */
-/*      * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo), */
-/*      * reverting with custom message when dividing by zero. */
-/*      * */
-/*      * CAUTION: This function is deprecated because it requires allocating memory for the error */
-/*      * message unnecessarily. For custom revert reasons use {tryMod}. */
-/*      * */
-/*      * Counterpart to Solidity's `%` operator. This function uses a `revert` */
-/*      * opcode (which leaves remaining gas untouched) while Solidity uses an */
-/*      * invalid opcode to revert (consuming all remaining gas). */
-/*      * */
-/*      * Requirements: */
-/*      * */
-/*      * - The divisor cannot be zero. */
-/*      *\/ */
-/*     function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) { */
-/*         unchecked { */
-/*             require(b > 0, errorMessage); */
-/*             return a % b; */
-/*         } */
-/*     } */
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting with custom message when dividing by zero.
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {tryMod}.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a % b;
+        }
+    }
 }
 
 
@@ -1965,38 +1965,38 @@ contract SactAvatars is ERC721, Ownable {
     }
 
 
-   /* function summonAvatar(uint256 maxAvatars) public payable { */
-   /*      require(totalSupply() < MAX_AVATARS, "Sale has already ended"); */
-   /*      require(maxAvatars > 0 && maxAvatars <= 20, "You can craft minimum 1, maximum 20 avatars"); */
-   /*      require(totalSupply().add(maxAvatars) <= MAX_AVATARS, "Exceeds max tupply"); */
-   /*      require(msg.value >= calculatePrice().mul(maxAvatars), "Ether value sent is below the price"); */
+   function summonAvatar(uint256 maxAvatars) public payable {
+        /* require(totalSupply() < MAX_AVATARS, "Sale has already ended"); */
+        /* require(maxAvatars > 0 && maxAvatars <= 20, "You can craft minimum 1, maximum 20 avatars"); */
+        /* require(totalSupply().add(maxAvatars) <= MAX_AVATARS, "Exceeds max tupply"); */
+        /* require(msg.value >= calculatePrice().mul(maxAvatars), "Ether value sent is below the price"); */
 
-   /*      for (uint i = 0; i < maxAvatars; i++) { */
-   /*          uint mintIndex = totalSupply(); */
-   /*          _safeMint(msg.sender, mintIndex); */
-   /*      } */
-   /*  } */
+        for (uint i = 0; i < maxAvatars; i++) {
+            uint mintIndex = totalSupply();
+            _safeMint(msg.sender, mintIndex);
+        }
+    }
 
-   /*  // ONLYOWNER FUNCTIONS */
+    // ONLYOWNER FUNCTIONS
 
-   /*  function setProvenanceHash(string memory _hash) public onlyOwner { */
-   /*      METADATA_PROVENANCE_HASH = _hash; */
-   /*  } */
+    function setProvenanceHash(string memory _hash) public onlyOwner {
+        METADATA_PROVENANCE_HASH = _hash;
+    }
 
-   /*  function setBaseURI(string memory baseURI) public onlyOwner { */
-   /*      _setBaseURI(baseURI); */
-   /*  } */
+    function setBaseURI(string memory baseURI) public onlyOwner {
+        _setBaseURI(baseURI);
+    }
 
-   /*  function startDrop() public onlyOwner { */
-   /*      hasSaleStarted = true; */
-   /*  } */
+    function startDrop() public onlyOwner {
+        hasSaleStarted = true;
+    }
 
-   /*  function pauseDrop() public onlyOwner { */
-   /*      hasSaleStarted = false; */
-   /*  } */
+    function pauseDrop() public onlyOwner {
+        hasSaleStarted = false;
+    }
 
-    /* function withdrawAll() public payable onlyOwner { */
-   /*      require(payable(msg.sender).send(address(this).balance)); */
-    /* } */
+    function withdrawAll() public payable onlyOwner {
+        require(payable(msg.sender).send(address(this).balance));
+    }
 
 }
