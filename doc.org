@@ -211,7 +211,8 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_block.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_state_var_decl.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_inline_arr_expr.sol")
-  (test-file #P"/home/rigidus/src/solipsism/tests/test_non_empty_str.sol")
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_non_empty_str.sol")
+  (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_type_name.sol")
 
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
 
@@ -408,7 +409,7 @@ identifier, он может совпасть с практически любы�
   (%ctract-body-elt-contents
    (%ctract-body-elt #'(lambda (x) `(:ctract-body-elt-last ,x)))
    (%ctract-body-elt %ctract-body-elt-contents
-                       #'(lambda (x y) `(:ctract-body-elt-head ,x :ctract-body-elt-rest ,y)))
+                     #'(lambda (x y) `(:ctract-body-elt-head ,x :ctract-body-elt-rest ,y)))
    )
 #+END_SRC
 
@@ -681,8 +682,8 @@ parlist):
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
   (%function %identifier %parlist %block
-         #'(lambda (fun id parlist blk)
-             `(:fun ,id :parlist ,parlist :block ,blk)))
+             #'(lambda (fun id parlist blk)
+                 `(:fun ,id :parlist ,parlist :block ,blk)))
 #+END_SRC
 
 Тут же его и доопределим, пока для случая с пустым списком параметров,
@@ -859,7 +860,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.parameter
 
 #+BEGIN_SRC lisp :noweb-ref param_subrules
   (%type-name %data-location %identifier
-         #'(lambda (tn dl id) `(:par-type ,tn :data-location ,dl :name ,id)))
+              #'(lambda (tn dl id) `(:par-type ,tn :data-location ,dl :name ,id)))
 #+END_SRC
 
 Все компоненты уже есть, так что осталось только написать тесты:
@@ -938,9 +939,9 @@ Retlist представляет из себя два возможных вар�
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
   (%function %identifier %parlist %fmeta %retlist %block
-         #'(lambda (fun id parlist fmeta retlist blk)
-             `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
-               :block ,blk)))
+             #'(lambda (fun id parlist fmeta retlist blk)
+                 `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
+                   :block ,blk)))
 #+END_SRC
 
 Эта мета правило является рамочным правилом для всех выше перечисленных
@@ -1158,8 +1159,8 @@ multi-identifier-path, поэтому нам понадобится раскры
   (%ident-path
    (%ident #'(lambda (id) `(:ident-last ,id)))
    (%ident |%.| %ident-path
-                #'(lambda (id-head dot id-rest)
-                    `(:ident-head ,id-head :ident-rest ,id-rest)))
+           #'(lambda (id-head dot id-rest)
+               `(:ident-head ,id-head :ident-rest ,id-rest)))
    )
   (%ident
    (%identifier #'(lambda (id) `(:id ,id)))
@@ -1184,12 +1185,98 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%type-name
    (%elt-type-name #'(lambda (par) `(:elt-type-name ,par)))
-   ;; (%function-type-name #'(lambda (par) `(:function-type-name ,par)))
+   (%func-type-name #'(lambda (par) `(:func-type-name ,par)))
    ;; (%mapping-type #'(lambda (par) `(:mapping-type ,par)))
    ;; (%identifier-path #'(lambda (par) `(:identifier-path ,par)))
    (%type-name |%[| %expr |%]|
                #'(lambda (par lb ex rb) `(:type-name-expr ,par :expr ,ex)))
    )
+#+END_SRC
+
+*** FunctionTypeName
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%func-type-name
+   (%function |%(| |%)|
+              #'(lambda (fu lb rb)
+                  `(:func-type-name nil)))
+   (%function |%(| %param-list |%)|
+              #'(lambda (fu lb pl rb)
+                  `(:func-type-name nil :param-list ,pl)))
+   (%function |%(| |%)| %visibility
+              #'(lambda (fu lb rb vi)
+                  `(:func-type-name nil :visibility ,vi))
+   (%function |%(| %param-list |%)| %visibility
+              #'(lambda (fu lb pl rb vi)
+                  `(:func-type-name nil :param-list ,pl :visibility ,vi)))
+   (%function |%(| |%)| %state-mutability
+              #'(lambda (fu lb rb sm)
+                  `(:func-type-name nil :state-mutability ,sm))
+   (%function |%(| %param-list |%)| %state-mutability
+              #'(lambda (fu lb pl rb sm)
+                  `(:func-type-name nil :param-list ,pl :state-mutability ,sm)))
+   (%function |%(| |%)| %visibility %state-mutability
+              #'(lambda (fu lb rb vi sm)
+                  `(:func-type-name nil :visibility ,vi :state-mutability ,sm))
+   (%function |%(| %param-list |%)| %visibility %state-mutability
+              #'(lambda (fu lb pl rb vi sm)
+                  `(:func-type-name nil :param-list ,pl :visibility ,vi :state-mutability ,sm)))
+   (%function |%(| |%)| %state-mutability %visibility
+              #'(lambda (fu lb rb sm vi)
+                  `(:func-type-name nil :visibility ,vi :state-mutability ,sm))
+   (%function |%(| %param-list |%)| %state-mutability %visibility
+              #'(lambda (fu lb pl rb sm vi)
+                  `(:func-type-name nil :param-list ,pl :visibility ,vi :state-mutability ,sm)))
+
+   (%function |%(| |%)| %returns |%(| %param-list |%)|
+              #'(lambda (fu lb rb rt lb2 pl2 rb2)
+                  `(:func-type-name nil
+                    :returns ,pl2)))
+   (%function |%(| %param-list |%)| %returns |%(| %param-list |%)|
+              #'(lambda (fu lb pl rb rt lb2 pl2 rb2)
+                  `(:func-type-name nil :param-list ,pl
+                    :returns ,pl2)))
+   (%function |%(| |%)| %visibility %returns |%(| %param-list |%)|
+              #'(lambda (fu lb rb vi rt lb2 pl2 rb2)
+                  `(:func-type-name nil :visibility ,vi
+                  :returns ,pl2))
+   (%function |%(| %param-list |%)| %visibility %returns |%(| %param-list |%)|
+              #'(lambda (fu lb pl rb vi rt lb2 pl2 rb2)
+                  `(:func-type-name nil :param-list ,pl :visibility ,vi
+                    :returns ,pl2)))
+   (%function |%(| |%)| %state-mutability %returns |%(| %param-list |%)|
+              #'(lambda (fu lb rb sm rt lb2 pl2 rb2)
+                  `(:func-type-name nil :state-mutability ,sm
+                  :returns ,pl2))
+   (%function |%(| %param-list |%)| %state-mutability %returns |%(| %param-list |%)|
+              #'(lambda (fu lb pl rb sm rt lb2 pl2 rb2)
+                  `(:func-type-name nil :param-list ,pl :state-mutability ,sm
+                    :returns ,pl2)))
+   (%function |%(| |%)| %visibility %state-mutability %returns |%(| %param-list |%)|
+              #'(lambda (fu lb rb vi sm rt lb2 pl2 rb2)
+                  `(:func-type-name nil :visibility ,vi :state-mutability ,sm
+                  :returns ,pl2))
+   (%function |%(| %param-list |%)| %visibility %state-mutability %returns |%(| %param-list |%)|
+              #'(lambda (fu lb pl rb vi sm rt lb2 pl2 rb2)
+                  `(:func-type-name nil :param-list ,pl :visibility ,vi :state-mutability ,sm
+                    :returns ,pl2)))
+   (%function |%(| |%)| %state-mutability %visibility %returns |%(| %param-list |%)|
+              #'(lambda (fu lb rb sm vi rt lb2 pl2 rb2)
+                  `(:func-type-name nil :visibility ,vi :state-mutability ,sm
+                  :returns ,pl2))
+   (%function |%(| %param-list |%)| %state-mutability %visibility %returns |%(| %param-list |%)|
+              #'(lambda (fu lb pl rb sm vi rt lb2 pl2 rb2)
+                  `(:func-type-name nil :param-list ,pl :visibility ,vi :state-mutability ,sm
+                    :returns ,pl2)))
+#+END_SRC
+
+
+#+BEGIN_SRC solidity :tangle tests/test_fn_type_name.sol :mkdirp yes :noweb yes
+  pragma solidity ^0.8.0;
+  library Strings {
+      function test(uint256 value) internal pure returns (string memory) {
+          bytes memory buffer = new bytes(digits);
+      }
 #+END_SRC
 
 ** ElementaryTypeName
@@ -2328,7 +2415,6 @@ Block может быть:
       }
   }
 #+END_SRC
-
 
 *** START Literal
 
