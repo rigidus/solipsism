@@ -831,7 +831,7 @@ library Address {
                 /*     revert(add(32, returndata), returndata_size) */
                 /* } */
             } else {
-                /* revert(errorMessage); */
+                revert(errorMessage);
             }
         }
     }
@@ -1587,7 +1587,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
                 return retval == IERC721Receiver(to).onERC721Received.selector;
             /* } catch (bytes memory reason) { */
                 if (reason.length == 0) {
-                    /* revert("ERC721: transfer to non ERC721Receiver implementer"); */
+                    revert("ERC721: transfer to non ERC721Receiver implementer");
                 } else {
                     /* // solhint-disable-next-line no-inline-assembly */
                     /* assembly { */
