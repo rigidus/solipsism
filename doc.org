@@ -1202,7 +1202,7 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
   (%type-name
    (%elt-type-name #'(lambda (par) `(:elt-type-name ,par)))
    (%func-type-name #'(lambda (par) `(:func-type-name ,par)))
-   ;; (%mapping-type #'(lambda (par) `(:mapping-type ,par)))
+   (%mapping-type #'(lambda (par) `(:mapping-type ,par)))
    ;; (%identifier-path #'(lambda (par) `(:identifier-path ,par)))
    (%type-name |%[| %expr |%]|
                #'(lambda (par lb ex rb) `(:type-name-expr ,par :expr ,ex)))
@@ -1210,6 +1210,7 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
 #+END_SRC
 
 *** FunctionTypeName
+
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%func-type-name
@@ -1296,6 +1297,40 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
   }
 #+END_SRC
 
+*** START Mapping type
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingType
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("[=]{1}[>]{1}" '|%=>| '|%=>|)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  |%=>|
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%mapping-type
+   (|%(| %mapping-key-type |%=>| %type-name |%)| #'(lambda (a b c d e) `(:mapping-from ,b :mapping-to ,d))))
+
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%mapping-key-type
+   (%elt-type-name #'(lambda (type) `(:elt_type ,type)))
+   ;; (%identifier-path #'(lambda (ip) `(:ident-path ,ip)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_fn_mapping.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_mapping_type
+  {
+      function fn_mapping_type_1 (uint8 p_one) returns (uint16 r_one) {
+          ( uint8 => uint16 );
+      }
+  }
+#+END_SRC
 ** ElementaryTypeName
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
