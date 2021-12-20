@@ -2547,7 +2547,7 @@ Block может быть:
   (%lit
    (%num-lit #'(lambda (lt) `(:num-lit ,lt)))
    (%str-lit #'(lambda (lt) `(:str-lit ,lt)))
-   ;; (%bool-lit #'(lambda (lt) `(:bool-lit ,lt)))
+   (%bool-lit #'(lambda (lt) `(:bool-lit ,lt)))
    ;; (%hexstr-litl #'(lambda (lt) `(:hexstr-lit ,lt)))
    ;; (%unicodestr-lit #'(lambda (lt) `(:unicodestr-lit ,lt)))
    )
@@ -2780,6 +2780,37 @@ Hex numbers consist of a prefix and an arbitrary number of hex digits that may b
 #+END_SRC
 
 **** TODO Boolean-literal
+Судя по этой диаграмме является терминалом, нерекурсивный
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.booleanLiteral
+
+Добавляем в список терминлов
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %bool-lit
+#+END_SRC
+
+Добавляем в лексер:
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\btrue\\b" '%bool-lit 'true)
+  ("\\bfalse\\b" '%bool-lit 'false)
+#+END_SRC
+
+Тест:
+
+#+BEGIN_SRC solidity :tangle tests/test_bool_lit.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_bool_lit
+  {
+      function fn_bool_lit (uint p_one) returns (uint r_one) {
+          // comment
+          /* multi-
+             line-
+             comment */
+
+          true ;
+          false ;
+      }
+  }
+#+END_SRC
 **** TODO HexStringLiteral
 **** TODO Unicode-string-literal
 * Макросы для корректного вывода ошибок
