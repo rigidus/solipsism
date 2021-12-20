@@ -2751,22 +2751,30 @@ Block может быть:
    )
 #+END_SRC
 
-***** START HexNum
+***** HexNum
 
-Hex numbers consist of a prefix and an arbitrary number of hex digits that may be delimited by underscores.
+Hex numbers consist of a prefix and an arbitrary number of hex digits
+that may be delimited by underscores.
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.HexString
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
   ("\\b0x[0-9A-Fa-f_]+\\b" '%hex_num_v1 $@)
+  ("\"\b0x[0-9A-Fa-f_]+\"\b" '%hex_num_v2 $@)
+  ("\'\b0x[0-9A-Fa-f_]+\'\b" '%hex_num_v3 $@)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
   %hex_num_v1
+  %hex_num_v2
+  %hex_num_v3
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%hex-num
    (%hex_num_v1 #'(lambda (hn) `(:hex-num ,hn)))
-   ;; todo: ...
+   (%hex_num_v2 #'(lambda (hn) `(:hex-num ,hn)))
+   (%hex_num_v3 #'(lambda (hn) `(:hex-num ,hn)))
    )
 #+END_SRC
 
@@ -2776,11 +2784,13 @@ Hex numbers consist of a prefix and an arbitrary number of hex digits that may b
   {
       function fn_test_hexnum () {
           0xF ;
+          "0xF2" ;
+          '0xF2A' ;
       }
   }
 #+END_SRC
 
-**** TODO Boolean-literal
+**** Boolean-literal
 Судя по этой диаграмме является терминалом, нерекурсивный
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.booleanLiteral
 
