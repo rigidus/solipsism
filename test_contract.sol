@@ -64,7 +64,7 @@ library Strings {
         buffer[0] = "0";
         buffer[1] = "x";
         for (uint256 i = 2 * length + 1; i > 1; --i) {
-            /* buffer[i] = alphabet[value & 0xf]; */
+            buffer[i] = alphabet[value & 0xf];
             value >>= 4;
         }
         require(value == 0, "Strings: hex length insufficient");
@@ -908,7 +908,7 @@ abstract contract ERC165 is IERC165 {
      * - `interfaceId` cannot be the ERC165 invalid interface (`0xffffffff`).
      */
     function _registerInterface(bytes4 interfaceId) internal virtual {
-        /* require(interfaceId != 0xffffffff, "ERC165: invalid interface id"); */
+        require(interfaceId != 0xffffffff, "ERC165: invalid interface id");
         _supportedInterfaces[interfaceId] = true;
     }
 

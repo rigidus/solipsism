@@ -215,8 +215,9 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_type_name.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_constructor.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
-
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_modifier.sol")
+
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_hexnum.sol")
 
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
 
@@ -2366,7 +2367,7 @@ Block может быть:
    (%tuple-expression #'(lambda (te) `(:expr-tuple ,te)))
    (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
    (%ident #'(lambda (id) `(:expr-ident ,id)))
-   (%lit #'(lambda (lit) `(:expr ,lit)))
+   (%lit #'(lambda (lit) `(:expr-lit ,lit)))
    (%elt-type-name #'(lambda (etn) `(:elt-type-name ,etn)))
    )
   (%idex-contents ;; TODO: Кажется это multi-ident-path
@@ -2679,7 +2680,7 @@ Block может быть:
   }
 #+END_SRC
 
-**** TODO Number-literal
+**** START Number-literal
 
 Числовые литералы могут быть либо десятичными либо шестнадцатиричными,
 при этом могут иметь опциональный number-unit
@@ -2689,13 +2690,13 @@ Block может быть:
    (%dec-num #'(lambda (lt) `(:num-lit ,lt)))
    ;; (%dec-num %num-unit #'(lambda (lt nu)
    ;;                         `(:dec-num ,lt :num-unit ,nu)))
-   ;; (%hex-num #'(lambda (lt) `(:hex-number ,lt)))
+   (%hex-num #'(lambda (lt) `(:hexnum ,lt)))
    ;; (%hex-num %num-unit #'(lambda (lt nu)
    ;;                         `(:hex-num ,lt :num-unit ,nu)))
    )
 #+END_SRC
 
-***** TODO Decimal-number
+***** START DecimalNumber
 
 может быть:
 - набором из цифр и знаков подчеркивания (regex: [0-9_])
@@ -2745,8 +2746,37 @@ Block может быть:
    )
 #+END_SRC
 
+***** START HexNum
+
+Hex numbers consist of a prefix and an arbitrary number of hex digits that may be delimited by underscores.
+
+#+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
+  ("\\b0x[0-9A-Fa-f_]+\\b" '%hex_num_v1 $@)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %hex_num_v1
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%hex-num
+   (%hex_num_v1 #'(lambda (hn) `(:hex-num ,hn)))
+   ;; todo: ...
+   )
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_hexnum.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_hexnum
+  {
+      function fn_test_hexnum () {
+          0xF ;
+      }
+  }
+#+END_SRC
+
 **** TODO Boolean-literal
-**** TODO Hex-literal
+**** TODO HexStringLiteral
 **** TODO Unicode-string-literal
 * Макросы для корректного вывода ошибок
 
