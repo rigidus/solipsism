@@ -1667,13 +1667,13 @@ abstract contract Ownable is Context {
         return _owner;
     }
 
-/*     /\** */
-/*      * @dev Throws if called by any account other than the owner. */
-/*      *\/ */
-/*     modifier onlyOwner() { */
-/*         require(owner() == _msgSender(), "Ownable: caller is not the owner"); */
-/*         _; */
-/*     } */
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+        _;
+    }
 
     /**
      * @dev Leaves the contract without owner. It will not be possible to call

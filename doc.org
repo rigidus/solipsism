@@ -214,8 +214,9 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_non_empty_str.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_fn_type_name.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_constructor.sol")
-
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_expr_idx_stmnt.sol")
+
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_modifier.sol")
 
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
 
@@ -1491,7 +1492,7 @@ Block может быть:
       }
   }
 #+END_SRC
-** TODO СonstructorDefinition
+** СonstructorDefinition
 
 Тут потребуется генерировать код так же как в FuncDefinition,
 т.к. конструктор может иметь следующие слова в определении:
@@ -1509,14 +1510,12 @@ Block может быть:
                     `(:constructor nil :parlist ,pl :cmeta ,cm :block ,blk)))
 #+END_SRC
 
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %constructor
-#+END_SRC
-
-и их распознавание в лексер:
-
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
   ("\\bconstructor\\b" '%constructor 'constructor)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %constructor
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb yes :noweb-ref grammar_rules
@@ -1545,7 +1544,64 @@ Block может быть:
 
 ** TODO Import-directive
 ** TODO Interface-definition
-** TODO Modifier-definition
+** Modifier-definition
+
+#+BEGIN_SRC lisp :noweb-ref func_def_contents
+  (%modifier %identifier |%;|
+             #'(lambda (mo id cm) `(:mod-def ,id)))
+  (%modifier %identifier %parlist |%;|
+             #'(lambda (mo id pl cm) `(:mod-def ,id :parlist ,pl)))
+  (%modifier %identifier %mdmeta |%;|
+             #'(lambda (mo id me cm) `(:mod-def ,id :meta ,me)))
+  (%modifier %identifier %parlist %mdmeta |%;|
+             #'(lambda (mo id pl me cm) `(:mod-def ,id :parlist ,pl :meta ,me)))
+
+  (%modifier %identifier %block
+             #'(lambda (mo id blk) `(:mod-def ,id :blk ,blk)))
+  (%modifier %identifier %parlist %block
+             #'(lambda (mo id pl blk) `(:mod-def ,id :parlist ,pl :blk ,blk)))
+  (%modifier %identifier %mdmeta %block
+             #'(lambda (mo id me blk) `(:mod-def ,id :meta ,me :blk ,blk)))
+  (%modifier %identifier %parlist %mdmeta %block
+             #'(lambda (mo id pl me blk) `(:mod-def ,id :parlist ,pl :meta ,me :blk ,blk)))
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bmodifier\\b" '%modifier 'modifier)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %modifier
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb yes :noweb-ref grammar_rules
+  (%mdmeta
+   <<mdmeta-combination()>>
+   )
+#+END_SRC
+
+#+NAME: mdmeta-combination
+#+BEGIN_SRC elisp :results output
+  (require 'cl)
+  (gen-accmd '(%virtual %override-specifier))
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_modifier.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_modifier
+  {
+      modifier onlyOwner ;
+      modifier onlyOwner () ;
+      modifier onlyOwner () { }
+      modifier onlyOwner () virtual { }
+
+      modifier onlyOwner() {
+          require(owner() == _msgSender(), "Ownable: caller is not the owner");
+          _;
+      }
+  }
+#+END_SRC
+
 ** TODO Fallback-function-definition
 ** TODO Receive-function-definition
 ** TODO Struct-definition
