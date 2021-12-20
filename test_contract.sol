@@ -67,7 +67,7 @@ library Strings {
             /* buffer[i] = alphabet[value & 0xf]; */
             value >>= 4;
         }
-        /* require(value == 0, "Strings: hex length insufficient"); */
+        require(value == 0, "Strings: hex length insufficient");
         return string(buffer);
     }
 
@@ -700,11 +700,11 @@ library Address {
      * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
      */
     function sendValue(address payable recipient, uint256 amount) internal {
-        /* require(address(this).balance >= amount, "Address: insufficient balance"); */
+        require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
         (bool success, ) = recipient.call{ value: amount }("");
-        /* require(success, "Address: unable to send value, recipient may have reverted"); */
+        require(success, "Address: unable to send value, recipient may have reverted");
     }
 
     /**
@@ -761,8 +761,8 @@ library Address {
      * _Available since v3.1._
      */
     function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
-        /* require(address(this).balance >= value, "Address: insufficient balance for call"); */
-        /* require(isContract(target), "Address: call to non-contract"); */
+        require(address(this).balance >= value, "Address: insufficient balance for call");
+        require(isContract(target), "Address: call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory returndata) = target.call{ value: value }(data);
@@ -786,7 +786,7 @@ library Address {
      * _Available since v3.3._
      */
     function functionStaticCall(address target, bytes memory data, string memory errorMessage) internal view returns (bytes memory) {
-        /* require(isContract(target), "Address: static call to non-contract"); */
+        require(isContract(target), "Address: static call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory returndata) = target.staticcall(data);
@@ -810,7 +810,7 @@ library Address {
      * _Available since v3.4._
      */
     function functionDelegateCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
-        /* require(isContract(target), "Address: delegate call to non-contract"); */
+        require(isContract(target), "Address: delegate call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory returndata) = target.delegatecall(data);
@@ -908,7 +908,7 @@ abstract contract ERC165 is IERC165 {
      * - `interfaceId` cannot be the ERC165 invalid interface (`0xffffffff`).
      */
     function _registerInterface(bytes4 interfaceId) internal virtual {
-/*         require(interfaceId != 0xffffffff, "ERC165: invalid interface id"); */
+        /* require(interfaceId != 0xffffffff, "ERC165: invalid interface id"); */
         _supportedInterfaces[interfaceId] = true;
     }
 
@@ -1241,7 +1241,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * @dev See {IERC721-balanceOf}.
      */
     function balanceOf(address owner) public view virtual override returns (uint256) {
-        /* require(owner != address(0), "ERC721: balance query for the zero address"); */
+        require(owner != address(0), "ERC721: balance query for the zero address");
         return _holderTokens[owner].length();
     }
 
@@ -1280,7 +1280,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * @dev See {IERC721Metadata-tokenURI}.
      */
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        /* require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token"); */
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
         string memory _tokenURI = _tokenURIs[tokenId];
         string memory base = baseURI();
@@ -1334,11 +1334,11 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      */
     function approve(address to, uint256 tokenId) public virtual override {
         address owner = ERC721.ownerOf(tokenId);
-/*         require(to != owner, "ERC721: approval to current owner"); */
+        require(to != owner, "ERC721: approval to current owner");
 
-/*         require(_msgSender() == owner || ERC721.isApprovedForAll(owner, _msgSender()), */
-/*             "ERC721: approve caller is not owner nor approved for all" */
-/*         ); */
+        require(_msgSender() == owner || ERC721.isApprovedForAll(owner, _msgSender()),
+            "ERC721: approve caller is not owner nor approved for all"
+        );
 
         _approve(to, tokenId);
     }
@@ -1347,7 +1347,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * @dev See {IERC721-getApproved}.
      */
     function getApproved(uint256 tokenId) public view virtual override returns (address) {
-        /* require(_exists(tokenId), "ERC721: approved query for nonexistent token"); */
+        require(_exists(tokenId), "ERC721: approved query for nonexistent token");
 
         return _tokenApprovals[tokenId];
     }
@@ -1356,7 +1356,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * @dev See {IERC721-setApprovalForAll}.
      */
     function setApprovalForAll(address operator, bool approved) public virtual override {
-/*         require(operator != _msgSender(), "ERC721: approve to caller"); */
+        require(operator != _msgSender(), "ERC721: approve to caller");
 
         _operatorApprovals[_msgSender()][operator] = approved;
         emit ApprovalForAll(_msgSender(), operator, approved);
@@ -1374,7 +1374,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      */
     function transferFrom(address from, address to, uint256 tokenId) public virtual override {
         //solhint-disable-next-line max-line-length
-        /* require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved"); */
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
 
         _transfer(from, to, tokenId);
     }
@@ -1390,7 +1390,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * @dev See {IERC721-safeTransferFrom}.
      */
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public virtual override {
-        /* require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved"); */
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
         _safeTransfer(from, to, tokenId, _data);
     }
 
@@ -1414,7 +1414,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      */
     function _safeTransfer(address from, address to, uint256 tokenId, bytes memory _data) internal virtual {
         _transfer(from, to, tokenId);
-/*         require(_checkOnERC721Received(from, to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer"); */
+        require(_checkOnERC721Received(from, to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer");
     }
 
     /**
@@ -1437,7 +1437,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * - `tokenId` must exist.
      */
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
-    /*     require(_exists(tokenId), "ERC721: operator query for nonexistent token"); */
+        require(_exists(tokenId), "ERC721: operator query for nonexistent token");
         address owner = ERC721.ownerOf(tokenId);
         return (spender == owner || getApproved(tokenId) == spender || ERC721.isApprovedForAll(owner, spender));
     }
@@ -1462,7 +1462,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      */
     function _safeMint(address to, uint256 tokenId, bytes memory _data) internal virtual {
         _mint(to, tokenId);
-        /* require(_checkOnERC721Received(address(0), to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer"); */
+        require(_checkOnERC721Received(address(0), to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer");
     }
 
     /**
@@ -1478,8 +1478,8 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * Emits a {Transfer} event.
      */
     function _mint(address to, uint256 tokenId) internal virtual {
-/*         require(to != address(0), "ERC721: mint to the zero address"); */
-/*         require(!_exists(tokenId), "ERC721: token already minted"); */
+        require(to != address(0), "ERC721: mint to the zero address");
+        require(!_exists(tokenId), "ERC721: token already minted");
 
         _beforeTokenTransfer(address(0), to, tokenId);
 
@@ -1532,8 +1532,8 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * Emits a {Transfer} event.
      */
     function _transfer(address from, address to, uint256 tokenId) internal virtual {
-        /* require(ERC721.ownerOf(tokenId) == from, "ERC721: transfer of token that is not own"); // internal owner */
-        /* require(to != address(0), "ERC721: transfer to the zero address"); */
+        require(ERC721.ownerOf(tokenId) == from, "ERC721: transfer of token that is not own"); // internal owner
+        require(to != address(0), "ERC721: transfer to the zero address");
 
         _beforeTokenTransfer(from, to, tokenId);
 
@@ -1556,7 +1556,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * - `tokenId` must exist.
      */
     function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal virtual {
-        /* require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token"); */
+        require(_exists(tokenId), "ERC721Metadata: URI set of nonexistent token");
         _tokenURIs[tokenId] = _tokenURI;
     }
 
@@ -1692,7 +1692,7 @@ abstract contract Ownable is Context {
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        /* require(newOwner != address(0), "Ownable: new owner is the zero address"); */
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
         /* emit OwnershipTransferred(_owner, newOwner); */
         _owner = newOwner;
     }
@@ -1892,7 +1892,7 @@ library SafeMath {
      */
     function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         unchecked {
-            /* require(b > 0, errorMessage); */
+            require(b > 0, errorMessage);
             return a / b;
         }
     }
@@ -1959,17 +1959,17 @@ contract SactAvatars is ERC721, Ownable {
     /* } */
 
     function calculatePrice() public view returns (uint256) {
-   /*      require(hasSaleStarted == true, "Sale hasn't started"); */
-   /*      require(totalSupply() < MAX_AVATARS, "Sale has already ended"); */
+        require(hasSaleStarted == true, "Sale hasn't started");
+        require(totalSupply() < MAX_AVATARS, "Sale has already ended");
         return 50000000000000000; //0.05BNB
     }
 
 
    function summonAvatar(uint256 maxAvatars) public payable {
-        /* require(totalSupply() < MAX_AVATARS, "Sale has already ended"); */
-        /* require(maxAvatars > 0 && maxAvatars <= 20, "You can craft minimum 1, maximum 20 avatars"); */
-        /* require(totalSupply().add(maxAvatars) <= MAX_AVATARS, "Exceeds max tupply"); */
-        /* require(msg.value >= calculatePrice().mul(maxAvatars), "Ether value sent is below the price"); */
+        require(totalSupply() < MAX_AVATARS, "Sale has already ended");
+        require(maxAvatars > 0 && maxAvatars <= 20, "You can craft minimum 1, maximum 20 avatars");
+        require(totalSupply().add(maxAvatars) <= MAX_AVATARS, "Exceeds max tupply");
+        require(msg.value >= calculatePrice().mul(maxAvatars), "Ether value sent is below the price");
 
         for (uint i = 0; i < maxAvatars; i++) {
             uint mintIndex = totalSupply();
