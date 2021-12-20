@@ -881,11 +881,11 @@ abstract contract ERC165 is IERC165 {
      */
 /*     mapping(bytes4 => bool) private _supportedInterfaces; */
 
-/*     constructor () { */
-/*         // Derived contracts need only register support for their own interfaces, */
-/*         // we register support for ERC165 itself here */
-/*         _registerInterface(type(IERC165).interfaceId); */
-/*     } */
+    constructor () {
+        // Derived contracts need only register support for their own interfaces,
+        // we register support for ERC165 itself here
+    /*     _registerInterface(type(IERC165).interfaceId); */
+    }
 
     /**
      * @dev See {IERC165-supportsInterface}.
@@ -1227,15 +1227,15 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-/*     constructor (string memory name_, string memory symbol_) { */
-/*         _name = name_; */
-/*         _symbol = symbol_; */
+    constructor (string memory name_, string memory symbol_) {
+        _name = name_;
+        _symbol = symbol_;
 
-/*         // register the supported interfaces to conform to ERC721 via ERC165 */
+        // register the supported interfaces to conform to ERC721 via ERC165
 /*         _registerInterface(type(IERC721).interfaceId); */
 /*         _registerInterface(type(IERC721Metadata).interfaceId); */
 /*         _registerInterface(type(IERC721Enumerable).interfaceId); */
-/*     } */
+    }
 
     /**
      * @dev See {IERC721-balanceOf}.
@@ -1651,14 +1651,14 @@ abstract contract Ownable is Context {
 
 
 
-/*     /\** */
-/*      * @dev Initializes the contract setting the deployer as the initial owner. */
-/*      *\/ */
-/*     constructor () { */
-/*         address msgSender = _msgSender(); */
-/*         _owner = msgSender; */
+    /**
+     * @dev Initializes the contract setting the deployer as the initial owner.
+     */
+    constructor () {
+        address msgSender = _msgSender();
+        _owner = msgSender;
 /*         emit OwnershipTransferred(address(0), msgSender); */
-/*     } */
+    }
 
     /**
      * @dev Returns the address of the current owner.
@@ -1934,11 +1934,11 @@ contract SactAvatars is ERC721, Ownable {
 
 
 
-   /*  constructor() ERC721("Sact Avatars","SAVATAR")  { */
-   /*      setBaseURI("https://cafeswap.finance/api/sactavatars/"); */
-   /*      feeReceiver = payable(msg.sender); */
-   /*      _safeMint(msg.sender,0); */
-   /*  } */
+    constructor() ERC721("Sact Avatars","SAVATAR")  {
+        /* setBaseURI("https://cafeswap.finance/api/sactavatars/"); */
+        feeReceiver = payable(msg.sender);
+        _safeMint(msg.sender,0);
+    }
 
 
 
