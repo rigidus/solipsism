@@ -220,8 +220,9 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_modifier.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_hexnum.sol")
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
-
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
+
+  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_iface_def.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -360,9 +361,17 @@ identifier, он может совпасть с практически любы�
    (%src-unit-contents %src-unit  #'(lambda (a b) `(:src-head ,a :src-rest, b)))
    )
   (%src-unit-contents
-   (%pragma-def #'(lambda (x) `(:pragma-def ,x)))
-   (%ctract-def #'(lambda (x) `(:ctract-def ,x)))
-   (%lib-def    #'(lambda (x) `(:lib-def ,x)))
+   ;; import
+   (%pragma-def #'(lambda (df) `(:pragma-def ,df)))
+   (%ctract-def #'(lambda (df) `(:ctract-def ,df)))
+   (%iface-def  #'(lambda (df) `(:iface-def ,df)))
+   (%lib-def    #'(lambda (df) `(:lib-def ,df)))
+   ;; func-def
+   ;; const-var-decl
+   ;; struct-def
+   ;; enum-def
+   ;; user-def-val-type-def
+   ;; error-def
    )
 #+END_SRC
 
@@ -1546,7 +1555,40 @@ Block может быть:
 #+END_SRC
 
 ** TODO Import-directive
-** TODO Interface-definition
+** START InterfaceDefinition
+
+[TODO:gmm] - вынести ctract-body-elt-contents
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%iface-def
+   (%interface %identifier |%{| |%}|
+               #'(lambda (in id lb rb) `(:iface ,id)))
+   (%interface %identifier %is %inher-spec-list |%{| |%}|
+               #'(lambda (in id is isp lb rb) `(:iface ,id :is ,isp)))
+   (%interface %identifier |%{| %ctract-body-elt-contents |%}|
+               #'(lambda (in id lb bdy rb) `(:iface ,id :contents ,bdy)))
+   (%interface %identifier %is %inher-spec-list |%{|
+               %ctract-body-elt-contents |%}|
+               #'(lambda (in id is isp lb bdy rb)
+                   `(:iface ,id :is ,isp :contents ,bdy)))
+  )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\binterface\\b" '%interface 'interface)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %interface
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_iface_def.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  interface IERC165 {
+      function test (bytes4 interfaceId) external view returns (bool);
+  }
+#+END_SRC
+
 ** Modifier-definition
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
