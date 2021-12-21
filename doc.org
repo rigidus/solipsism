@@ -194,32 +194,33 @@ solidity-конструкциями и ожидаю получить дерев�
              pathname))
 
   ;; (test-all)
-  (test-file #P"./tests/test_lib_def.sol")
-  (test-file #P"./tests/test_ctract_def.sol")
-  (test-file #P"./tests/test_ctract_body_elt.sol")
-  (test-file #P"./tests/test_simple_func_def.sol")
-  (test-file #P"./tests/test_func_with_param.sol")
-  (test-file #P"./tests/test_func_with_params.sol")
-  (test-file #P"./tests/test_fn_prm_type_id.sol")
-  (test-file #P"./tests/test_fn_prms_type_id.sol")
-  (test-file #P"./tests/test_fn_prms_type_loc.sol")
-  (test-file #P"./tests/test_fn_prms_type_loc_id.sol")
-  (test-file #P"./tests/test_fn_returns.sol")
-  (test-file #P"./tests/test_fn_visibility.sol")
-  (test-file #P"./tests/test_fn_state_mutability.sol")
-  (test-file #P"./tests/test_fn_virtual.sol")
-  (test-file #P"./tests/test_fn_mod_inv.sol")
-  (test-file #P"./tests/test_fn_override.sol")
-  (test-file #P"./tests/test_fn_block.sol")
-  (test-file #P"./tests/test_state_var_decl.sol")
-  (test-file #P"./tests/test_inline_arr_expr.sol")
-  (test-file #P"./tests/test_non_empty_str.sol")
-  (test-file #P"./tests/test_fn_type_name.sol")
-  (test-file #P"./tests/test_constructor.sol")
-  (test-file #P"./tests/test_expr_idx_stmnt.sol")
-  (test-file #P"./tests/test_modifier.sol")
-  (test-file #P"./tests/test_hexnum.sol")
-  (test-file #P"./tests/test_bool_lit.sol")
+  ;; (test-file #P"./tests/test_lib_def.sol")
+  ;; (test-file #P"./tests/test_ctract_def.sol")
+  ;; (test-file #P"./tests/test_ctract_body_elt.sol")
+  ;; (test-file #P"./tests/test_simple_func_def.sol")
+  ;; (test-file #P"./tests/test_func_with_param.sol")
+  ;; (test-file #P"./tests/test_func_with_params.sol")
+  ;; (test-file #P"./tests/test_fn_prm_type_id.sol")
+  ;; (test-file #P"./tests/test_fn_prms_type_id.sol")
+  ;; (test-file #P"./tests/test_fn_prms_type_loc.sol")
+  ;; (test-file #P"./tests/test_fn_prms_type_loc_id.sol")
+  ;; (test-file #P"./tests/test_fn_returns.sol")
+  ;; (test-file #P"./tests/test_fn_visibility.sol")
+  ;; (test-file #P"./tests/test_fn_state_mutability.sol")
+  ;; (test-file #P"./tests/test_fn_virtual.sol")
+  ;; (test-file #P"./tests/test_fn_mod_inv.sol")
+  ;; (test-file #P"./tests/test_fn_override.sol")
+  ;; (test-file #P"./tests/test_fn_block.sol")
+  ;; (test-file #P"./tests/test_state_var_decl.sol")
+  ;; (test-file #P"./tests/test_inline_arr_expr.sol")
+  ;; (test-file #P"./tests/test_non_empty_str.sol")
+  ;; (test-file #P"./tests/test_fn_type_name.sol")
+  ;; (test-file #P"./tests/test_constructor.sol")
+  ;; (test-file #P"./tests/test_expr_idx_stmnt.sol")
+  ;; (test-file #P"./tests/test_modifier.sol")
+  ;; (test-file #P"./tests/test_hexnum.sol")
+  ;; (test-file #P"./tests/test_bool_lit.sol")
+  ;; (test-file #P"./tests/test_mapping.sol")
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
 
@@ -1201,7 +1202,7 @@ multi-identifier-path, поэтому нам понадобится раскры
    )
 #+END_SRC
 
-** START TypeName
+** TypeName
 
 A type name can be an elementary type, a function type, a mapping
 type, a user-defined type (e.g. a contract or struct) or an array
@@ -1213,8 +1214,8 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
   (%type-name
    (%elt-type-name #'(lambda (par) `(:elt-type-name ,par)))
    (%func-type-name #'(lambda (par) `(:func-type-name ,par)))
-   ;; (%mapping-type #'(lambda (par) `(:mapping-type ,par)))
-   ;; (%identifier-path #'(lambda (par) `(:identifier-path ,par)))
+   (%mapping-type #'(lambda (par) `(:mapping-type ,par)))
+   (%ident-path #'(lambda (par) `(:identifier-path ,par)))
    (%type-name |%[| %expr |%]|
                #'(lambda (par lb ex rb) `(:type-name-expr ,par :expr ,ex)))
    )
@@ -1303,6 +1304,46 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
   library Strings {
       function test() {
           bytes memory buffer =  new bytes(digits);
+      }
+  }
+#+END_SRC
+
+*** Mapping type
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingType
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%mapping-type
+   (%mapping |%(| %mapping-key-type |%=>| %type-name  |%)|  #'(lambda (a b c d e f)
+                                                                 `(:type-from ,c :type-to ,e))))
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%mapping-key-type
+   (%elt-type-name #'(lambda (par) `(:elt-type-name ,par)))
+   (%ident-path #'(lambda (par) `(:identifier-path ,par))))
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bmapping\\b" '%mapping 'mapping)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("[=]{1}[>]{1}" '|%=>| '|%=>|)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  |%=>|
+  %mapping
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_mapping.sol :mkdirp yes :noweb yes
+  pragma solidity ^0.8.0;
+  contract test_mapping_type
+  {
+      function fn_mapping_type_1 (uint8 p_one) returns (uint16 r_one) {
+         new mapping(uint8 => uint16);
+         new mapping(Obj.isOk => uint16);
       }
   }
 #+END_SRC
@@ -2776,25 +2817,31 @@ Block может быть:
    )
 #+END_SRC
 
-***** START HexNum
+***** HexNum
 
-Hex numbers consist of a prefix and an arbitrary number of hex digits that may be delimited by underscores.
+Hex numbers consist of a prefix and an arbitrary number of hex digits
+that may be delimited by underscores.
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.HexString
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
   ("\\b0x[0-9A-Fa-f_]+\\b" '%hex_num_v1 $@)
+  ("\"\b0x[0-9A-Fa-f_]+\"\b" '%hex_num_v2 $@)
+  ("\'\b0x[0-9A-Fa-f_]+\'\b" '%hex_num_v3 $@)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
   %hex_num_v1
+  %hex_num_v2
+  %hex_num_v3
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%hex-num
-   (%hex_num_v1
-    #'(lambda (hn)
-        (dbg "~A" hn)
-        `(:hex-num ,hn)))
-   ;; todo: ...
+   (%hex_num_v1 #'(lambda (hn) `(:hex-num ,hn)))
+   (%hex_num_v2 #'(lambda (hn) `(:hex-num ,hn)))
+   (%hex_num_v3 #'(lambda (hn) `(:hex-num ,hn)))
+
    )
 #+END_SRC
 
@@ -2804,11 +2851,13 @@ Hex numbers consist of a prefix and an arbitrary number of hex digits that may b
   {
       function fn_test_hexnum () {
           0xF ;
+          "0xF2" ;
+          '0xF2A' ;
       }
   }
 #+END_SRC
 
-**** TODO Boolean-literal
+**** Boolean-literal
 Судя по этой диаграмме является терминалом, нерекурсивный
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.booleanLiteral
 
