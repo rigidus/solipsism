@@ -192,32 +192,33 @@ solidity-конструкциями и ожидаю получить дерев�
              pathname))
 
   ;; (test-all)
-  (test-file #P"./tests/test_lib_def.sol")
-  (test-file #P"./tests/test_ctract_def.sol")
-  (test-file #P"./tests/test_ctract_body_elt.sol")
-  (test-file #P"./tests/test_simple_func_def.sol")
-  (test-file #P"./tests/test_func_with_param.sol")
-  (test-file #P"./tests/test_func_with_params.sol")
-  (test-file #P"./tests/test_fn_prm_type_id.sol")
-  (test-file #P"./tests/test_fn_prms_type_id.sol")
-  (test-file #P"./tests/test_fn_prms_type_loc.sol")
-  (test-file #P"./tests/test_fn_prms_type_loc_id.sol")
-  (test-file #P"./tests/test_fn_returns.sol")
-  (test-file #P"./tests/test_fn_visibility.sol")
-  (test-file #P"./tests/test_fn_state_mutability.sol")
-  (test-file #P"./tests/test_fn_virtual.sol")
-  (test-file #P"./tests/test_fn_mod_inv.sol")
-  (test-file #P"./tests/test_fn_override.sol")
-  (test-file #P"./tests/test_fn_block.sol")
-  (test-file #P"./tests/test_state_var_decl.sol")
-  (test-file #P"./tests/test_inline_arr_expr.sol")
-  (test-file #P"./tests/test_non_empty_str.sol")
-  (test-file #P"./tests/test_fn_type_name.sol")
-  (test-file #P"./tests/test_constructor.sol")
-  (test-file #P"./tests/test_expr_idx_stmnt.sol")
-  (test-file #P"./tests/test_modifier.sol")
-  (test-file #P"./tests/test_hexnum.sol")
-  (test-file #P"./tests/test_bool_lit.sol")
+  ;; (test-file #P"./tests/test_lib_def.sol")
+  ;; (test-file #P"./tests/test_ctract_def.sol")
+  ;; (test-file #P"./tests/test_ctract_body_elt.sol")
+  ;; (test-file #P"./tests/test_simple_func_def.sol")
+  ;; (test-file #P"./tests/test_func_with_param.sol")
+  ;; (test-file #P"./tests/test_func_with_params.sol")
+  ;; (test-file #P"./tests/test_fn_prm_type_id.sol")
+  ;; (test-file #P"./tests/test_fn_prms_type_id.sol")
+  ;; (test-file #P"./tests/test_fn_prms_type_loc.sol")
+  ;; (test-file #P"./tests/test_fn_prms_type_loc_id.sol")
+  ;; (test-file #P"./tests/test_fn_returns.sol")
+  ;; (test-file #P"./tests/test_fn_visibility.sol")
+  ;; (test-file #P"./tests/test_fn_state_mutability.sol")
+  ;; (test-file #P"./tests/test_fn_virtual.sol")
+  ;; (test-file #P"./tests/test_fn_mod_inv.sol")
+  ;; (test-file #P"./tests/test_fn_override.sol")
+  ;; (test-file #P"./tests/test_fn_block.sol")
+  ;; (test-file #P"./tests/test_state_var_decl.sol")
+  ;; (test-file #P"./tests/test_inline_arr_expr.sol")
+  ;; (test-file #P"./tests/test_non_empty_str.sol")
+  ;; (test-file #P"./tests/test_fn_type_name.sol")
+  ;; (test-file #P"./tests/test_constructor.sol")
+  ;; (test-file #P"./tests/test_expr_idx_stmnt.sol")
+  ;; (test-file #P"./tests/test_modifier.sol")
+  ;; (test-file #P"./tests/test_hexnum.sol")
+  ;; (test-file #P"./tests/test_bool_lit.sol")
+  (test-file #P"./tests/test_fn_mapping.sol")
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
 
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
@@ -1302,7 +1303,7 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingType
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("[=]{1}[>]{1}" '|%=>| '|%=>|)
+  ("[=]{1}[>]{1}" '|%=>| '|=>|)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
@@ -1312,7 +1313,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingTy
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%mapping-type
    (%mapping |%(| %mapping-key-type |%=>| %type-name |%)| #'(lambda (op b map-k-t d t-name f)
-                                                              (dbg op b map-k-t d e f)
+                                                              (dbg ~A op b map-k-t d e f)
                                                               `(:mapping-from ,map-k-t :mapping-to ,t-name))))
 #+END_SRC
 
@@ -2882,6 +2883,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.booleanLi
 
 #+NAME: dbgout
 #+BEGIN_SRC lisp
+  (in-package :sol-parser)
+
   (defparameter *dbg-enable* t)
   (defparameter *dbg-indent* 1)
 
