@@ -1202,7 +1202,7 @@ multi-identifier-path, поэтому нам понадобится раскры
    )
 #+END_SRC
 
-** START TypeName
+** TypeName
 
 A type name can be an elementary type, a function type, a mapping
 type, a user-defined type (e.g. a contract or struct) or an array
@@ -1309,7 +1309,7 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
   }
 #+END_SRC
 
-*** START Mapping type
+*** Mapping type
 
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingType
 
