@@ -1313,8 +1313,12 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingTy
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%mapping-type
    (%mapping |%(| %mapping-key-type |%=>| %type-name |%)| #'(lambda (op b map-k-t d t-name f)
-                                                              (dbg ~A op b map-k-t d e f)
+                                                              (dbg "~A" op b map-k-t d t-name f)
                                                               `(:mapping-from ,map-k-t :mapping-to ,t-name))))
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bmapping\\b" '%mapping 'mapping)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
@@ -1333,7 +1337,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingTy
   contract test_mapping_type
   {
       function fn_mapping_type_1 (uint8 p_one) returns (uint16 r_one) {
-          mapping(uint8 => uint16);
+         new mapping(uint8 => uint16);
       }
   }
 #+END_SRC
