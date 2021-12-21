@@ -53,6 +53,8 @@ solidity-конструкциями и ожидаю получить дерев�
         (cons (car par) (lddr (cadr par)))
         par))
 
+  <<dbgout>>
+
   <<deleting_comments>>
 
   <<lexer>>
@@ -2764,7 +2766,10 @@ Hex numbers consist of a prefix and an arbitrary number of hex digits that may b
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%hex-num
-   (%hex_num_v1 #'(lambda (hn) `(:hex-num ,hn)))
+   (%hex_num_v1
+    #'(lambda (hn)
+        (dbg "~A" hn)
+        `(:hex-num ,hn)))
    ;; todo: ...
    )
 #+END_SRC
@@ -2800,6 +2805,8 @@ Hex numbers consist of a prefix and an arbitrary number of hex digits that may b
 
 #+NAME: dbgout
 #+BEGIN_SRC lisp
+  (in-package :sol-parser)
+
   (defparameter *dbg-enable* t)
   (defparameter *dbg-indent* 1)
 
