@@ -476,6 +476,10 @@ identifier, он может совпасть с практически любы�
    ;; receive-function-definition
    ;; struct-definition
    ;; enum-definition
+   (%enum-def
+    (%enum %identifier |%{| %identifier |%}| #'(lambda (a b c d e)
+                                                 `(:ident-first ,b :ident-first, d)))
+    )
    ;; user-defined-value-type-definition
    ;; event-definition
    ;; error-definition
@@ -499,6 +503,24 @@ identifier, он может совпасть с практически любы�
   }
 #+END_SRC
 
+*** Enum
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %enum
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\benum\\b" '%enum 'enum)
+#+END_SRC
+
+
+#+BEGIN_SRC solidity :tangle tests/test_enum.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_library_definition
+  {
+      enum Status { canceled };
+  }
+#+END_SRC
 ** START ContractDefinition
 
 Замечание о наименовании:
