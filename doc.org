@@ -220,7 +220,7 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_modifier.sol")
   ;; (test-file #P"./tests/test_hexnum.sol")
   ;; (test-file #P"./tests/test_bool_lit.sol")
-  (test-file #P"./tests/test_fn_mapping.sol")
+  ;; (test-file #P"./tests/test_mapping.sol")
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
 
@@ -1317,10 +1317,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingTy
   ("[=]{1}[>]{1}" '|%=>| '|=>|)
 #+END_SRC
 
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%=>|
-#+END_SRC
-
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%mapping-type
    (%mapping |%(| %mapping-key-type |%=>| %type-name |%)| #'(lambda (op b map-k-t d t-name f)
@@ -1332,10 +1328,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingTy
   ("\\bmapping\\b" '%mapping 'mapping)
 #+END_SRC
 
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %mapping
-#+END_SRC
-
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%mapping-key-type
    (%elt-type-name #'(lambda (type) `(:elt_type ,type)))
@@ -1343,8 +1335,13 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingTy
    )
 #+END_SRC
 
-#+BEGIN_SRC solidity :tangle tests/test_fn_mapping.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  |%=>|
+  %mapping
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_mapping.sol :mkdirp yes :noweb yes
+  pragma solidity ^0.8.0;
   contract test_mapping_type
   {
       function fn_mapping_type_1 (uint8 p_one) returns (uint16 r_one) {
@@ -1353,6 +1350,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingTy
       }
   }
 #+END_SRC
+
 ** ElementaryTypeName
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
