@@ -225,6 +225,8 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_iface_def.sol")
   ;; (test-file #P"./tests/test_fallback.sol")
+  ;; (test-file #P"./tests/test_receive.sol")
+  ;; (test-file #P"./tests/test_struct.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -471,8 +473,8 @@ identifier, он может совпасть с практически любы�
    (%ctor-def #'(lambda (x) `(:ctor ,x)))
    (%modif-def #'(lambda (x) `(:modif-def ,x)))
    (%fallback-func-def #'(lambda (x) `(:fallback-func-def ,x)))
-   ;; receive-function-definition
-   ;; struct-definition
+   (%receive-func-def #'(lambda (x) `(:receive-func-def ,x)))
+   (%struct-def #'(lambda (x) `(:struct-def ,x)))
    ;; enum-definition
    ;; user-defined-value-type-definition
    ;; event-definition
@@ -1682,14 +1684,14 @@ Fallback-функция во всем подобна обычной функци
               #'(lambda (fb parlist blk)
                   `(:fallback nil :parlist ,parlist :block ,blk)))
    (%fallback %parlist %retlist %block
-              #'(lambda (fn id pl rl blk)
+              #'(lambda (fb id pl rl blk)
                   `(:fallback nil :parlist ,pl :retlist ,rl :block ,blk)))
    (%fallback %parlist %fmeta %retlist %block
               #'(lambda (fb parlist fmeta retlist blk)
                   `(:fallback nil :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
                     :block ,blk)))
    (%fallback %parlist %fmeta %block
-              #'(lambda (fbg parlist fmeta blk)
+              #'(lambda (fb parlist fmeta blk)
                   `(:fallback nil :parlist ,parlist :fmeta ,fmeta :block ,blk)))
    )
 #+END_SRC
@@ -1709,6 +1711,88 @@ Fallback-функция во всем подобна обычной функци
   contract test_fallback
   {
       fallback (uint storage p_one) ;
+  }
+#+END_SRC
+
+** ReceiveFunctionDefinition
+
+По аналогии с fallback
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%receive-func-def
+   (%receive %parlist %block
+              #'(lambda (rv parlist blk)
+                  `(:receive nil :parlist ,parlist :block ,blk)))
+   (%receive %parlist %retlist %block
+              #'(lambda (rv id pl rl blk)
+                  `(:receive nil :parlist ,pl :retlist ,rl :block ,blk)))
+   (%receive %parlist %fmeta %retlist %block
+              #'(lambda (rv parlist fmeta retlist blk)
+                  `(:receive nil :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
+                    :block ,blk)))
+   (%receive %parlist %fmeta %block
+              #'(lambda (rv parlist fmeta blk)
+                  `(:receive nil :parlist ,parlist :fmeta ,fmeta :block ,blk)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\breceive\\b" '%receive 'receive)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %receive
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_receive.sol :mkdirp yes :noweb yes
+  contract test_receive
+  {
+      receive (uint storage p_one) ;
+  }
+#+END_SRC
+
+** StructDefinition
+
+Definition of a struct. Can occur at top-level within a source unit or within a contract, library or interface.
+
+[TODO:gmm] - Походу, встретив Struct мы должны расширить количество
+разбираемых типов
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%struct-def
+   (%struct %identifier |%{| %struct-member-contents |%}|
+            #'(lambda (st id lb smc rb)
+                `(:struct ,id :contents ,smc)))
+   )
+  (%struct-member-contents
+   (%struct-member #'(lambda (sm)
+                       `(:struct-last ,sm)))
+   (%struct-member %struct-member-contents
+                   #'(lambda (sm smc)
+                       `(:struct-head ,sm :struct-rest ,smc)))
+   )
+  (%struct-member
+   (%type-name %identifier |%;|
+               #'(lambda (tn id sc)
+                   `(:struct-name ,id :type ,tn)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bstruct\\b" '%struct 'struct)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %struct
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_struct.sol :mkdirp yes :noweb yes
+  contract test_struct
+  {
+      struct MapEntry {
+          bytes32 _key;
+          mapping (bytes32 => uint256) _indexes;
+      }
   }
 #+END_SRC
 
