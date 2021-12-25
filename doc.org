@@ -221,6 +221,8 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_hexnum.sol")
   ;; (test-file #P"./tests/test_bool_lit.sol")
   ;; (test-file #P"./tests/test_mapping.sol")
+  ;; (test-file #P"./tests/test_enum.sol")
+
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_iface_def.sol")
@@ -374,7 +376,7 @@ identifier, он может совпасть с практически любы�
    (%func-def   #'(lambda (df) `(:func-def ,df)))
    ;; const-var-decl
    ;; struct-def
-   ;; enum-def
+   (%enum-def #'(lambda (df) `(:enum-def ,df)))
    ;; user-def-val-type-def
    ;; error-def
    )
@@ -473,9 +475,9 @@ identifier, он может совпасть с практически любы�
    (%ctor-def #'(lambda (x) `(:ctor ,x)))
    (%modif-def #'(lambda (x) `(:modif-def ,x)))
    (%fallback-func-def #'(lambda (x) `(:fallback-func-def ,x)))
+   (%enum-def #'(lambda (x) `(:enum-def ,x)))
    (%receive-func-def #'(lambda (x) `(:receive-func-def ,x)))
    (%struct-def #'(lambda (x) `(:struct-def ,x)))
-   ;; enum-definition
    ;; user-defined-value-type-definition
    ;; event-definition
    ;; error-definition
@@ -498,6 +500,41 @@ identifier, он может совпасть с практически любы�
   }
 #+END_SRC
 
+*** Enum
+
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%enum-def
+   (%enum %identifier |%{| %enum-body |%}| #'(lambda (a b c d e)
+                                                `(:ident ,b :enum-body, d))))
+
+  (%enum-body
+   ( %identifier #'(lambda (a)
+                     `(:enum-body ,a)))
+   ( %identifier |%,| %enum-body #'(lambda (a b c)
+                                     `(:body-head ,a :body-rest ,c))))
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %enum
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\benum\\b" '%enum 'enum)
+#+END_SRC
+
+
+#+BEGIN_SRC solidity :tangle tests/test_enum.sol :mkdirp yes :noweb yes
+  <<test_pragma>>
+  contract test_library_definition
+  {
+      enum Status { canceled }
+
+      enum Status { canceled,
+                    ended,
+                    started }
+  }
+#+END_SRC
 ** START ContractDefinition
 
 Замечание о наименовании:
