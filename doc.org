@@ -225,8 +225,8 @@ solidity-конструкциями и ожидаю получить дерев�
 
   ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
-
   ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_iface_def.sol")
+  ;; (test-file #P"./tests/test_fallback.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
@@ -444,7 +444,6 @@ identifier, он может совпасть с практически любы�
 Тест использует опережающее определение функции:
 
 #+BEGIN_SRC solidity :tangle tests/test_lib_def.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   library test_library_definition
   {
   }
@@ -470,11 +469,10 @@ identifier, он может совпасть с практически любы�
    )
   (%ctract-body-elt
    (%func-def #'(lambda (x) `(:func-def ,x)))
-   (%state-variable-declaration #'(lambda (x)
-                                    `(:state-variable-declaration ,x)))
-   ;; constructor-definition
-   ;; nmodifier-definition
-   ;; fallback-function-definition
+   (%state-var-decl #'(lambda (x) `(:state-var-decl ,x)))
+   (%ctor-def #'(lambda (x) `(:ctor ,x)))
+   (%modif-def #'(lambda (x) `(:modif-def ,x)))
+   (%fallback-func-def #'(lambda (x) `(:fallback-func-def ,x)))
    ;; receive-function-definition
    ;; struct-definition
    (%enum-def #'(lambda (x) `(:enum-def ,x)))
@@ -489,7 +487,6 @@ identifier, он может совпасть с практически любы�
 параграфов.
 
 #+BEGIN_SRC solidity :tangle tests/test_ctract_body_elt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_library_definition
   {
       function func_1 () ;
@@ -621,7 +618,6 @@ NB: Правило IndentifierPath вынесено в параграф [[*Ident
 Тест (использует опережающее определение функции):
 
 #+BEGIN_SRC solidity :tangle tests/test_ctract_def.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_empty_ctract_def
   {
   }
@@ -726,7 +722,6 @@ NB: Использует опережающие правила %expr, %expr-comm
 Начнем с теста простейшего варианта функции:
 
 #+BEGIN_SRC solidity :tangle tests/test_simple_func_def.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_simple_func_def
   {
       function simple_func () ;
@@ -810,7 +805,6 @@ TypeName определен в параграфе [[*TypeName][TypeName]]
 который определен как тип:
 
 #+BEGIN_SRC solidity :tangle tests/test_func_with_param.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_func_with_param
   {
       function func_with_param (uint) ;
@@ -820,7 +814,6 @@ TypeName определен в параграфе [[*TypeName][TypeName]]
 и тест с несколькими параметрами, определенными как тип:
 
 #+BEGIN_SRC solidity :tangle tests/test_func_with_params.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_func_with_params
   {
       function func_with_params (uint, int) ;
@@ -851,7 +844,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.parameter
 Для этого правила следует составить тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_prm_type_id.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_prm_type_id
   {
       function func (uint param) ;
@@ -862,7 +854,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.parameter
 параметров несколько:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_prms_type_id.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_prms_type_id
   {
       function func (uint param_one, int param_two) ;
@@ -898,7 +889,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.parameter
 Теперь можно писать тесты:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_prms_type_loc.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_prms_type_loc
   {
       function just_func (uint storage) ;
@@ -924,7 +914,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.parameter
 Все компоненты уже есть, так что осталось только написать тесты:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_prms_type_loc_id.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_prms_type_loc_id
   {
       function just_func (uint storage param_one) ;
@@ -972,7 +961,6 @@ Retlist представляет из себя два возможных вар�
 Переходим к тестам:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_returns.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_returns
   {
       function fn_1 (uint storage p_one) returns (uint storage r_one, int memory r_two) ;
@@ -1078,7 +1066,6 @@ Retlist представляет из себя два возможных вар�
 Попробуем написать тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_visibility.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_visibility
   {
       function fn_1 (uint p_one, int p_two) external returns (uint r_one) ;
@@ -1116,7 +1103,6 @@ Retlist представляет из себя два возможных вар�
 Тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_state_mutability.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_state_mutability
   {
       function fn_1 (uint p_one, int p_two) external view returns (uint r_one) ;
@@ -1143,7 +1129,6 @@ Retlist представляет из себя два возможных вар�
 Тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_virtual.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_virtual
   {
       function fn_1 (uint p_one, int p_two) virtual returns (uint r_one) ;
@@ -1169,7 +1154,6 @@ call-argument-list, поэтому нам понадобится раскрыв�
 Тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_mod_inv.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_mod_inv
   {
       function fn_1 (uint p_one) isOk returns (uint r_one) ;
@@ -1207,7 +1191,6 @@ multi-identifier-path, поэтому нам понадобится раскры
 Тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_override.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_override
   {
       function fn_1 (uint p_one) override returns (uint r_one) ;
@@ -1259,7 +1242,6 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
 #+END_SRC
 
 *** FunctionTypeName
-
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%func-type-name
@@ -1356,9 +1338,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingTy
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%mapping-type
-   (%mapping |%(| %mapping-key-type |%=>| %type-name |%)| #'(lambda (op b map-k-t d t-name f)
-                                                              (dbg "~A" op b map-k-t d t-name f)
-                                                              `(:mapping-from ,map-k-t :mapping-to ,t-name))))
+   (%mapping |%(| %mapping-key-type |%=>| %type-name |%)|
+             #'(lambda (op b map-k-t d t-name f)
+                 `(:mapping-from ,map-k-t :mapping-to ,t-name))))
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
@@ -1574,7 +1556,6 @@ Block может быть:
 друга:
 
 #+BEGIN_SRC solidity :tangle tests/test_fn_block.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_unchecked
   {
       function fn_unchecked_1 (uint p_one) returns (uint r_one) ;
@@ -1595,13 +1576,15 @@ Block может быть:
 - internal
 - public
 
-#+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%constructor %parlist %block
-             #'(lambda (ct pl blk)
-                 `(:constructor nil :parlist ,pl :block ,blk)))
-  (%constructor %parlist %cmeta %block
-                #'(lambda (ct pl cm blk)
-                    `(:constructor nil :parlist ,pl :cmeta ,cm :block ,blk)))
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%ctor-def
+   (%constructor %parlist %block
+                 #'(lambda (ct pl blk)
+                     `(:constructor nil :parlist ,pl :block ,blk)))
+   (%constructor %parlist %cmeta %block
+                 #'(lambda (ct pl cm blk)
+                     `(:constructor nil :parlist ,pl :cmeta ,cm :block ,blk)))
+   )
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
@@ -1625,8 +1608,7 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_constructor.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
-  contract test_constructror
+  contract test_constructor
   {
       constructor() ERC721("Sact Avatars","SAVATAR")  {
           somefunc(msg.sender, 0);
@@ -1636,9 +1618,7 @@ Block может быть:
   }
 #+END_SRC
 
-** START InterfaceDefinition
-
-[TODO:gmm] - вынести ctract-body-elt-contents
+** InterfaceDefinition
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%iface-def
@@ -1664,32 +1644,33 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_iface_def.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   interface IERC165 {
       function test (bytes4 interfaceId) external view returns (bool);
   }
 #+END_SRC
 
-** Modifier-definition
+** ModifierDefinition
 
-#+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%modifier %identifier |%;|
-             #'(lambda (mo id cm) `(:mod-def ,id)))
-  (%modifier %identifier %parlist |%;|
-             #'(lambda (mo id pl cm) `(:mod-def ,id :parlist ,pl)))
-  (%modifier %identifier %mdmeta |%;|
-             #'(lambda (mo id me cm) `(:mod-def ,id :meta ,me)))
-  (%modifier %identifier %parlist %mdmeta |%;|
-             #'(lambda (mo id pl me cm) `(:mod-def ,id :parlist ,pl :meta ,me)))
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%modif-def
+   (%modifier %identifier |%;|
+              #'(lambda (mo id cm) `(:mod-def ,id)))
+   (%modifier %identifier %parlist |%;|
+              #'(lambda (mo id pl cm) `(:mod-def ,id :parlist ,pl)))
+   (%modifier %identifier %mdmeta |%;|
+              #'(lambda (mo id me cm) `(:mod-def ,id :meta ,me)))
+   (%modifier %identifier %parlist %mdmeta |%;|
+              #'(lambda (mo id pl me cm) `(:mod-def ,id :parlist ,pl :meta ,me)))
 
-  (%modifier %identifier %block
-             #'(lambda (mo id blk) `(:mod-def ,id :blk ,blk)))
-  (%modifier %identifier %parlist %block
-             #'(lambda (mo id pl blk) `(:mod-def ,id :parlist ,pl :blk ,blk)))
-  (%modifier %identifier %mdmeta %block
-             #'(lambda (mo id me blk) `(:mod-def ,id :meta ,me :blk ,blk)))
-  (%modifier %identifier %parlist %mdmeta %block
-             #'(lambda (mo id pl me blk) `(:mod-def ,id :parlist ,pl :meta ,me :blk ,blk)))
+   (%modifier %identifier %block
+              #'(lambda (mo id blk) `(:mod-def ,id :blk ,blk)))
+   (%modifier %identifier %parlist %block
+              #'(lambda (mo id pl blk) `(:mod-def ,id :parlist ,pl :blk ,blk)))
+   (%modifier %identifier %mdmeta %block
+              #'(lambda (mo id me blk) `(:mod-def ,id :meta ,me :blk ,blk)))
+   (%modifier %identifier %parlist %mdmeta %block
+              #'(lambda (mo id pl me blk) `(:mod-def ,id :parlist ,pl :meta ,me :blk ,blk)))
+   )
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
@@ -1713,7 +1694,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_modifier.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_modifier
   {
       modifier onlyOwner ;
@@ -1725,6 +1705,47 @@ Block может быть:
           require(owner() == _msgSender(), "Ownable: caller is not the owner");
           _;
       }
+  }
+#+END_SRC
+
+** FallbackFunctionDefinition
+
+Fallback-функция во всем подобна обычной функции, только не имеет
+имени и начинается не с терминала %function а с терминала %fallback:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%fallback-func-def
+   (%fallback %parlist %block
+              #'(lambda (fb parlist blk)
+                  `(:fallback nil :parlist ,parlist :block ,blk)))
+   (%fallback %parlist %retlist %block
+              #'(lambda (fn id pl rl blk)
+                  `(:fallback nil :parlist ,pl :retlist ,rl :block ,blk)))
+   (%fallback %parlist %fmeta %retlist %block
+              #'(lambda (fb parlist fmeta retlist blk)
+                  `(:fallback nil :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
+                    :block ,blk)))
+   (%fallback %parlist %fmeta %block
+              #'(lambda (fbg parlist fmeta blk)
+                  `(:fallback nil :parlist ,parlist :fmeta ,fmeta :block ,blk)))
+   )
+#+END_SRC
+
+правило %fmeta мы используем из уже сгенерированного в разделе про
+функции.
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bfallback\\b" '%fallback 'fallback)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %fallback
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_fallback.sol :mkdirp yes :noweb yes
+  contract test_fallback
+  {
+      fallback (uint storage p_one) ;
   }
 #+END_SRC
 
@@ -1759,7 +1780,7 @@ Block может быть:
 написан в разделе [[*Fmeta][Fmeta]]
 
 #+BEGIN_SRC lisp :noweb yes :noweb-ref grammar_rules
-  (%state-variable-declaration
+  (%state-var-decl
    (%type-name %identifier |%;|
                #'(lambda (tn id sc)
                    `(:state-var-decl ,id :type-name ,tn)))
@@ -1789,7 +1810,6 @@ Block может быть:
 Тест
 
 #+BEGIN_SRC solidity :tangle tests/test_state_var_decl.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   library test_library_definition
   {
       bytes16 tmpvar ;
@@ -1804,7 +1824,7 @@ Block может быть:
 ** START Constant-variable-declaration
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
-  ;; (%constant-variable-declaration
+  ;; (%const-var-decl
   ;;  (%type-name %constant %identifier |%=| %expr |%;|
   ;;              #'(lambda (tn ct id rq ex sc)
   ;;                  `(:constant-variable-declaration ,id :type-name tn :val %expr)))
@@ -1860,7 +1880,6 @@ Block может быть:
 Тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_statement.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_statement
   {
       function fn_stmnt_1 (uint p_one) returns (uint r_one) {
@@ -1909,7 +1928,6 @@ Block может быть:
 Тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_var_decl.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_var_decl
   {
       function fn_var_decl (uint p_one) returns (uint r_one) {
@@ -1946,7 +1964,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_var_decl_typle.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_var_decl_tuple
   {
       function fn_var_decl_typle (uint p_one) returns (uint r_one) {
@@ -1970,7 +1987,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_expr_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_var_decl
   {
       function fn_expr_stmnt (uint p_one) returns (uint r_one) {
@@ -2001,7 +2017,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_if_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_if_stmnt
   {
       function fn_if_stmnt (uint p_one) returns (uint r_one) {
@@ -2069,7 +2084,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_for_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_for_stmnt
   {
       function fn_for_stmnt (uint p_one) returns (uint r_one) {
@@ -2113,7 +2127,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_while_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_while_stmnt
   {
       function fn_while_stmnt (uint p_one) returns (uint r_one) {
@@ -2146,7 +2159,6 @@ Block может быть:
 
 
 #+BEGIN_SRC solidity :tangle tests/test_dowhile_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_dowhile_stmnt
   {
       function fn_dowhile_stmnt (uint p_one) returns (uint r_one) {
@@ -2173,7 +2185,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_continue_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_continue_stmnt
   {
       function fn_continue_stmnt (uint p_one) returns (uint r_one) {
@@ -2201,7 +2212,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_break_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_break_stmnt
   {
       function fn_break_stmnt (uint p_one) returns (uint r_one) {
@@ -2246,7 +2256,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_try_catch_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_try_stmnt
   {
       function fn_try_stmnt (uint p_one) returns (uint r_one) {
@@ -2282,7 +2291,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_return_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_return_stmnt
   {
       function fn_return_stmnt (uint p_one) returns (uint r_one) {
@@ -2311,7 +2319,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_emit_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_emit_stmnt
   {
       function fn_emit_stmnt (uint p_one) returns (uint r_one) {
@@ -2347,7 +2354,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_revert_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_revert_stmnt
   {
       function fn_revert_stmnt (uint p_one) returns (uint r_one) {
@@ -2383,7 +2389,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_assembly_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_assembly_stmnt
   {
       function fn_assembly_stmnt (uint p_one) returns (uint r_one) {
@@ -2559,7 +2564,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_expr_idx_stmnt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_expr_idx_stmnt
   {
       function fn_expr_idx_stmnt (uint p_one) returns (uint r_one) {
@@ -2638,7 +2642,6 @@ Block может быть:
 Тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_inline_arr_expr.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_override
   {
       function fn_1 (uint p_one) override returns (uint r_one) {
@@ -2782,7 +2785,6 @@ Block может быть:
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_non_empty_str.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_fn_override
   {
       function ownerOf(uint256 tokenId) public view virtual override returns (address) {
@@ -2885,7 +2887,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.HexString
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_hexnum.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_hexnum
   {
       function fn_test_hexnum () {
@@ -2914,7 +2915,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.booleanLi
 Тест:
 
 #+BEGIN_SRC solidity :tangle tests/test_bool_lit.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
   contract test_bool_lit
   {
       function fn_bool_lit (uint p_one) returns (uint r_one) {
