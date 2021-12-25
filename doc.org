@@ -376,7 +376,7 @@ identifier, он может совпасть с практически любы�
    (%lib-def    #'(lambda (df) `(:lib-def ,df)))
    (%func-def   #'(lambda (df) `(:func-def ,df)))
    ;; const-var-decl
-   ;; struct-def
+   (%struct-def #'(lambda (x) `(:struct-def ,x)))
    (%enum-def #'(lambda (df) `(:enum-def ,df)))
    ;; user-def-val-type-def
    ;; error-def
@@ -490,12 +490,12 @@ identifier, он может совпасть с практически любы�
 параграфов.
 
 #+BEGIN_SRC solidity :tangle tests/test_ctract_body_elt.sol :mkdirp yes :noweb yes
-  contract test_library_definition
+  contract test_contract_def
   {
       function func_1 () ;
       function func_2 () ;
   }
-  library test_library_definition
+  library test_library_def
   {
       function func_3 () ;
   }
@@ -520,11 +520,12 @@ identifier, он может совпасть с практически любы�
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_enum.sol :mkdirp yes :noweb yes
-  enum Status1 { canceled } ;
+  enum Status0 { canceled }
   contract test_enum
   {
-      enum Status1 { canceled } ;
-      enum Status2 { canceled, ended, started } ;
+      enum Status1 { canceled }
+      enum Status2 { canceled, ended, started }
+      function func_3 () ;
   }
 #+END_SRC
 
@@ -1817,6 +1818,11 @@ Definition of a struct. Can occur at top-level within a source unit or within a 
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_struct.sol :mkdirp yes :noweb yes
+  struct MapEntryPrimo {
+      bytes32 _key;
+      mapping (bytes32 => uint256) _indexes;
+  }
+
   contract test_struct
   {
       struct MapEntry {
