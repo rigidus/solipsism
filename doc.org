@@ -470,7 +470,7 @@ identifier, он может совпасть с практически любы�
    (%func-def #'(lambda (x) `(:func-def ,x)))
    (%state-variable-declaration #'(lambda (x)
                                     `(:state-variable-declaration ,x)))
-   ;; constructor-definition
+   (%ctor-def #'(lambda (x) `(:ctor ,x)))
    ;; nmodifier-definition
    ;; fallback-function-definition
    ;; receive-function-definition
@@ -1223,7 +1223,6 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
 
 *** FunctionTypeName
 
-
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%func-type-name
    (%function |%(| |%)|
@@ -1319,9 +1318,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.mappingTy
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%mapping-type
-   (%mapping |%(| %mapping-key-type |%=>| %type-name |%)| #'(lambda (op b map-k-t d t-name f)
-                                                              (dbg "~A" op b map-k-t d t-name f)
-                                                              `(:mapping-from ,map-k-t :mapping-to ,t-name))))
+   (%mapping |%(| %mapping-key-type |%=>| %type-name |%)|
+             #'(lambda (op b map-k-t d t-name f)
+                 `(:mapping-from ,map-k-t :mapping-to ,t-name))))
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
@@ -1558,13 +1557,15 @@ Block может быть:
 - internal
 - public
 
-#+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%constructor %parlist %block
-             #'(lambda (ct pl blk)
-                 `(:constructor nil :parlist ,pl :block ,blk)))
-  (%constructor %parlist %cmeta %block
-                #'(lambda (ct pl cm blk)
-                    `(:constructor nil :parlist ,pl :cmeta ,cm :block ,blk)))
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%ctor-def
+   (%constructor %parlist %block
+                 #'(lambda (ct pl blk)
+                     `(:constructor nil :parlist ,pl :block ,blk)))
+   (%constructor %parlist %cmeta %block
+                 #'(lambda (ct pl cm blk)
+                     `(:constructor nil :parlist ,pl :cmeta ,cm :block ,blk)))
+   )
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
@@ -1589,7 +1590,7 @@ Block может быть:
 
 #+BEGIN_SRC solidity :tangle tests/test_constructor.sol :mkdirp yes :noweb yes
   <<test_pragma>>
-  contract test_constructror
+  contract test_constructor
   {
       constructor() ERC721("Sact Avatars","SAVATAR")  {
           somefunc(msg.sender, 0);
@@ -1599,9 +1600,7 @@ Block может быть:
   }
 #+END_SRC
 
-** START InterfaceDefinition
-
-[TODO:gmm] - вынести ctract-body-elt-contents
+** InterfaceDefinition
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%iface-def
