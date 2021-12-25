@@ -221,17 +221,18 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_hexnum.sol")
   ;; (test-file #P"./tests/test_bool_lit.sol")
   ;; (test-file #P"./tests/test_mapping.sol")
-  ;; (test-file #P"./tests/test_enum.sol")
-
-  ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
-  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
-  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_iface_def.sol")
+  ;; (test-file #P"./tests/test_iface_def.sol")
+  ;; (test-file #P"./tests/test_revert_stmnt.sol")
   ;; (test-file #P"./tests/test_fallback.sol")
   ;; (test-file #P"./tests/test_receive.sol")
   ;; (test-file #P"./tests/test_struct.sol")
 
+  ;; (test-file #P"./tests/test_enum.sol")
+
+  ;; (test-contract-file #P"./test_contract.sol")
+
   ;;; Вариант для получения списка всех лексем конкретного файла
-  ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
+  ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
   ;;        (contents (read-file-into-string file))
   ;;        (clj (sol-lexer contents)))
   ;;   (print contents)
@@ -500,19 +501,14 @@ identifier, он может совпасть с практически любы�
   }
 #+END_SRC
 
-*** Enum
-
+** Enum
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%enum-def
-   (%enum %identifier |%{| %enum-body |%}| #'(lambda (a b c d e)
-                                                `(:ident ,b :enum-body, d))))
-
-  (%enum-body
-   ( %identifier #'(lambda (a)
-                     `(:enum-body ,a)))
-   ( %identifier |%,| %enum-body #'(lambda (a b c)
-                                     `(:body-head ,a :body-rest ,c))))
+   (%enum %identifier |%{| %multi-ident-path |%}|
+          #'(lambda (en id lb co rb)
+              `(:enum ,id :contents, co)))
+   )
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
@@ -523,18 +519,15 @@ identifier, он может совпасть с практически любы�
   ("\\benum\\b" '%enum 'enum)
 #+END_SRC
 
-
 #+BEGIN_SRC solidity :tangle tests/test_enum.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
-  contract test_library_definition
+  enum Status1 { canceled } ;
+  contract test_enum
   {
-      enum Status { canceled }
-
-      enum Status { canceled,
-                    ended,
-                    started }
+      enum Status1 { canceled } ;
+      enum Status2 { canceled, ended, started } ;
   }
 #+END_SRC
+
 ** START ContractDefinition
 
 Замечание о наименовании:
