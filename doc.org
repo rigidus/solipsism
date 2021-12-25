@@ -226,8 +226,8 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_fallback.sol")
   ;; (test-file #P"./tests/test_receive.sol")
   ;; (test-file #P"./tests/test_struct.sol")
-
   ;; (test-file #P"./tests/test_enum.sol")
+  ;; (test-file #P"./tests/test_user_def_type.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
 
@@ -378,7 +378,7 @@ identifier, он может совпасть с практически любы�
    ;; const-var-decl
    (%struct-def #'(lambda (x) `(:struct-def ,x)))
    (%enum-def #'(lambda (df) `(:enum-def ,df)))
-   ;; user-def-val-type-def
+   (%user-val-type-def #'(lambda (df) `(:user-val-type-def ,df)))
    ;; error-def
    )
 #+END_SRC
@@ -479,7 +479,7 @@ identifier, он может совпасть с практически любы�
    (%enum-def #'(lambda (x) `(:enum-def ,x)))
    (%receive-func-def #'(lambda (x) `(:receive-func-def ,x)))
    (%struct-def #'(lambda (x) `(:struct-def ,x)))
-   ;; user-defined-value-type-definition
+   (%user-val-type-def #'(lambda (df) `(:user-val-type-def ,df)))
    ;; event-definition
    ;; error-definition
    ;; using-directive
@@ -1831,6 +1831,29 @@ Definition of a struct. Can occur at top-level within a source unit or within a 
       }
   }
 #+END_SRC
+
+** UserDefinedValueTypeDefinition
+
+Definition of a user defined value type. Can occur at top-level within
+a source unit or within a contract, library or interface.
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%user-val-type-def
+   (%type %identifier %is %elt-type-name |%;|
+            #'(lambda (ty id is etn sc)
+                `(:user-def-type ,id :def ,etn)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_user_def_type.sol :mkdirp yes :noweb yes
+  type Price is uint128;
+
+  contract test_struct
+  {
+      type Quantity is uint128;
+  }
+#+END_SRC
+
 
 ** START State-variable-declaration
 
