@@ -1,4 +1,4 @@
-#+STARTUP: showall indent hidestars
+>#+STARTUP: showall indent hidestars
 
 * Intro
 
@@ -228,6 +228,7 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_struct.sol")
   ;; (test-file #P"./tests/test_enum.sol")
   ;; (test-file #P"./tests/test_user_def_type.sol")
+  ;; (test-file #P"./tests/test_error_def.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
 
@@ -379,7 +380,7 @@ identifier, он может совпасть с практически любы�
    (%struct-def #'(lambda (x) `(:struct-def ,x)))
    (%enum-def #'(lambda (df) `(:enum-def ,df)))
    (%user-val-type-def #'(lambda (df) `(:user-val-type-def ,df)))
-   ;; error-def
+   (%error-def #'(lambda (df) `(:error-def ,df)))
    )
 #+END_SRC
 
@@ -481,7 +482,7 @@ identifier, он может совпасть с практически любы�
    (%struct-def #'(lambda (x) `(:struct-def ,x)))
    (%user-val-type-def #'(lambda (df) `(:user-val-type-def ,df)))
    ;; event-definition
-   ;; error-definition
+   (%error-def #'(lambda (df) `(:error-def ,df)))
    ;; using-directive
    )
 #+END_SRC
@@ -1854,6 +1855,44 @@ a source unit or within a contract, library or interface.
   }
 #+END_SRC
 
+** ErrorDefinition
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%error-def
+   (%error %identifier |%(| |%)| |%;|
+           #'(lambda (er id lb rb cm)
+               `(:error-def ,id )))
+   (%error %identifier |%(| %err-param-contents |%)| |%;|
+           #'(lambda (er id lb mip rb cm)
+               `(:error-def ,id :contents ,mip)))
+   )
+  (%err-param-contents
+   (%err-param #'(lambda (id) `(:err-par-last ,id)))
+   (%err-param |%,| %err-param-contents
+               #'(lambda (ep cm epc)
+                   `(:err-param-head ,ep :err-param-rest ,epc)))
+   )
+  (%err-param
+   (%type-name #'(lambda (tn) `(:err-type ,tn)))
+   (%type-name %identifier #'(lambda (tn id) `(:err-type ,tn :err-name ,id)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\berror\\b" '%error 'error)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %error
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_error_def.sol :mkdirp yes :noweb yes
+  error MyError0 ( ) ;
+  error MyError1 ( bytes ) ;
+  error MyError2 ( bytes , uint256 ) ;
+  error MyError3 ( bytes arr ) ;
+  error MyError4 ( bytes arr , uint256 someval ) ;
+#+END_SRC
 
 ** START State-variable-declaration
 
