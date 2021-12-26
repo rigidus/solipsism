@@ -1,4 +1,4 @@
-#+STARTUP: showall indent hidestars
+>#+STARTUP: showall indent hidestars
 
 * Intro
 
@@ -221,16 +221,20 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_hexnum.sol")
   ;; (test-file #P"./tests/test_bool_lit.sol")
   ;; (test-file #P"./tests/test_mapping.sol")
+  ;; (test-file #P"./tests/test_iface_def.sol")
+  ;; (test-file #P"./tests/test_revert_stmnt.sol")
+  ;; (test-file #P"./tests/test_fallback.sol")
+  ;; (test-file #P"./tests/test_receive.sol")
+  ;; (test-file #P"./tests/test_struct.sol")
   ;; (test-file #P"./tests/test_enum.sol")
+  ;; (test-file #P"./tests/test_user_def_type.sol")
+  ;; (test-file #P"./tests/test_error_def.sol")
   ;; (test-file #P"./tests/test_event.sol")
 
-  ;; (test-contract-file #P"/home/rigidus/src/solipsism/test_contract.sol")
-  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_revert_stmnt.sol")
-
-  ;; (test-file #P"/home/rigidus/src/solipsism/tests/test_iface_def.sol")
+  ;; (test-contract-file #P"./test_contract.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
-  ;; (let* ((file #P"/home/rigidus/src/solipsism/tests/test_fn_mod_inv.sol")
+  ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
   ;;        (contents (read-file-into-string file))
   ;;        (clj (sol-lexer contents)))
   ;;   (print contents)
@@ -374,10 +378,10 @@ identifier, он может совпасть с практически любы�
    (%lib-def    #'(lambda (df) `(:lib-def ,df)))
    (%func-def   #'(lambda (df) `(:func-def ,df)))
    ;; const-var-decl
-   ;; struct-def
+   (%struct-def #'(lambda (x) `(:struct-def ,x)))
    (%enum-def #'(lambda (df) `(:enum-def ,df)))
-   ;; user-def-val-type-def
-   ;; error-def
+   (%user-val-type-def #'(lambda (df) `(:user-val-type-def ,df)))
+   (%error-def #'(lambda (df) `(:error-def ,df)))
    )
 #+END_SRC
 
@@ -471,17 +475,16 @@ identifier, он может совпасть с практически любы�
    )
   (%ctract-body-elt
    (%func-def #'(lambda (x) `(:func-def ,x)))
-   (%state-variable-declaration #'(lambda (x)
-                                    `(:state-variable-declaration ,x)))
-   ;; constructor-definition
-   ;; nmodifier-definition
-   ;; fallback-function-definition
-   ;; receive-function-definition
-   ;; struct-definition
+   (%state-var-decl #'(lambda (x) `(:state-var-decl ,x)))
+   (%ctor-def #'(lambda (x) `(:ctor ,x)))
+   (%modif-def #'(lambda (x) `(:modif-def ,x)))
+   (%fallback-func-def #'(lambda (x) `(:fallback-func-def ,x)))
    (%enum-def #'(lambda (x) `(:enum-def ,x)))
-   ;; user-defined-value-type-definition
+   (%receive-func-def #'(lambda (x) `(:receive-func-def ,x)))
+   (%struct-def #'(lambda (x) `(:struct-def ,x)))
+   (%user-val-type-def #'(lambda (df) `(:user-val-type-def ,df)))
    (%event-def #'(lambda (x) `(:event-def ,x)))
-   ;; error-definition
+   (%error-def #'(lambda (df) `(:error-def ,df)))
    ;; using-directive
    )
 #+END_SRC
@@ -490,13 +493,12 @@ identifier, он может совпасть с практически любы�
 параграфов.
 
 #+BEGIN_SRC solidity :tangle tests/test_ctract_body_elt.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
-  contract test_library_definition
+  contract test_contract_def
   {
       function func_1 () ;
       function func_2 () ;
   }
-  library test_library_definition
+  library test_library_def
   {
       function func_3 () ;
   }
@@ -583,17 +585,15 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.eventPara
 
 *** Enum
 
+=======
+** Enum
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%enum-def
-   (%enum %identifier |%{| %enum-body |%}| #'(lambda (a b c d e)
-                                                `(:ident ,b :enum-body, d))))
-
-  (%enum-body
-   ( %identifier #'(lambda (a)
-                     `(:enum-body ,a)))
-   ( %identifier |%,| %enum-body #'(lambda (a b c)
-                                     `(:body-head ,a :body-rest ,c))))
+   (%enum %identifier |%{| %multi-ident-path |%}|
+          #'(lambda (en id lb co rb)
+              `(:enum ,id :contents, co)))
+   )
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
@@ -604,18 +604,16 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.eventPara
   ("\\benum\\b" '%enum 'enum)
 #+END_SRC
 
-
 #+BEGIN_SRC solidity :tangle tests/test_enum.sol :mkdirp yes :noweb yes
-  <<test_pragma>>
-  contract test_library_definition
+  enum Status0 { canceled }
+  contract test_enum
   {
-      enum Status { canceled }
-
-      enum Status { canceled,
-                    ended,
-                    started }
+      enum Status1 { canceled }
+      enum Status2 { canceled, ended, started }
+      function func_3 () ;
   }
 #+END_SRC
+
 ** START ContractDefinition
 
 Замечание о наименовании:
@@ -1807,6 +1805,196 @@ Block может быть:
       }
   }
 #+END_SRC
+
+** FallbackFunctionDefinition
+
+Fallback-функция во всем подобна обычной функции, только не имеет
+имени и начинается не с терминала %function а с терминала %fallback:
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%fallback-func-def
+   (%fallback %parlist %block
+              #'(lambda (fb parlist blk)
+                  `(:fallback nil :parlist ,parlist :block ,blk)))
+   (%fallback %parlist %retlist %block
+              #'(lambda (fb id pl rl blk)
+                  `(:fallback nil :parlist ,pl :retlist ,rl :block ,blk)))
+   (%fallback %parlist %fmeta %retlist %block
+              #'(lambda (fb parlist fmeta retlist blk)
+                  `(:fallback nil :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
+                    :block ,blk)))
+   (%fallback %parlist %fmeta %block
+              #'(lambda (fb parlist fmeta blk)
+                  `(:fallback nil :parlist ,parlist :fmeta ,fmeta :block ,blk)))
+   )
+#+END_SRC
+
+правило %fmeta мы используем из уже сгенерированного в разделе про
+функции.
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bfallback\\b" '%fallback 'fallback)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %fallback
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_fallback.sol :mkdirp yes :noweb yes
+  contract test_fallback
+  {
+      fallback (uint storage p_one) ;
+  }
+#+END_SRC
+
+** ReceiveFunctionDefinition
+
+По аналогии с fallback
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%receive-func-def
+   (%receive %parlist %block
+              #'(lambda (rv parlist blk)
+                  `(:receive nil :parlist ,parlist :block ,blk)))
+   (%receive %parlist %retlist %block
+              #'(lambda (rv id pl rl blk)
+                  `(:receive nil :parlist ,pl :retlist ,rl :block ,blk)))
+   (%receive %parlist %fmeta %retlist %block
+              #'(lambda (rv parlist fmeta retlist blk)
+                  `(:receive nil :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
+                    :block ,blk)))
+   (%receive %parlist %fmeta %block
+              #'(lambda (rv parlist fmeta blk)
+                  `(:receive nil :parlist ,parlist :fmeta ,fmeta :block ,blk)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\breceive\\b" '%receive 'receive)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %receive
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_receive.sol :mkdirp yes :noweb yes
+  contract test_receive
+  {
+      receive (uint storage p_one) ;
+  }
+#+END_SRC
+
+** StructDefinition
+
+Definition of a struct. Can occur at top-level within a source unit or within a contract, library or interface.
+
+[TODO:gmm] - Походу, встретив Struct мы должны расширить количество
+разбираемых типов
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%struct-def
+   (%struct %identifier |%{| %struct-member-contents |%}|
+            #'(lambda (st id lb smc rb)
+                `(:struct ,id :contents ,smc)))
+   )
+  (%struct-member-contents
+   (%struct-member #'(lambda (sm)
+                       `(:struct-last ,sm)))
+   (%struct-member %struct-member-contents
+                   #'(lambda (sm smc)
+                       `(:struct-head ,sm :struct-rest ,smc)))
+   )
+  (%struct-member
+   (%type-name %identifier |%;|
+               #'(lambda (tn id sc)
+                   `(:struct-name ,id :type ,tn)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bstruct\\b" '%struct 'struct)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %struct
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_struct.sol :mkdirp yes :noweb yes
+  struct MapEntryPrimo {
+      bytes32 _key;
+      mapping (bytes32 => uint256) _indexes;
+  }
+
+  contract test_struct
+  {
+      struct MapEntry {
+          bytes32 _key;
+          mapping (bytes32 => uint256) _indexes;
+      }
+  }
+#+END_SRC
+
+** UserDefinedValueTypeDefinition
+
+Definition of a user defined value type. Can occur at top-level within
+a source unit or within a contract, library or interface.
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%user-val-type-def
+   (%type %identifier %is %elt-type-name |%;|
+            #'(lambda (ty id is etn sc)
+                `(:user-def-type ,id :def ,etn)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_user_def_type.sol :mkdirp yes :noweb yes
+  type Price is uint128;
+
+  contract test_struct
+  {
+      type Quantity is uint128;
+  }
+#+END_SRC
+
+** ErrorDefinition
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%error-def
+   (%error %identifier |%(| |%)| |%;|
+           #'(lambda (er id lb rb cm)
+               `(:error-def ,id )))
+   (%error %identifier |%(| %err-param-contents |%)| |%;|
+           #'(lambda (er id lb mip rb cm)
+               `(:error-def ,id :contents ,mip)))
+   )
+  (%err-param-contents
+   (%err-param #'(lambda (id) `(:err-par-last ,id)))
+   (%err-param |%,| %err-param-contents
+               #'(lambda (ep cm epc)
+                   `(:err-param-head ,ep :err-param-rest ,epc)))
+   )
+  (%err-param
+   (%type-name #'(lambda (tn) `(:err-type ,tn)))
+   (%type-name %identifier #'(lambda (tn id) `(:err-type ,tn :err-name ,id)))
+   )
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\berror\\b" '%error 'error)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %error
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_error_def.sol :mkdirp yes :noweb yes
+  error MyError0 ( ) ;
+  error MyError1 ( bytes ) ;
+  error MyError2 ( bytes , uint256 ) ;
+  error MyError3 ( bytes arr ) ;
+  error MyError4 ( bytes arr , uint256 someval ) ;
+#+END_SRC
+
 
 ** START State-variable-declaration
 
