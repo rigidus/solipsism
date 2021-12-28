@@ -230,6 +230,7 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_user_def_type.sol")
   ;; (test-file #P"./tests/test_error_def.sol")
   ;; (test-file #P"./tests/test_event_def.sol")
+  ;; (test-file #P"./tests/test_const_def.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
 
@@ -352,7 +353,7 @@ identifier, он может совпасть с практически любы�
 В этомя разделе будут перечислены все грамматические конструкции Solidity
 которые я хочу разбирать.
 
-** START SourceUnit
+** SourceUnit
 
 Начнем с source unit, которым в общем случае выступает sol-файл.
 
@@ -377,12 +378,37 @@ identifier, он может совпасть с практически любы�
    (%iface-def  #'(lambda (df) `(:iface-def ,df)))
    (%lib-def    #'(lambda (df) `(:lib-def ,df)))
    (%func-def   #'(lambda (df) `(:func-def ,df)))
-   ;; const-var-decl
+   (%const-def #'(lambda (cf) `(:const-def ,cf)))
    (%struct-def #'(lambda (x) `(:struct-def ,x)))
    (%enum-def #'(lambda (df) `(:enum-def ,df)))
    (%user-val-type-def #'(lambda (df) `(:user-val-type-def ,df)))
    (%error-def #'(lambda (df) `(:error-def ,df)))
    )
+#+END_SRC
+** Const-var
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.constantVariableDeclaration
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bconstant\\b" '%constant 'constant)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %constant
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%const-def
+   (%type-name %constant %identifier |%=| %expr |%;|
+               #'(lambda (t-name c id eq ex e)
+                   `(:c-t-name ,t-name :c-id ,id :c-expr ,ex))))
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_const_def.sol :mkdirp yes :noweb yes
+  contract test_const_def
+  {
+      string public constant symbol = "TKN";
+      bytes32 public constant hash = keccak256(symbol);
+  }
 #+END_SRC
 
 ** PragmaDefinition
