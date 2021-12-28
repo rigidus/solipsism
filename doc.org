@@ -2082,25 +2082,6 @@ a source unit or within a contract, library or interface.
       bytes16 private constant alphabet = '0123456789abcdef';
   }
 #+END_SRC
-
-** START Constant-variable-declaration
-
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
-  ;; (%const-vari-decl
-  ;;  (%type-name %constant %identifier |%=| %expr |%;|
-  ;;              #'(lambda (tn ct id rq ex sc)
-  ;;                  `(:const-var-decl ,id :type-name ,tn :val ,expr)))
-  ;;  )
-#+END_SRC
-
-#+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\bconstant\\b" '%constant 'constant)
-#+END_SRC
-
-#+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %constant
-#+END_SRC
-
 ** START Statement
 
 Может быть блоком, повторяющимися декларациями переменных,
