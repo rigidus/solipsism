@@ -229,10 +229,10 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_user_def_type.sol")
   ;; (test-file #P"./tests/test_error_def.sol")
   ;; (test-file #P"./tests/test_event_def.sol")
+  ;; (test-file #P"./tests/test_inline_arr_expr.sol")
+  ;; (test-file #P"./tests/test_using_def.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
-
-  ;; (test-file #P"./tests/test_inline_arr_expr.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
@@ -503,16 +503,17 @@ identifier, он может совпасть с практически любы�
       function func_3 () ;
   }
 #+END_SRC
+
 ** Using-definition
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%using-def
    (%using %ident-path %for |%*| |%;|
-           #'(lambda (us id f s sc)
-               `(:using-ident-path ,id :using-star ,s)))
+           #'(lambda (us id fo st sc)
+               `(:using ,id :all t)))
    (%using %ident-path %for %type-name |%;|
-           #'(lambda (us id f t-name sc)
-               `(:using-ident-path ,id :using-t-name ,t-name))))
+           #'(lambda (us id fo tn sc)
+               `(:using ,id :type-name ,tn))))
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
