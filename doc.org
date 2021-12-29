@@ -229,6 +229,7 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_user_def_type.sol")
   ;; (test-file #P"./tests/test_error_def.sol")
   ;; (test-file #P"./tests/test_event_def.sol")
+  ;; (test-file #P"./tests/test_try_catch_stmnt.sol")
   ;; (test-file #P"./tests/test_inline_arr_expr.sol")
   ;; (test-file #P"./tests/test_using_def.sol")
 
@@ -367,9 +368,10 @@ identifier, он может совпасть с практически любы�
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%src-unit
-   (%src-unit-contents #'(lambda (x) `(:src-last ,x)))
+   (%src-unit-contents #'(lambda (last) `(:src (,last))))
    (%src-unit-contents %src-unit
-                       #'(lambda (a b) `(:src-head ,a :src-rest, b)))
+                       #'(lambda (head rest)
+                           `(:src ,(append (list head) (getf rest :src)))))
    )
   (%src-unit-contents
    (%pragma-def #'(lambda (df) `(:pragma-def ,df)))
@@ -467,11 +469,11 @@ identifier, он может совпасть с практически любы�
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%ctract-body-elt-contents
-   (%ctract-body-elt #'(lambda (x) `(:ctract-body-elt-last ,x)))
+   (%ctract-body-elt #'(lambda (last) `(:ctract-body-elt (,last))))
    (%ctract-body-elt %ctract-body-elt-contents
-                     #'(lambda (x y)
-                         `(:ctract-body-elt-head ,x
-                           :ctract-body-elt-rest ,y)))
+                     #'(lambda (head rest)
+                         `(:ctract-body-elt ,(append (list head)
+                                                     (getf rest :ctract-body-elt)))))
    )
   (%ctract-body-elt
    (%func-def #'(lambda (x) `(:func-def ,x)))
@@ -550,10 +552,11 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.eventPara
                `(:event ,id :params ,ep :anon t)))
    )
   (%event-params-contents
-   (%event-param #'(lambda (ep) `(:event-param-last ,ep)))
+   (%event-param #'(lambda (last) `(:event-param (,last))))
    (%event-param |%,| %event-params-contents
-                 #'(lambda (ep co epc)
-                     `(:event-param-head ,ep ::event-param-rest ,epc)))
+                 #'(lambda (head co rest)
+                     `(:event-param ,(append (list head)
+                                             (getf rest :event-param)))))
    )
   (%event-param
    (%type-name #'(lambda (tn) `(:type-name ,tn)))
@@ -580,17 +583,17 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.eventPara
 #+BEGIN_SRC solidity :tangle tests/test_event_def.sol :mkdirp yes :noweb yes
   contract test_event_def
   {
-      event some();
-      event some() anonymous;
+      event some_1();
+      event some_2() anonymous;
 
-      event some(bytes);
-      event some(bytes) anonymous;
+      event some_3(bytes);
+      event some_4(bytes) anonymous;
 
-      event some(uint, int);
-      event some(uint, int) anonymous;
+      event some_5(uint, int);
+      event some_6(uint, int) anonymous;
 
-      event Deposit(address indexed from, bytes32 indexed id, uint val);
-      event Deposit(address indexed from, bytes32 indexed id, uint val) anonymous;
+      event Deposit_7(address indexed from, bytes32 indexed id, uint val);
+      event Deposit_8(address indexed from, bytes32 indexed id, uint val) anonymous;
   }
 #+END_SRC
 
@@ -1614,10 +1617,11 @@ Block может быть:
          #'(lambda (l-brak cont r-brak) `(:unchecked-blk-contents ,cont)))
    )
   (%unchecked-block-contents
-   (%unchecked-block #'(lambda (x) `(:unchk-blk-last ,x)))
+   (%unchecked-block #'(lambda (last) `(:unchk-blk (,last))))
    (%unchecked-block %unchecked-block-contents
-                     #'(lambda (a b)
-                         `(:unchk-blk-head ,a :unchk-blk-rest ,b)))
+                     #'(lambda (head rest)
+                         `(:unchk-blk ,(append (list head)
+                                               (getf rest :unchk-blk)))))
    )
 #+END_SRC
 
@@ -1650,6 +1654,10 @@ Block может быть:
   {
       function fn_unchecked_1 () ;
       function fn_unchecked_2 () {
+          unchecked { }
+      }
+      function fn_unchecked_3 () {
+          unchecked { }
           unchecked { }
       }
       function fn_unchecked_3 () {
@@ -1892,11 +1900,11 @@ Definition of a struct. Can occur at top-level within a source unit or within a 
                 `(:struct ,id :contents ,smc)))
    )
   (%struct-member-contents
-   (%struct-member #'(lambda (sm)
-                       `(:struct-last ,sm)))
+   (%struct-member #'(lambda (last)
+                       `(:member (,last))))
    (%struct-member %struct-member-contents
-                   #'(lambda (sm smc)
-                       `(:struct-head ,sm :struct-rest ,smc)))
+                   #'(lambda (head rest)
+                       `(:member ,(append (list head) (getf rest :memeber)))))
    )
   (%struct-member
    (%type-name %identifier |%;|
@@ -1962,10 +1970,10 @@ a source unit or within a contract, library or interface.
                `(:error-def ,id :contents ,mip)))
    )
   (%err-param-contents
-   (%err-param #'(lambda (id) `(:err-par-last ,id)))
+   (%err-param #'(lambda (last) `(:err-par (,last))))
    (%err-param |%,| %err-param-contents
-               #'(lambda (ep cm epc)
-                   `(:err-param-head ,ep :err-param-rest ,epc)))
+               #'(lambda (head cm rest)
+                   `(:err-par ,(append (list head) (getf rest :err-par)))))
    )
   (%err-param
    (%type-name #'(lambda (tn) `(:err-type ,tn)))
@@ -1984,9 +1992,10 @@ a source unit or within a contract, library or interface.
 #+BEGIN_SRC solidity :tangle tests/test_error_def.sol :mkdirp yes :noweb yes
   error MyError0 ( ) ;
   error MyError1 ( bytes ) ;
-  error MyError2 ( bytes , uint256 ) ;
-  error MyError3 ( bytes arr ) ;
-  error MyError4 ( bytes arr , uint256 someval ) ;
+  error MyError2 ( bytes1, bytes2, bytes3, bytes4 ) ;
+  error MyError3 ( bytes , uint256 ) ;
+  error MyError4 ( bytes arr ) ;
+  error MyError5 ( bytes arr , uint256 someval ) ;
 #+END_SRC
 
 ** START State-variable-declaration
@@ -2088,32 +2097,45 @@ a source unit or within a contract, library or interface.
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%stmnt
    (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
-   (%var-decl-stmnt #'(lambda (x) `(:var-decl ,x)))
-   (%var-decl-stmnt %stmnt #'(lambda (x y) `(:var-decl ,x :next-stmnt ,y)))
-   (%expr-stmnt #'(lambda (x) `(:expr-stmnt ,x)))
-   (%expr-stmnt %stmnt #'(lambda (x y) `(:expr-stmnt ,x :next-stmnt ,y)))
-   (%if-stmnt #'(lambda (x) `(:if-stmnt ,x)))
-   (%if-stmnt %stmnt #'(lambda (x y) `(:if-stmnt ,x :next-stmnt ,y)))
-   (%for-stmnt #'(lambda (x) `(:for-stmnt ,x)))
-   (%for-stmnt %stmnt #'(lambda (x y) `(:for-stmnt ,x :next-stmnt ,y)))
-   (%while-stmnt #'(lambda (x) `(:while-stmnt ,x)))
-   (%while-stmnt %stmnt #'(lambda (x y) `(:while-stmnt ,x :next-stmnt ,y)))
-   (%do-while-stmnt #'(lambda (x) `(:dowhile-stmnt ,x)))
-   (%do-while-stmnt %stmnt #'(lambda (x y) `(:dowhile-stmnt ,x :next-stmnt ,y)))
-   (%cont-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
-   (%cont-stmnt %stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
-   (%break-stmnt #'(lambda (x) `(:break-stmnt ,x)))
-   (%break-stmnt %stmnt #'(lambda (x y) `(:break-stmnt ,x :next-stmnt ,y)))
-   (%try-stmnt #'(lambda (x) `(:try-stmnt ,x)))
-   (%try-stmnt %stmnt #'(lambda (x y) `(:try-stmnt ,x :next-stmnt ,y)))
-   (%return-stmnt #'(lambda (x) `(:return-stmnt ,x)))
-   (%return-stmnt %stmnt #'(lambda (x y) `(:return-stmnt ,x :next-stmnt ,y)))
-   (%emit-stmnt #'(lambda (x) `(:emit-stmnt ,x)))
-   (%emit-stmnt %stmnt #'(lambda (x y) `(:emit-stmnt ,x :next-stmnt ,y)))
-   (%revert-stmnt #'(lambda (x) `(:revert-stmnt ,x)))
-   (%revert-stmnt %stmnt #'(lambda (x y) `(:revert-stmnt ,x :next-stmnt ,y)))
-   (%assembly-stmnt #'(lambda (x) `(:assembly-stmnt ,x)))
-   (%assembly-stmnt %stmnt #'(lambda (x y) `(:assembly-stmnt ,x :next-stmnt ,y)))
+
+   (%var-decl-stmnt #'(lambda (last) `(:var-decl-stmnt ,x)))
+   (%var-decl-stmnt %stmnt #'(lambda (head rest) `(:var-decl-stmnt ,x :next-stmnt ,y)))
+
+   (%expr-stmnt #'(lambda (last) `(:expr-stmnt ,x)))
+   (%expr-stmnt %stmnt #'(lambda (head rest) `(:expr-stmnt ,x :next-stmnt ,y)))
+
+   (%if-stmnt #'(lambda (last) `(:if-stmnt ,x)))
+   (%if-stmnt %stmnt #'(lambda (head rest) `(:if-stmnt ,x :next-stmnt ,y)))
+
+   (%for-stmnt #'(lambda (last) `(:for-stmnt ,x)))
+   (%for-stmnt %stmnt #'(lambda (head rest) `(:for-stmnt ,x :next-stmnt ,y)))
+
+   (%while-stmnt #'(lambda (last) `(:while-stmnt ,x)))
+   (%while-stmnt %stmnt #'(lambda (head rest) `(:while-stmnt ,x :next-stmnt ,y)))
+
+   (%do-while-stmnt #'(lambda (last) `(:dowhile-stmnt ,x)))
+   (%do-while-stmnt %stmnt #'(lambda (head rest) `(:dowhile-stmnt ,x :next-stmnt ,y)))
+
+   (%cont-stmnt #'(lambda (last) `(:cont-stmnt ,x)))
+   (%cont-stmnt %stmnt #'(lambda (head rest) `(:cont-stmnt ,x :next-stmnt ,y)))
+
+   (%break-stmnt #'(lambda (last) `(:break-stmnt ,x)))
+   (%break-stmnt %stmnt #'(lambda (head rest) `(:break-stmnt ,x :next-stmnt ,y)))
+
+   (%try-stmnt #'(lambda (last) `(:try-stmnt ,x)))
+   (%try-stmnt %stmnt #'(lambda (head rest) `(:try-stmnt ,x :next-stmnt ,y)))
+
+   (%return-stmnt #'(lambda (last) `(:return-stmnt ,x)))
+   (%return-stmnt %stmnt #'(lambda (head rest) `(:return-stmnt ,x :next-stmnt ,y)))
+
+   (%emit-stmnt #'(lambda (last) `(:emit-stmnt ,x)))
+   (%emit-stmnt %stmnt #'(lambda (head rest) `(:emit-stmnt ,x :next-stmnt ,y)))
+
+   (%revert-stmnt #'(lambda (last) `(:revert-stmnt ,x)))
+   (%revert-stmnt %stmnt #'(lambda (head rest) `(:revert-stmnt ,x :next-stmnt ,y)))
+
+   (%assembly-stmnt #'(lambda (last) `(:assembly-stmnt ,x)))
+   (%assembly-stmnt %stmnt #'(lambda (head rest) `(:assembly-stmnt ,x :next-stmnt ,y)))
    )
 #+END_SRC
 
@@ -2472,9 +2494,10 @@ a source unit or within a contract, library or interface.
              `(:try ,ex :ret ,pl :blk ,bl :catch ,cc)))
    )
   (%catch-clause-contents
+   (%catch-clause #'(lambda (last) `(:catch (,last))))
    (%catch-clause %catch-clause-contents
-                  #'(lambda (a b) `(:catch-head ,a :catch-rest ,b)))
-   (%catch-clause #'(lambda (a) `(:catch-last ,a)))
+                  #'(lambda (head rest) `(:catch ,(append (list head)
+                                                          (getf rest :catch)))))
    )
   (%catch-clause
    (%catch %block #'(lambda (ca bl) `(:catch nil :blk ,bl)))
@@ -2727,8 +2750,10 @@ a source unit or within a contract, library or interface.
    (%elt-type-name #'(lambda (etn) `(:elt-type-name ,etn)))
    )
   (%idex-contents ;; TODO: Кажется это multi-ident-path
-   (%idex #'(lambda (idex) `(:idex-last ,idex)))
-   (%idex |%,| %idex-contents #'(lambda (idex c rest) `(:idex-head ,idex :idex-rest ,rest)))
+   (%idex #'(lambda (last) `(:idex (,last))))
+   (%idex |%,| %idex-contents #'(lambda (head co rest)
+                                  `(:idex ,(append (list head)
+                                                   (getf rest :idex)))))
    )
   (%idex
    (%identifier |%:| %expr #'(lambda (id cm ex) `(:idex-last ,id :expr ,ex)))
