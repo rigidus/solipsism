@@ -235,6 +235,8 @@ solidity-конструкциями и ожидаю получить дерев�
 
   ;; (test-contract-file #P"./test_contract.sol")
 
+  ;; (test-file #P"./tests/test_var_decl.sol")
+
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
   ;;        (contents (read-file-into-string file))
@@ -371,7 +373,7 @@ identifier, он может совпасть с практически любы�
    (%src-unit-contents #'(lambda (last) `(:src (,last))))
    (%src-unit-contents %src-unit
                        #'(lambda (head rest)
-                           `(:src ,(append (list head) (getf rest :src)))))
+                           `(:src ,(append (list head) (cadr rest)))))
    )
   (%src-unit-contents
    (%pragma-def #'(lambda (df) `(:pragma-def ,df)))
@@ -472,8 +474,7 @@ identifier, он может совпасть с практически любы�
    (%ctract-body-elt #'(lambda (last) `(:ctract-body-elt (,last))))
    (%ctract-body-elt %ctract-body-elt-contents
                      #'(lambda (head rest)
-                         `(:ctract-body-elt ,(append (list head)
-                                                     (getf rest :ctract-body-elt)))))
+                         `(:ctract-body-elt ,(append (list head) (cadr rest)))))
    )
   (%ctract-body-elt
    (%func-def #'(lambda (x) `(:func-def ,x)))
@@ -555,8 +556,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.eventPara
    (%event-param #'(lambda (last) `(:event-param (,last))))
    (%event-param |%,| %event-params-contents
                  #'(lambda (head co rest)
-                     `(:event-param ,(append (list head)
-                                             (getf rest :event-param)))))
+                     `(:event-param ,(append (list head) (cadr rest)))))
    )
   (%event-param
    (%type-name #'(lambda (tn) `(:type-name ,tn)))
@@ -653,26 +653,27 @@ NB: Правило IndentifierPath вынесено в параграф [[*Ident
                   `(:contract ,id :abstract t :contents ,cbec)))
    ;; INCHERITANCE
    ;; empty inheritance contract
-   (%contract %identifier %is %inher-spec-list |%{| |%}|
+   (%contract %identifier %is %inher-spec-contents |%{| |%}|
               #'(lambda (ctract id is isl l-brak r-brak)
                   `(:contract ,id :inher ,isl)))
    ;; inheritance with contract-body
-   (%contract %identifier %is %inher-spec-list |%{| %ctract-body-elt-contents |%}|
+   (%contract %identifier %is %inher-spec-contents |%{| %ctract-body-elt-contents |%}|
               #'(lambda (ctract id is isl l-brak cbec r-brak)
                   `(:contract ,id :inher ,isl :contents ,cbec)))
    ;; abstract empty inheritance contract
-   (%abstract %contract %identifier %is %inher-spec-list |%{| |%}|
+   (%abstract %contract %identifier %is %inher-spec-contents |%{| |%}|
               #'(lambda (ab ctract id is isl l-brak r-brak)
                   `(:contract ,id :abstract t :inher ,isl)))
    ;; abstract inheritance with contract-body
-   (%abstract %contract %identifier %is %inher-spec-list |%{| %ctract-body-elt-contents |%}|
+   (%abstract %contract %identifier %is %inher-spec-contents |%{| %ctract-body-elt-contents |%}|
               #'(lambda (ab ctract id is isl l-brak cbec r-brak)
                   `(:contract ,id :abstract t :inher ,isl :contents ,cbec)))
    )
-  (%inher-spec-list
-   (%inher-spec #'(lambda (ic) `(:inher-spec-last ,ic)))
-   (%inher-spec |%,| %inher-spec-list
-                #'(lambda (ic cm isl) `(:inher-spec-head ,ic :inher-spec-rest ,isl)))
+  (%inher-spec-contents
+   (%inher-spec #'(lambda (last) `(:inher-spec (,last))))
+   (%inher-spec |%,| %inher-spec-contents
+                #'(lambda (head co rest)
+                    `(:inher-spec ,(append (list head) (cadr rest)))))
    )
   (%inher-spec
    (%ident-path #'(lambda (ip) `(:ident-path ,ip)))
@@ -771,7 +772,7 @@ NB: Использует опережающие правила %expr, %expr-comm
    (%identifier |%:| %expr |%,| %call-arg-obj
                 #'(lambda (id cm ex sc rt)
                     `(:call-arg-obj-head ,id :call-expr ,ex
-                      :call-arg-obj-head ,rt)))
+                      :call-arg-obj-rest ,rt)))
    )
 #+END_SRC
 
@@ -791,12 +792,14 @@ NB: Использует опережающие правила %expr, %expr-comm
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%expr-comma-list
-   (%expr #'(lambda (a) `(:expr-comma-list-last ,a)))
+   (%expr #'(lambda (last) `(:expr-comma-list (,last))))
    (%expr |%,| %expr-comma-list
-          #'(lambda (ex cm nx)
-              `(:expr-comma-list-head ,ex :expr-comma-list-rest ,nx)))
+          #'(lambda (head cm rest)
+              `(:expr-comma-list ,(append (list head) (cadr rest)))))
    )
 #+END_SRC
+
+[TODO:gmm] - Test
 
 ** FunctionDefinition
 
@@ -875,8 +878,9 @@ non_empty_parameter_list
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%param-list
-   (%param #'(lambda (x) `(:par-last ,x)))
-   (%param |%,| %param-list #'(lambda (pm cm pl) `(:param-head ,pm :param-rest ,pl)))
+   (%param #'(lambda (last) `(:par (,last))))
+   (%param |%,| %param-list #'(lambda (head cm rest)
+                                `(:par ,(append (list head) (cadr rest)))))
    )
 #+END_SRC
 
@@ -1297,10 +1301,10 @@ multi-identifier-path, поэтому нам понадобится раскры
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%ident-path
-   (%ident #'(lambda (id) `(:ident-last ,id)))
+   (%ident #'(lambda (last) `(:ident (,last))))
    (%ident |%.| %ident-path
-           #'(lambda (id-head dot id-rest)
-               `(:ident-head ,id-head :ident-rest ,id-rest)))
+           #'(lambda (head dot rest)
+               `(:ident ,(append (list head) (cadr rest)))))
    )
   (%ident
    (%identifier #'(lambda (id) `(:id ,id)))
@@ -1313,6 +1317,8 @@ multi-identifier-path, поэтому нам понадобится раскры
    (%ident-path |%,| %multi-ident-path #'(lambda (id cm mip) `(:id-head ,id :id-rest ,mip)))
    )
 #+END_SRC
+
+[TODO:gmm] - Test
 
 ** TypeName
 
@@ -1620,8 +1626,7 @@ Block может быть:
    (%unchecked-block #'(lambda (last) `(:unchk-blk (,last))))
    (%unchecked-block %unchecked-block-contents
                      #'(lambda (head rest)
-                         `(:unchk-blk ,(append (list head)
-                                               (getf rest :unchk-blk)))))
+                         `(:unchk-blk ,(append (list head) (cadr rest)))))
    )
 #+END_SRC
 
@@ -1723,11 +1728,11 @@ Block может быть:
   (%iface-def
    (%interface %identifier |%{| |%}|
                #'(lambda (in id lb rb) `(:iface ,id)))
-   (%interface %identifier %is %inher-spec-list |%{| |%}|
+   (%interface %identifier %is %inher-spec-contents |%{| |%}|
                #'(lambda (in id is isp lb rb) `(:iface ,id :is ,isp)))
    (%interface %identifier |%{| %ctract-body-elt-contents |%}|
                #'(lambda (in id lb bdy rb) `(:iface ,id :contents ,bdy)))
-   (%interface %identifier %is %inher-spec-list |%{|
+   (%interface %identifier %is %inher-spec-contents |%{|
                %ctract-body-elt-contents |%}|
                #'(lambda (in id is isp lb bdy rb)
                    `(:iface ,id :is ,isp :contents ,bdy)))
@@ -1904,7 +1909,7 @@ Definition of a struct. Can occur at top-level within a source unit or within a 
                        `(:member (,last))))
    (%struct-member %struct-member-contents
                    #'(lambda (head rest)
-                       `(:member ,(append (list head) (getf rest :memeber)))))
+                       `(:member ,(append (list head) (cadr rest)))))
    )
   (%struct-member
    (%type-name %identifier |%;|
@@ -1973,7 +1978,7 @@ a source unit or within a contract, library or interface.
    (%err-param #'(lambda (last) `(:err-par (,last))))
    (%err-param |%,| %err-param-contents
                #'(lambda (head cm rest)
-                   `(:err-par ,(append (list head) (getf rest :err-par)))))
+                   `(:err-par ,(append (list head) (cadr rest)))))
    )
   (%err-param
    (%type-name #'(lambda (tn) `(:err-type ,tn)))
@@ -2098,44 +2103,57 @@ a source unit or within a contract, library or interface.
   (%stmnt
    (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
 
-   (%var-decl-stmnt #'(lambda (last) `(:var-decl-stmnt ,x)))
-   (%var-decl-stmnt %stmnt #'(lambda (head rest) `(:var-decl-stmnt ,x :next-stmnt ,y)))
+   (%var-decl-stmnt #'(lambda (last) `(:var-decl-stmnt (,last))))
+   (%var-decl-stmnt %stmnt #'(lambda (head rest)
+                               `(:var-decl-stmnt ,(append (list head) (cadr rest)))))
 
-   (%expr-stmnt #'(lambda (last) `(:expr-stmnt ,x)))
-   (%expr-stmnt %stmnt #'(lambda (head rest) `(:expr-stmnt ,x :next-stmnt ,y)))
+   (%expr-stmnt #'(lambda (last) `(:expr-stmnt (,last))))
+   (%expr-stmnt %stmnt #'(lambda (head rest)
+                           `(:expr-stmnt ,(append (list head) (cadr rest)))))
 
-   (%if-stmnt #'(lambda (last) `(:if-stmnt ,x)))
-   (%if-stmnt %stmnt #'(lambda (head rest) `(:if-stmnt ,x :next-stmnt ,y)))
+   (%if-stmnt #'(lambda (last) `(:if-stmnt (,last))))
+   (%if-stmnt %stmnt #'(lambda (head rest)
+                         `(:if-stmnt ,(append (list head) (cadr rest)))))
 
-   (%for-stmnt #'(lambda (last) `(:for-stmnt ,x)))
-   (%for-stmnt %stmnt #'(lambda (head rest) `(:for-stmnt ,x :next-stmnt ,y)))
+   (%for-stmnt #'(lambda (last) `(:for-stmnt (,last))))
+   (%for-stmnt %stmnt #'(lambda (head rest)
+                          `(:for-stmnt ,(append (list head) (cadr rest)))))
 
-   (%while-stmnt #'(lambda (last) `(:while-stmnt ,x)))
-   (%while-stmnt %stmnt #'(lambda (head rest) `(:while-stmnt ,x :next-stmnt ,y)))
+   (%while-stmnt #'(lambda (last) `(:while-stmnt (,last))))
+   (%while-stmnt %stmnt #'(lambda (head rest)
+                            `(:while-stmnt ,(append (list head) (cadr rest)))))
 
-   (%do-while-stmnt #'(lambda (last) `(:dowhile-stmnt ,x)))
-   (%do-while-stmnt %stmnt #'(lambda (head rest) `(:dowhile-stmnt ,x :next-stmnt ,y)))
+   (%do-while-stmnt #'(lambda (last) `(:dowhile-stmnt (,last))))
+   (%do-while-stmnt %stmnt #'(lambda (head rest)
+                               `(:dowhile-stmnt ,(append (list head) (cadr rest)))))
 
-   (%cont-stmnt #'(lambda (last) `(:cont-stmnt ,x)))
-   (%cont-stmnt %stmnt #'(lambda (head rest) `(:cont-stmnt ,x :next-stmnt ,y)))
+   (%cont-stmnt #'(lambda (last) `(:cont-stmnt (,last))))
+   (%cont-stmnt %stmnt #'(lambda (head rest)
+                           `(:cont-stmnt ,(append (list head) (cadr rest)))))
 
-   (%break-stmnt #'(lambda (last) `(:break-stmnt ,x)))
-   (%break-stmnt %stmnt #'(lambda (head rest) `(:break-stmnt ,x :next-stmnt ,y)))
+   (%break-stmnt #'(lambda (last) `(:break-stmnt (,last))))
+   (%break-stmnt %stmnt #'(lambda (head rest)
+                            `(:break-stmnt ,(append (list head) (cadr rest)))))
 
-   (%try-stmnt #'(lambda (last) `(:try-stmnt ,x)))
-   (%try-stmnt %stmnt #'(lambda (head rest) `(:try-stmnt ,x :next-stmnt ,y)))
+   (%try-stmnt #'(lambda (last) `(:try-stmnt (,last))))
+   (%try-stmnt %stmnt #'(lambda (head rest)
+                          `(:try-stmnt ,(append (list head) (cadr rest)))))
 
-   (%return-stmnt #'(lambda (last) `(:return-stmnt ,x)))
-   (%return-stmnt %stmnt #'(lambda (head rest) `(:return-stmnt ,x :next-stmnt ,y)))
+   (%return-stmnt #'(lambda (last) `(:return-stmnt (,last))))
+   (%return-stmnt %stmnt #'(lambda (head rest)
+                             `(:return-stmnt ,(append (list head) (cadr rest)))))
 
-   (%emit-stmnt #'(lambda (last) `(:emit-stmnt ,x)))
-   (%emit-stmnt %stmnt #'(lambda (head rest) `(:emit-stmnt ,x :next-stmnt ,y)))
+   (%emit-stmnt #'(lambda (last) `(:emit-stmnt (,last))))
+   (%emit-stmnt %stmnt #'(lambda (head rest)
+                           `(:emit-stmnt ,(append (list head) (cadr rest)))))
 
-   (%revert-stmnt #'(lambda (last) `(:revert-stmnt ,x)))
-   (%revert-stmnt %stmnt #'(lambda (head rest) `(:revert-stmnt ,x :next-stmnt ,y)))
+   (%revert-stmnt #'(lambda (last) `(:revert-stmnt (,last))))
+   (%revert-stmnt %stmnt #'(lambda (head rest)
+                             `(:revert-stmnt ,(append (list head) (cadr rest)))))
 
-   (%assembly-stmnt #'(lambda (last) `(:assembly-stmnt ,x)))
-   (%assembly-stmnt %stmnt #'(lambda (head rest) `(:assembly-stmnt ,x :next-stmnt ,y)))
+   (%assembly-stmnt #'(lambda (last) `(:assembly-stmnt (,last))))
+   (%assembly-stmnt %stmnt #'(lambda (head rest)
+                               `(:assembly-stmnt ,(append (list head) (cadr rest)))))
    )
 #+END_SRC
 
@@ -2756,7 +2774,7 @@ a source unit or within a contract, library or interface.
                                                    (getf rest :idex)))))
    )
   (%idex
-   (%identifier |%:| %expr #'(lambda (id cm ex) `(:idex-last ,id :expr ,ex)))
+   (%identifier |%:| %expr #'(lambda (id cm ex) `(:idex-id ,id :expr ,ex)))
    )
   (%tuple-expression
    (|%(| %expr-comma-list |%)| #'(lambda (lb ecl rb) `(:tuple ,ecl)))
