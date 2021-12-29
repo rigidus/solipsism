@@ -212,7 +212,6 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_fn_override.sol")
   ;; (test-file #P"./tests/test_fn_block.sol")
   ;; (test-file #P"./tests/test_state_var_decl.sol")
-  ;; (test-file #P"./tests/test_inline_arr_expr.sol")
   ;; (test-file #P"./tests/test_non_empty_str.sol")
   ;; (test-file #P"./tests/test_fn_type_name.sol")
   ;; (test-file #P"./tests/test_constructor.sol")
@@ -233,6 +232,8 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_const_def.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
+
+  ;; (test-file #P"./tests/test_inline_arr_expr.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
@@ -819,7 +820,7 @@ NB: Использует опережающие правила %expr, %expr-comm
    )
 #+END_SRC
 
-** FuncDefinition
+** FunctionDefinition
 
 Я использую Виртовскую [[https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.functionDefinition][диаграмму]], описывающую фунцию. В соответствии с
 ней разбор определения функции слишком сложный, поэтому лучше будет
@@ -1343,14 +1344,16 @@ type.
 
 NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
 
+NB: Закомментированое определение конфликтует с [[*Inline-array-expression][Inline-array-expression]]
+
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%type-name
    (%elt-type-name #'(lambda (par) `(:elt-type-name ,par)))
    (%func-type-name #'(lambda (par) `(:func-type-name ,par)))
    (%mapping-type #'(lambda (par) `(:mapping-type ,par)))
    (%ident-path #'(lambda (par) `(:identifier-path ,par)))
-   (%type-name |%[| %expr |%]|
-               #'(lambda (par lb ex rb) `(:type-name-expr ,par :expr ,ex)))
+   ;; (%type-name |%[| %expr |%]|
+   ;;             #'(lambda (par lb ex rb) `(:type-name-expr ,par :expr ,ex)))
    )
 #+END_SRC
 
@@ -1670,11 +1673,11 @@ Block может быть:
 #+BEGIN_SRC solidity :tangle tests/test_fn_block.sol :mkdirp yes :noweb yes
   contract test_fn_unchecked
   {
-      function fn_unchecked_1 (uint p_one) returns (uint r_one) ;
-      function fn_unchecked_2 (uint p_one) returns (uint r_one) {
+      /* function fn_unchecked_1 () ; */
+      function fn_unchecked_2 () {
           unchecked { }
       }
-      function fn_unchecked_3 (uint p_one) returns (uint r_one) {
+      function fn_unchecked_3 () {
           unchecked { unchecked { } }
       }
   }
@@ -2703,10 +2706,10 @@ a source unit or within a contract, library or interface.
    (%expr |%pipe|  %expr #'(lambda (e1 op e2) `(:expr-pipe   ,e1 :arg ,e2)))
    (%expr |%<|  %expr #'(lambda (e1 op e2) `(:expr-less      ,e1 :arg ,e2)))
    (%expr |%>|  %expr #'(lambda (e1 op e2) `(:expr-more      ,e1 :arg ,e2)))
-   (%expr |%<=| %expr #'(lambda (e1 op e2) `(:expr-less-eq   ,e1 :arg ,e2)))
-   (%expr |%>=| %expr #'(lambda (e1 op e2) `(:expr-more-eq   ,e1 :arg ,e2)))
-   (%expr |%==| %expr #'(lambda (e1 op e2) `(:expr-eq        ,e1 :arg ,e2)))
-   (%expr |%!=| %expr #'(lambda (e1 op e2) `(:expr-not-eq    ,e1 :arg ,e2)))
+   (%expr |%<=| %expr #'(lambda (e1 op e2) `(:expr-less-eql  ,e1 :arg ,e2)))
+   (%expr |%>=| %expr #'(lambda (e1 op e2) `(:expr-more-eql  ,e1 :arg ,e2)))
+   (%expr |%==| %expr #'(lambda (e1 op e2) `(:expr-eql       ,e1 :arg ,e2)))
+   (%expr |%!=| %expr #'(lambda (e1 op e2) `(:expr-not-eql   ,e1 :arg ,e2)))
    (%expr |%&&| %expr #'(lambda (e1 op e2) `(:expr-and       ,e1 :arg ,e2)))
    (%expr |%pipepipe| %expr #'(lambda (e1 op e2) `(:expr-or  ,e1 :arg ,e2)))
    (%expr |%?| %expr #'(lambda (e1 op e2) `(:expr-question   ,e1 :arg ,e2)))
@@ -2887,9 +2890,12 @@ a source unit or within a contract, library or interface.
 #+BEGIN_SRC solidity :tangle tests/test_inline_arr_expr.sol :mkdirp yes :noweb yes
   contract test_fn_override
   {
-      function fn_1 (uint p_one) override returns (uint r_one) {
-          alfa = buffer[0] ;
+      function fn_1 () {
           names = ["Alice", "Bob", "Carol"] ;
+          alfa = buffer[0] ;
+          buffer[0] = alfa ;
+          buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+          buffer[i] = alphabet[value & 0xf];
       }
   }
 #+END_SRC
