@@ -2707,8 +2707,8 @@ a source unit or within a contract, library or interface.
    (%expr |%[| %expr |%:| %expr |%]|
           #'(lambda (e1 lb e2 c e3 rb) `(:expr-idx-range ,e1 :from ,e2 :to ,e3)))
    ;; member access
-   (%expr |%.| %identifier #'(lambda (ex dt id) `(:expr-identifier ,ex :if ,id)))
-   (%expr |%.| %addr    #'(lambda (ex dt ad) `(:expr-addr    ,ex :add ,ad)))
+   (%expr |%.| %identifier #'(lambda (ex dt id) `(:expr-identifier ,ex :id ,id)))
+   (%expr |%.| %addr       #'(lambda (ex dt ad) `(:expr-addr       ,ex :add ,ad)))
    ;; idex
    (%expr |%{| |%}| #'(lambda (ex lb rb) `(:expr-idex-empty nil)))
    (%expr |%{| %idex-contents |%}| #'(lambda (ex lb idex rb) `(:expr-idex ,idex)))
