@@ -1184,15 +1184,15 @@ pragma solidity ^0.8.0;
  * @dev see https://eips.ethereum.org/EIPS/eip-721
  */
 contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable {
-/*     using Address for address; */
-/*     using EnumerableSet for EnumerableSet.UintSet; */
-/*     using EnumerableMap for EnumerableMap.UintToAddressMap; */
-/*     using Strings for uint256; */
-/*      struct Price { */
-/*         uint256 tokenId; */
-/*         uint256 price; */
-/*         TokenState state; */
-/*     } */
+    using Address for address;
+    using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableMap for EnumerableMap.UintToAddressMap;
+    using Strings for uint256;
+    struct Price {
+        uint256 tokenId;
+        uint256 price;
+        TokenState state;
+    }
     enum TokenState {Pending, ForSale, Sold, Transferred, Neutral}
     mapping(uint256 => Price) public Bazaar;
     event Bought(uint256 tokenId, uint256 value);
@@ -1924,7 +1924,7 @@ library SafeMath {
 //SACTAVATARS START
 pragma solidity ^0.8.0;
 contract SactAvatars is ERC721, Ownable {
-   /*  using SafeMath for uint256; */
+    using SafeMath for uint256;
     uint public constant MAX_AVATARS = 9000;
     bool public hasSaleStarted = false;
 
