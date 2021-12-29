@@ -485,7 +485,7 @@ identifier, он может совпасть с практически любы�
    (%user-val-type-def #'(lambda (df) `(:user-val-type-def ,df)))
    (%event-def #'(lambda (x) `(:event-def ,x)))
    (%error-def #'(lambda (df) `(:error-def ,df)))
-   ;; using-directive
+   (%using-def #'(lambda (uf) `(:using-def ,uf)))
    )
 #+END_SRC
 
@@ -501,6 +501,34 @@ identifier, он может совпасть с практически любы�
   library test_library_def
   {
       function func_3 () ;
+  }
+#+END_SRC
+** Using-definition
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%using-def
+   (%using %ident-path %for |%*| |%;|
+           #'(lambda (us id f s sc)
+               `(:using-ident-path ,id :using-star ,s)))
+   (%using %ident-path %for %type-name |%;|
+           #'(lambda (us id f t-name sc)
+               `(:using-ident-path ,id :using-t-name ,t-name))))
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\busing\\b" '%using 'using)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %using
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_using_def.sol :mkdirp yes :noweb yes
+  contract test_using_def
+  {
+      using count for count.hold;
+      using count for uint;
+      using count for *;
   }
 #+END_SRC
 
@@ -2287,7 +2315,7 @@ a source unit or within a contract, library or interface.
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\bfor\\b" '%for '%for)
+  ("\\bfor\\b" '%for 'for)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
