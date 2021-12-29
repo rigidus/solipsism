@@ -1619,7 +1619,7 @@ Block может быть:
 #+BEGIN_SRC solidity :tangle tests/test_fn_block.sol :mkdirp yes :noweb yes
   contract test_fn_unchecked
   {
-      /* function fn_unchecked_1 () ; */
+      function fn_unchecked_1 () ;
       function fn_unchecked_2 () {
           unchecked { }
       }
