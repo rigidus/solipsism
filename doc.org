@@ -233,7 +233,7 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_inline_arr_expr.sol")
   ;; (test-file #P"./tests/test_using_def.sol")
   ;; (test-file #P"./tests/test_const_def.sol")
-
+  ;; (test-file #P"tests/test_yul_block.sol")
   ;; (test-contract-file #P"./test_contract.sol")
 
   ;; (test-file #P"./tests/test_var_decl.sol")
@@ -2661,9 +2661,9 @@ a source unit or within a contract, library or interface.
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%assembly-stmnt
    (%assembly |%{| |%}| #'(lambda (as lb rb) `(:asm-empty nil)))
-   (%assembly |%{| yul-stmnt |%}| #'(lambda (as lb yu rb) `(:asm ,yu)))
+   (%assembly |%{| %yul-stmnt |%}| #'(lambda (as lb yu rb) `(:asm ,yu)))
    (%assembly %evmasm |%{|  |%}| #'(lambda (as em lb rb) `(:asm-empty nil)))
-   (%assembly %evmasm |%{| yul-stmnt |%}| #'(lambda (as em lb yu rb) `(:asm nil)))
+   (%assembly %evmasm |%{| %yul-stmnt |%}| #'(lambda (as em lb yu rb) `(:asm nil)))
    )
 #+END_SRC
 
@@ -2685,9 +2685,108 @@ a source unit or within a contract, library or interface.
   }
 #+END_SRC
 
-**** TODO Yul-statement
-***** TODO yul-block
-***** TODO yul-variable-declaration
+**** START Yul-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-stmnt
+   (%yul-block #'(lambda (yb) `(:y-block ,yb)))
+   (%yul-var-decl #'(lambda (yvs) `(:y-var ,yvs)))
+   ;; (%yul-assignmnt #'(lambda (ya) `(:y-assignmnt ,ya)))
+   ;; (%yul-func-call #'(lambda (yfc) `(:y-f-call ,yfc)))
+   ;; (%yul-if-stmnt #'(lambda (yi) `(:y-if-stmnt ,yi)))
+   ;; (%yul-for #'(lambda (yf) `(:y-for ,yf)))
+   ;; (%yul-switch #'(lambda (ys) `(:y-switch ,ys)))
+   ;; (%yul-func-def #'(lambda (yfd) `(:y-func-def ,yfd)))
+   )
+#+END_SRC
+
+***** START yul-block
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-block
+   ( |%{| |%}| #'(lambda (lb rb) `(:empty-y-block nil)))
+   ( %yul-stmnt #'(lambda (y-stmnt) `(:stmnt ,y-stmnt))))
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_block.sol :mkdirp yes :noweb yes
+  contract test_empty_yul_block
+  {
+        function fn_yul_empty_stmnt (uint p_one) returns (uint r_one) {
+
+            assembly { { } }
+        }
+  }
+#+END_SRC
+
+***** START yul-variable-declaration
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulBlock
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  ;; (%yul-var-decl
+  ;;  (%let %yul-identifier #'(lambda (var id)
+  ;;                            `(:v-id ,id)))
+
+  ;;  (%let %yul-identifier |%:=| %yul-expr
+  ;;        #'(lambda (var id assgn expr)
+  ;;            `(:v-id ,id :y-expr ,expr)))
+
+  ;;  (%let %yul-var-ident
+  ;;        #'(lambda (var id) `(:v-id ,id)))
+
+  ;;  (%let %yul-var-ident |%:=| %yul-func-call
+  ;;        #'(lambda (var id assgn fcall)
+  ;;            `(:v-id ,id :y-fcall ,fcall))))
+
+
+  ;; (%yul-var-ident
+  ;;  (%yul-identifier #'(lambda (id) `(:y-id ,id)))
+  ;;  (%yul-identifier |%,| %yul-var-ident #'(lambda (id1 id2)
+  ;;                                           `(:y-id-head ,id1 :y-id-rest ,id2))))
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\blet\\b" '%let 'let)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %let
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_var_decl.sol :mkdirp yes :noweb yes
+  contract test_empty_yul_block
+  {
+
+  }
+#+END_SRC
+
+***** yul-identifier
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulIdentifier
+
+Это копия обычного identifier, так что его тоже надо закидывать в конец.
+#+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
+  ("\\b[a-zA-Z$_]+[a-zA-Z0-9$_]*\\b" '%yul-identifier $@)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %yul-identifier
+#+END_SRC
+
+***** START yul-expression
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-expr
+   (%yul-path #'(lambda (yp) `(:y-path ,yp)))
+   (%yul-func-call #'(lambda (yfc) `(:y-fcall ,yfc)))
+   (%yul-literal #'(lambda (yl) `(:y-lit ,yl))))
+#+END_SRC
+
+***** TODO yul-path
+***** TODO yul-func-call
+***** TODO yul-literal
+
+***** TODO yul-function-call
 ***** TODO yul-assignment
 ***** TODO yul-function-call
 ***** TODO yul-if-statement
