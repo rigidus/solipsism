@@ -229,11 +229,14 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_user_def_type.sol")
   ;; (test-file #P"./tests/test_error_def.sol")
   ;; (test-file #P"./tests/test_event_def.sol")
+  ;; (test-file #P"./tests/test_try_catch_stmnt.sol")
+  ;; (test-file #P"./tests/test_inline_arr_expr.sol")
+  ;; (test-file #P"./tests/test_using_def.sol")
   ;; (test-file #P"./tests/test_const_def.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
 
-  ;; (test-file #P"./tests/test_inline_arr_expr.sol")
+  ;; (test-file #P"./tests/test_var_decl.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
@@ -368,9 +371,10 @@ identifier, он может совпасть с практически любы�
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%src-unit
-   (%src-unit-contents #'(lambda (x) `(:src-last ,x)))
+   (%src-unit-contents #'(lambda (last) `(:src (,last))))
    (%src-unit-contents %src-unit
-                       #'(lambda (a b) `(:src-head ,a :src-rest, b)))
+                       #'(lambda (head rest)
+                           `(:src ,(append (list head) (cadr rest)))))
    )
   (%src-unit-contents
    (%pragma-def #'(lambda (df) `(:pragma-def ,df)))
@@ -400,7 +404,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.constantV
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%const-def
    (%type-name %constant %identifier |%=| %expr |%;|
-               #'(lambda (t-name c id eq ex e)
+               #'(lambda (t-name const id eq ex end)
                    `(:c-t-name ,t-name :c-id ,id :c-expr ,ex))))
 #+END_SRC
 
@@ -493,11 +497,10 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.constantV
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%ctract-body-elt-contents
-   (%ctract-body-elt #'(lambda (x) `(:ctract-body-elt-last ,x)))
+   (%ctract-body-elt #'(lambda (last) `(:ctract-body-elt (,last))))
    (%ctract-body-elt %ctract-body-elt-contents
-                     #'(lambda (x y)
-                         `(:ctract-body-elt-head ,x
-                           :ctract-body-elt-rest ,y)))
+                     #'(lambda (head rest)
+                         `(:ctract-body-elt ,(append (list head) (cadr rest)))))
    )
   (%ctract-body-elt
    (%func-def #'(lambda (x) `(:func-def ,x)))
@@ -529,16 +532,17 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.constantV
       function func_3 () ;
   }
 #+END_SRC
+
 ** Using-definition
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%using-def
    (%using %ident-path %for |%*| |%;|
-           #'(lambda (us id f s sc)
-               `(:using-ident-path ,id :using-star ,s)))
+           #'(lambda (us id fo st sc)
+               `(:using ,id :all t)))
    (%using %ident-path %for %type-name |%;|
-           #'(lambda (us id f t-name sc)
-               `(:using-ident-path ,id :using-t-name ,t-name))))
+           #'(lambda (us id fo tn sc)
+               `(:using ,id :type-name ,tn))))
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
@@ -575,10 +579,10 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.eventPara
                `(:event ,id :params ,ep :anon t)))
    )
   (%event-params-contents
-   (%event-param #'(lambda (ep) `(:event-param-last ,ep)))
+   (%event-param #'(lambda (last) `(:event-param (,last))))
    (%event-param |%,| %event-params-contents
-                 #'(lambda (ep co epc)
-                     `(:event-param-head ,ep ::event-param-rest ,epc)))
+                 #'(lambda (head co rest)
+                     `(:event-param ,(append (list head) (cadr rest)))))
    )
   (%event-param
    (%type-name #'(lambda (tn) `(:type-name ,tn)))
@@ -605,17 +609,17 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.eventPara
 #+BEGIN_SRC solidity :tangle tests/test_event_def.sol :mkdirp yes :noweb yes
   contract test_event_def
   {
-      event some();
-      event some() anonymous;
+      event some_1();
+      event some_2() anonymous;
 
-      event some(bytes);
-      event some(bytes) anonymous;
+      event some_3(bytes);
+      event some_4(bytes) anonymous;
 
-      event some(uint, int);
-      event some(uint, int) anonymous;
+      event some_5(uint, int);
+      event some_6(uint, int) anonymous;
 
-      event Deposit(address indexed from, bytes32 indexed id, uint val);
-      event Deposit(address indexed from, bytes32 indexed id, uint val) anonymous;
+      event Deposit_7(address indexed from, bytes32 indexed id, uint val);
+      event Deposit_8(address indexed from, bytes32 indexed id, uint val) anonymous;
   }
 #+END_SRC
 
@@ -675,26 +679,27 @@ NB: Правило IndentifierPath вынесено в параграф [[*Ident
                   `(:contract ,id :abstract t :contents ,cbec)))
    ;; INCHERITANCE
    ;; empty inheritance contract
-   (%contract %identifier %is %inher-spec-list |%{| |%}|
+   (%contract %identifier %is %inher-spec-contents |%{| |%}|
               #'(lambda (ctract id is isl l-brak r-brak)
                   `(:contract ,id :inher ,isl)))
    ;; inheritance with contract-body
-   (%contract %identifier %is %inher-spec-list |%{| %ctract-body-elt-contents |%}|
+   (%contract %identifier %is %inher-spec-contents |%{| %ctract-body-elt-contents |%}|
               #'(lambda (ctract id is isl l-brak cbec r-brak)
                   `(:contract ,id :inher ,isl :contents ,cbec)))
    ;; abstract empty inheritance contract
-   (%abstract %contract %identifier %is %inher-spec-list |%{| |%}|
+   (%abstract %contract %identifier %is %inher-spec-contents |%{| |%}|
               #'(lambda (ab ctract id is isl l-brak r-brak)
                   `(:contract ,id :abstract t :inher ,isl)))
    ;; abstract inheritance with contract-body
-   (%abstract %contract %identifier %is %inher-spec-list |%{| %ctract-body-elt-contents |%}|
+   (%abstract %contract %identifier %is %inher-spec-contents |%{| %ctract-body-elt-contents |%}|
               #'(lambda (ab ctract id is isl l-brak cbec r-brak)
                   `(:contract ,id :abstract t :inher ,isl :contents ,cbec)))
    )
-  (%inher-spec-list
-   (%inher-spec #'(lambda (ic) `(:inher-spec-last ,ic)))
-   (%inher-spec |%,| %inher-spec-list
-                #'(lambda (ic cm isl) `(:inher-spec-head ,ic :inher-spec-rest ,isl)))
+  (%inher-spec-contents
+   (%inher-spec #'(lambda (last) `(:inher-spec (,last))))
+   (%inher-spec |%,| %inher-spec-contents
+                #'(lambda (head co rest)
+                    `(:inher-spec ,(append (list head) (cadr rest)))))
    )
   (%inher-spec
    (%ident-path #'(lambda (ip) `(:ident-path ,ip)))
@@ -793,7 +798,7 @@ NB: Использует опережающие правила %expr, %expr-comm
    (%identifier |%:| %expr |%,| %call-arg-obj
                 #'(lambda (id cm ex sc rt)
                     `(:call-arg-obj-head ,id :call-expr ,ex
-                      :call-arg-obj-head ,rt)))
+                      :call-arg-obj-rest ,rt)))
    )
 #+END_SRC
 
@@ -813,12 +818,14 @@ NB: Использует опережающие правила %expr, %expr-comm
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%expr-comma-list
-   (%expr #'(lambda (a) `(:expr-comma-list-last ,a)))
+   (%expr #'(lambda (last) `(:expr-comma-list (,last))))
    (%expr |%,| %expr-comma-list
-          #'(lambda (ex cm nx)
-              `(:expr-comma-list-head ,ex :expr-comma-list-rest ,nx)))
+          #'(lambda (head cm rest)
+              `(:expr-comma-list ,(append (list head) (cadr rest)))))
    )
 #+END_SRC
+
+[TODO:gmm] - Test
 
 ** FunctionDefinition
 
@@ -897,8 +904,9 @@ non_empty_parameter_list
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%param-list
-   (%param #'(lambda (x) `(:par-last ,x)))
-   (%param |%,| %param-list #'(lambda (pm cm pl) `(:param-head ,pm :param-rest ,pl)))
+   (%param #'(lambda (last) `(:par (,last))))
+   (%param |%,| %param-list #'(lambda (head cm rest)
+                                `(:par ,(append (list head) (cadr rest)))))
    )
 #+END_SRC
 
@@ -1319,10 +1327,10 @@ multi-identifier-path, поэтому нам понадобится раскры
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%ident-path
-   (%ident #'(lambda (id) `(:ident-last ,id)))
+   (%ident #'(lambda (last) `(:ident (,last))))
    (%ident |%.| %ident-path
-           #'(lambda (id-head dot id-rest)
-               `(:ident-head ,id-head :ident-rest ,id-rest)))
+           #'(lambda (head dot rest)
+               `(:ident ,(append (list head) (cadr rest)))))
    )
   (%ident
    (%identifier #'(lambda (id) `(:id ,id)))
@@ -1335,6 +1343,8 @@ multi-identifier-path, поэтому нам понадобится раскры
    (%ident-path |%,| %multi-ident-path #'(lambda (id cm mip) `(:id-head ,id :id-rest ,mip)))
    )
 #+END_SRC
+
+[TODO:gmm] - Test
 
 ** TypeName
 
@@ -1639,10 +1649,10 @@ Block может быть:
          #'(lambda (l-brak cont r-brak) `(:unchecked-blk-contents ,cont)))
    )
   (%unchecked-block-contents
-   (%unchecked-block #'(lambda (x) `(:unchk-blk-last ,x)))
+   (%unchecked-block #'(lambda (last) `(:unchk-blk (,last))))
    (%unchecked-block %unchecked-block-contents
-                     #'(lambda (a b)
-                         `(:unchk-blk-head ,a :unchk-blk-rest ,b)))
+                     #'(lambda (head rest)
+                         `(:unchk-blk ,(append (list head) (cadr rest)))))
    )
 #+END_SRC
 
@@ -1673,8 +1683,12 @@ Block может быть:
 #+BEGIN_SRC solidity :tangle tests/test_fn_block.sol :mkdirp yes :noweb yes
   contract test_fn_unchecked
   {
-      /* function fn_unchecked_1 () ; */
+      function fn_unchecked_1 () ;
       function fn_unchecked_2 () {
+          unchecked { }
+      }
+      function fn_unchecked_3 () {
+          unchecked { }
           unchecked { }
       }
       function fn_unchecked_3 () {
@@ -1740,11 +1754,11 @@ Block может быть:
   (%iface-def
    (%interface %identifier |%{| |%}|
                #'(lambda (in id lb rb) `(:iface ,id)))
-   (%interface %identifier %is %inher-spec-list |%{| |%}|
+   (%interface %identifier %is %inher-spec-contents |%{| |%}|
                #'(lambda (in id is isp lb rb) `(:iface ,id :is ,isp)))
    (%interface %identifier |%{| %ctract-body-elt-contents |%}|
                #'(lambda (in id lb bdy rb) `(:iface ,id :contents ,bdy)))
-   (%interface %identifier %is %inher-spec-list |%{|
+   (%interface %identifier %is %inher-spec-contents |%{|
                %ctract-body-elt-contents |%}|
                #'(lambda (in id is isp lb bdy rb)
                    `(:iface ,id :is ,isp :contents ,bdy)))
@@ -1917,11 +1931,11 @@ Definition of a struct. Can occur at top-level within a source unit or within a 
                 `(:struct ,id :contents ,smc)))
    )
   (%struct-member-contents
-   (%struct-member #'(lambda (sm)
-                       `(:struct-last ,sm)))
+   (%struct-member #'(lambda (last)
+                       `(:member (,last))))
    (%struct-member %struct-member-contents
-                   #'(lambda (sm smc)
-                       `(:struct-head ,sm :struct-rest ,smc)))
+                   #'(lambda (head rest)
+                       `(:member ,(append (list head) (cadr rest)))))
    )
   (%struct-member
    (%type-name %identifier |%;|
@@ -1987,10 +2001,10 @@ a source unit or within a contract, library or interface.
                `(:error-def ,id :contents ,mip)))
    )
   (%err-param-contents
-   (%err-param #'(lambda (id) `(:err-par-last ,id)))
+   (%err-param #'(lambda (last) `(:err-par (,last))))
    (%err-param |%,| %err-param-contents
-               #'(lambda (ep cm epc)
-                   `(:err-param-head ,ep :err-param-rest ,epc)))
+               #'(lambda (head cm rest)
+                   `(:err-par ,(append (list head) (cadr rest)))))
    )
   (%err-param
    (%type-name #'(lambda (tn) `(:err-type ,tn)))
@@ -2009,9 +2023,10 @@ a source unit or within a contract, library or interface.
 #+BEGIN_SRC solidity :tangle tests/test_error_def.sol :mkdirp yes :noweb yes
   error MyError0 ( ) ;
   error MyError1 ( bytes ) ;
-  error MyError2 ( bytes , uint256 ) ;
-  error MyError3 ( bytes arr ) ;
-  error MyError4 ( bytes arr , uint256 someval ) ;
+  error MyError2 ( bytes1, bytes2, bytes3, bytes4 ) ;
+  error MyError3 ( bytes , uint256 ) ;
+  error MyError4 ( bytes arr ) ;
+  error MyError5 ( bytes arr , uint256 someval ) ;
 #+END_SRC
 
 ** START State-variable-declaration
@@ -2094,32 +2109,58 @@ a source unit or within a contract, library or interface.
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%stmnt
    (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
-   (%var-decl-stmnt #'(lambda (x) `(:var-decl ,x)))
-   (%var-decl-stmnt %stmnt #'(lambda (x y) `(:var-decl ,x :next-stmnt ,y)))
-   (%expr-stmnt #'(lambda (x) `(:expr-stmnt ,x)))
-   (%expr-stmnt %stmnt #'(lambda (x y) `(:expr-stmnt ,x :next-stmnt ,y)))
-   (%if-stmnt #'(lambda (x) `(:if-stmnt ,x)))
-   (%if-stmnt %stmnt #'(lambda (x y) `(:if-stmnt ,x :next-stmnt ,y)))
-   (%for-stmnt #'(lambda (x) `(:for-stmnt ,x)))
-   (%for-stmnt %stmnt #'(lambda (x y) `(:for-stmnt ,x :next-stmnt ,y)))
-   (%while-stmnt #'(lambda (x) `(:while-stmnt ,x)))
-   (%while-stmnt %stmnt #'(lambda (x y) `(:while-stmnt ,x :next-stmnt ,y)))
-   (%do-while-stmnt #'(lambda (x) `(:dowhile-stmnt ,x)))
-   (%do-while-stmnt %stmnt #'(lambda (x y) `(:dowhile-stmnt ,x :next-stmnt ,y)))
-   (%cont-stmnt #'(lambda (x) `(:cont-stmnt ,x)))
-   (%cont-stmnt %stmnt #'(lambda (x y) `(:cont-stmnt ,x :next-stmnt ,y)))
-   (%break-stmnt #'(lambda (x) `(:break-stmnt ,x)))
-   (%break-stmnt %stmnt #'(lambda (x y) `(:break-stmnt ,x :next-stmnt ,y)))
-   (%try-stmnt #'(lambda (x) `(:try-stmnt ,x)))
-   (%try-stmnt %stmnt #'(lambda (x y) `(:try-stmnt ,x :next-stmnt ,y)))
-   (%return-stmnt #'(lambda (x) `(:return-stmnt ,x)))
-   (%return-stmnt %stmnt #'(lambda (x y) `(:return-stmnt ,x :next-stmnt ,y)))
-   (%emit-stmnt #'(lambda (x) `(:emit-stmnt ,x)))
-   (%emit-stmnt %stmnt #'(lambda (x y) `(:emit-stmnt ,x :next-stmnt ,y)))
-   (%revert-stmnt #'(lambda (x) `(:revert-stmnt ,x)))
-   (%revert-stmnt %stmnt #'(lambda (x y) `(:revert-stmnt ,x :next-stmnt ,y)))
-   (%assembly-stmnt #'(lambda (x) `(:assembly-stmnt ,x)))
-   (%assembly-stmnt %stmnt #'(lambda (x y) `(:assembly-stmnt ,x :next-stmnt ,y)))
+
+   (%var-decl-stmnt #'(lambda (last) `(:var-decl-stmnt (,last))))
+   (%var-decl-stmnt %stmnt #'(lambda (head rest)
+                               `(:var-decl-stmnt ,(append (list head) (cadr rest)))))
+
+   (%expr-stmnt #'(lambda (last) `(:expr-stmnt (,last))))
+   (%expr-stmnt %stmnt #'(lambda (head rest)
+                           `(:expr-stmnt ,(append (list head) (cadr rest)))))
+
+   (%if-stmnt #'(lambda (last) `(:if-stmnt (,last))))
+   (%if-stmnt %stmnt #'(lambda (head rest)
+                         `(:if-stmnt ,(append (list head) (cadr rest)))))
+
+   (%for-stmnt #'(lambda (last) `(:for-stmnt (,last))))
+   (%for-stmnt %stmnt #'(lambda (head rest)
+                          `(:for-stmnt ,(append (list head) (cadr rest)))))
+
+   (%while-stmnt #'(lambda (last) `(:while-stmnt (,last))))
+   (%while-stmnt %stmnt #'(lambda (head rest)
+                            `(:while-stmnt ,(append (list head) (cadr rest)))))
+
+   (%do-while-stmnt #'(lambda (last) `(:dowhile-stmnt (,last))))
+   (%do-while-stmnt %stmnt #'(lambda (head rest)
+                               `(:dowhile-stmnt ,(append (list head) (cadr rest)))))
+
+   (%cont-stmnt #'(lambda (last) `(:cont-stmnt (,last))))
+   (%cont-stmnt %stmnt #'(lambda (head rest)
+                           `(:cont-stmnt ,(append (list head) (cadr rest)))))
+
+   (%break-stmnt #'(lambda (last) `(:break-stmnt (,last))))
+   (%break-stmnt %stmnt #'(lambda (head rest)
+                            `(:break-stmnt ,(append (list head) (cadr rest)))))
+
+   (%try-stmnt #'(lambda (last) `(:try-stmnt (,last))))
+   (%try-stmnt %stmnt #'(lambda (head rest)
+                          `(:try-stmnt ,(append (list head) (cadr rest)))))
+
+   (%return-stmnt #'(lambda (last) `(:return-stmnt (,last))))
+   (%return-stmnt %stmnt #'(lambda (head rest)
+                             `(:return-stmnt ,(append (list head) (cadr rest)))))
+
+   (%emit-stmnt #'(lambda (last) `(:emit-stmnt (,last))))
+   (%emit-stmnt %stmnt #'(lambda (head rest)
+                           `(:emit-stmnt ,(append (list head) (cadr rest)))))
+
+   (%revert-stmnt #'(lambda (last) `(:revert-stmnt (,last))))
+   (%revert-stmnt %stmnt #'(lambda (head rest)
+                             `(:revert-stmnt ,(append (list head) (cadr rest)))))
+
+   (%assembly-stmnt #'(lambda (last) `(:assembly-stmnt (,last))))
+   (%assembly-stmnt %stmnt #'(lambda (head rest)
+                               `(:assembly-stmnt ,(append (list head) (cadr rest)))))
    )
 #+END_SRC
 
@@ -2478,9 +2519,10 @@ a source unit or within a contract, library or interface.
              `(:try ,ex :ret ,pl :blk ,bl :catch ,cc)))
    )
   (%catch-clause-contents
+   (%catch-clause #'(lambda (last) `(:catch (,last))))
    (%catch-clause %catch-clause-contents
-                  #'(lambda (a b) `(:catch-head ,a :catch-rest ,b)))
-   (%catch-clause #'(lambda (a) `(:catch-last ,a)))
+                  #'(lambda (head rest) `(:catch ,(append (list head)
+                                                          (getf rest :catch)))))
    )
   (%catch-clause
    (%catch %block #'(lambda (ca bl) `(:catch nil :blk ,bl)))
@@ -2672,8 +2714,8 @@ a source unit or within a contract, library or interface.
    (%expr |%[| %expr |%:| %expr |%]|
           #'(lambda (e1 lb e2 c e3 rb) `(:expr-idx-range ,e1 :from ,e2 :to ,e3)))
    ;; member access
-   (%expr |%.| %identifier #'(lambda (ex dt id) `(:expr-identifier ,ex :if ,id)))
-   (%expr |%.| %addr    #'(lambda (ex dt ad) `(:expr-addr    ,ex :add ,ad)))
+   (%expr |%.| %identifier #'(lambda (ex dt id) `(:expr-identifier ,ex :id ,id)))
+   (%expr |%.| %addr       #'(lambda (ex dt ad) `(:expr-addr       ,ex :add ,ad)))
    ;; idex
    (%expr |%{| |%}| #'(lambda (ex lb rb) `(:expr-idex-empty nil)))
    (%expr |%{| %idex-contents |%}| #'(lambda (ex lb idex rb) `(:expr-idex ,idex)))
@@ -2733,11 +2775,13 @@ a source unit or within a contract, library or interface.
    (%elt-type-name #'(lambda (etn) `(:elt-type-name ,etn)))
    )
   (%idex-contents ;; TODO: Кажется это multi-ident-path
-   (%idex #'(lambda (idex) `(:idex-last ,idex)))
-   (%idex |%,| %idex-contents #'(lambda (idex c rest) `(:idex-head ,idex :idex-rest ,rest)))
+   (%idex #'(lambda (last) `(:idex (,last))))
+   (%idex |%,| %idex-contents #'(lambda (head co rest)
+                                  `(:idex ,(append (list head)
+                                                   (getf rest :idex)))))
    )
   (%idex
-   (%identifier |%:| %expr #'(lambda (id cm ex) `(:idex-last ,id :expr ,ex)))
+   (%identifier |%:| %expr #'(lambda (id cm ex) `(:idex-id ,id :expr ,ex)))
    )
   (%tuple-expression
    (|%(| %expr-comma-list |%)| #'(lambda (lb ecl rb) `(:tuple ,ecl)))
