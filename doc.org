@@ -2723,26 +2723,26 @@ a source unit or within a contract, library or interface.
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulBlock
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
-  ;; (%yul-var-decl
-  ;;  (%let %yul-identifier #'(lambda (var id)
-  ;;                            `(:v-id ,id)))
+  (%yul-var-decl
+   (%let %yul-identifier #'(lambda (var id)
+                             `(:v-id ,id)))
 
-  ;;  (%let %yul-identifier |%:=| %yul-expr
-  ;;        #'(lambda (var id assgn expr)
-  ;;            `(:v-id ,id :y-expr ,expr)))
+   (%let %yul-identifier |%:=| %yul-expr
+         #'(lambda (var id assgn expr)
+             `(:v-id ,id :y-expr ,expr)))
 
-  ;;  (%let %yul-var-ident
-  ;;        #'(lambda (var id) `(:v-id ,id)))
+   (%let %yul-var-ident
+         #'(lambda (var id) `(:v-id ,id)))
 
-  ;;  (%let %yul-var-ident |%:=| %yul-func-call
-  ;;        #'(lambda (var id assgn fcall)
-  ;;            `(:v-id ,id :y-fcall ,fcall))))
+   (%let %yul-var-ident |%:=| %yul-func-call
+         #'(lambda (var id assgn fcall)
+             `(:v-id ,id :y-fcall ,fcall))))
 
 
-  ;; (%yul-var-ident
-  ;;  (%yul-identifier #'(lambda (id) `(:y-id ,id)))
-  ;;  (%yul-identifier |%,| %yul-var-ident #'(lambda (id1 id2)
-  ;;                                           `(:y-id-head ,id1 :y-id-rest ,id2))))
+  (%yul-var-ident
+   (%yul-identifier #'(lambda (id) `(:y-id ,id)))
+   (%yul-identifier |%,| %yul-var-ident #'(lambda (id1 id2)
+                                            `(:y-id-head ,id1 :y-id-rest ,id2))))
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
@@ -2756,7 +2756,12 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulBlock
 #+BEGIN_SRC solidity :tangle tests/test_yul_var_decl.sol :mkdirp yes :noweb yes
   contract test_empty_yul_block
   {
-
+      function fn_yul_var_decl (uint p_one) returns (uint r_one) {
+          assembly {  let some
+                      let size := extcodesize(_addr)
+                      let size := obj.IsOk
+                   }
+      }
   }
 #+END_SRC
 
@@ -2764,13 +2769,15 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulBlock
 
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulIdentifier
 
-Это копия обычного identifier, так что его тоже надо закидывать в конец.
+Это полня копия обычного identifier - они совершенно идентичны. Поэтому
+чтоб не ломать парсер, используем вместо yul-identifier просто identifier
+
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ("\\b[a-zA-Z$_]+[a-zA-Z0-9$_]*\\b" '%yul-identifier $@)
+  ;; ("\\b[a-zA-Z$_]+[a-zA-Z0-9$_]*\\b" '%yul-identifier $@)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %yul-identifier
+  ;; %yul-identifier
 #+END_SRC
 
 ***** START yul-expression
@@ -2779,16 +2786,50 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulIdentif
   (%yul-expr
    (%yul-path #'(lambda (yp) `(:y-path ,yp)))
    (%yul-func-call #'(lambda (yfc) `(:y-fcall ,yfc)))
-   (%yul-literal #'(lambda (yl) `(:y-lit ,yl))))
+   ;; (%yul-literal #'(lambda (yl) `(:y-lit ,yl)))
+   )
 #+END_SRC
 
-***** TODO yul-path
-***** TODO yul-func-call
-***** TODO yul-literal
+***** START yul-path
 
-***** TODO yul-function-call
+[[TODO:gmm]] заменить yul-identifier на identifier везде
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-path
+   (%yul-identifier #'(lambda (yid) `(:y-path-head ,yid)))
+   (%yul-identifier |%.| %yul-path #'(lambda (yid1 pt yid2)
+                                       `(:y-id-head ,yid1 :y-id-rest ,yid2))))
+#+END_SRC
+
+***** START yul-func-call
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFunctionCall
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-func-call
+   (%yul-identifier |%(| |%)|
+                    #'(lambda (yid lsc rsc) `(:y-id ,yid)))
+   ;; (%yul-envbuiltin |%(| |%)|
+   ;;                  #'(lambda (yenv lsc rsc) `(:y-env ,yenv)))
+
+   (%yul-identifier |%(| %yul-func-call-body |%)|
+                    #'(lambda (yid lsc rsc) `(:y-id ,yid)))
+   ;; (%yul-envbuiltin |%(| %yul-func-call-body |%)|
+   ;;                  #'(lambda (yenv lsc rsc) `(:y-env ,yenv)))
+   )
+
+
+  (%yul-func-call-body
+   (%yul-expr #'(lambda (exp) `(:y-exp ,exp)))
+   (%yul-expr |%,| %yul-func-call-body
+              #'(lambda (exp1 cm exp2)
+                  `(:y-fcallb-head ,exp :y-fcallb-rest ,exp2))))
+
+
+#+END_SRC
+
+
+***** TODO yul-literal
 ***** TODO yul-assignment
-***** TODO yul-function-call
 ***** TODO yul-if-statement
 ***** TODO yul-for-statement
 ***** TODO yul-switch-statementleavebreakcontinue
