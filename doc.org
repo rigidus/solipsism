@@ -233,7 +233,9 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_inline_arr_expr.sol")
   ;; (test-file #P"./tests/test_using_def.sol")
   ;; (test-file #P"./tests/test_const_def.sol")
-  ;; (test-file #P"tests/test_yul_block.sol")
+  ;; (test-file #P"./tests/test_yul_block.sol")
+  (test-file #P"./tests/test_yul_var_decl.sol")
+
   ;; (test-contract-file #P"./test_contract.sol")
 
   ;; (test-file #P"./tests/test_var_decl.sol")
@@ -803,13 +805,14 @@ NB: Использует опережающие правила %expr, %expr-comm
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  (":=" '|%:=| '|%:=|)
   (":" '|%:| '|:|)
   ("\\(" '|%(| '|(|)
   ("\\)" '|%)| '|)|)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  |%:| |%(| |%)|
+  |%:=| |%:| |%(| |%)|
 #+END_SRC
 
 ** ExprCommaList
@@ -2689,6 +2692,14 @@ a source unit or within a contract, library or interface.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-stmnt
+   (%yul-stmnt-contents #'(lambda (last) `(:src (,last))))
+   (%yul-stmnt-contents %yul-stmnt
+                       #'(lambda (head rest)
+                           `(:src ,(append (list head) (cadr rest)))))
+   )
+
+
+  (%yul-stmnt-contents
    (%yul-block #'(lambda (yb) `(:y-block ,yb)))
    (%yul-var-decl #'(lambda (yvs) `(:y-var ,yvs)))
    ;; (%yul-assignmnt #'(lambda (ya) `(:y-assignmnt ,ya)))
@@ -2698,6 +2709,7 @@ a source unit or within a contract, library or interface.
    ;; (%yul-switch #'(lambda (ys) `(:y-switch ,ys)))
    ;; (%yul-func-def #'(lambda (yfd) `(:y-func-def ,yfd)))
    )
+
 #+END_SRC
 
 ***** START yul-block
@@ -2705,7 +2717,8 @@ a source unit or within a contract, library or interface.
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-block
    ( |%{| |%}| #'(lambda (lb rb) `(:empty-y-block nil)))
-   ( %yul-stmnt #'(lambda (y-stmnt) `(:stmnt ,y-stmnt))))
+   ( %yul-stmnt-contents #'(lambda (y-stmnt)
+                             `(:stmnt ,y-stmnt))))
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_yul_block.sol :mkdirp yes :noweb yes
@@ -2724,10 +2737,10 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulBlock
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-var-decl
-   (%let %yul-identifier #'(lambda (var id)
+   (%let %identifier #'(lambda (var id)
                              `(:v-id ,id)))
 
-   (%let %yul-identifier |%:=| %yul-expr
+   (%let %identifier |%:=| %yul-expr
          #'(lambda (var id assgn expr)
              `(:v-id ,id :y-expr ,expr)))
 
@@ -2739,9 +2752,14 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulBlock
              `(:v-id ,id :y-fcall ,fcall))))
 
 
+  ;; (%yul-var-ident
+  ;;  (%yul-identifier #'(lambda (id) `(:y-id ,id)))
+  ;;  (%yul-identifier |%,| %yul-var-ident #'(lambda (id1 id2)
+  ;;                                           `(:y-id-head ,id1 :y-id-rest ,id2))))
+
   (%yul-var-ident
-   (%yul-identifier #'(lambda (id) `(:y-id ,id)))
-   (%yul-identifier |%,| %yul-var-ident #'(lambda (id1 id2)
+   (%identifier #'(lambda (id) `(:y-id ,id)))
+   (%identifier |%,| %yul-var-ident #'(lambda (id1 id2)
                                             `(:y-id-head ,id1 :y-id-rest ,id2))))
 #+END_SRC
 
@@ -2757,9 +2775,11 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulBlock
   contract test_empty_yul_block
   {
       function fn_yul_var_decl (uint p_one) returns (uint r_one) {
-          assembly {  let some
+          assembly {
+                      let some
+                      let some := obj.IsOk
                       let size := extcodesize(_addr)
-                      let size := obj.IsOk
+                      let size := some(obj.IsOk)
                    }
       }
   }
@@ -2795,8 +2815,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulIdentif
 [[TODO:gmm]] заменить yul-identifier на identifier везде
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-path
-   (%yul-identifier #'(lambda (yid) `(:y-path-head ,yid)))
-   (%yul-identifier |%.| %yul-path #'(lambda (yid1 pt yid2)
+   (%identifier #'(lambda (yid) `(:y-path-head ,yid)))
+   (%identifier |%.| %yul-path #'(lambda (yid1 pt yid2)
                                        `(:y-id-head ,yid1 :y-id-rest ,yid2))))
 #+END_SRC
 
@@ -2806,15 +2826,15 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-func-call
-   (%yul-identifier |%(| |%)|
-                    #'(lambda (yid lsc rsc) `(:y-id ,yid)))
+   (%identifier |%(| |%)|
+                #'(lambda (yid lsc rsc) `(:y-id ,yid)))
    ;; (%yul-envbuiltin |%(| |%)|
    ;;                  #'(lambda (yenv lsc rsc) `(:y-env ,yenv)))
 
-   (%yul-identifier |%(| %yul-func-call-body |%)|
-                    #'(lambda (yid lsc rsc) `(:y-id ,yid)))
-   ;; (%yul-envbuiltin |%(| %yul-func-call-body |%)|
-   ;;                  #'(lambda (yenv lsc rsc) `(:y-env ,yenv)))
+   (%identifier |%(| %yul-func-call-body |%)|
+                #'(lambda (yid lsc fcbody rsc) `(:y-id ,yid :y-fbody ,fcbody)))
+   (%yul-envbuiltin |%(| %yul-func-call-body |%)|
+                    #'(lambda (yenv lsc  fcbody rsc) `(:y-env ,yenv :y-fbody ,fcbody)))
    )
 
 
@@ -2964,6 +2984,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   ("[+]{2}" '|%++| '|%++|)
   ("[-]{2}" '|%--| '|%--|)
 
+  (":=" '|%:=| '|%:=|)
   ("[=]{1}" '|%=| '|%=|)
   ("[|]{1}" '|%pipe| '|%pipe|)
   ("[&]{1}" '|%&| '|%&|)
