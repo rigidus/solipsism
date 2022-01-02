@@ -234,11 +234,10 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_using_def.sol")
   ;; (test-file #P"./tests/test_const_def.sol")
   ;; (test-file #P"./tests/test_yul_block.sol")
-  (test-file #P"./tests/test_yul_var_decl.sol")
+  ;; (test-file #P"./tests/test_yul_var_decl.sol")
+  ;; (test-file #P"./tests/test_fuccall.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
-
-  ;; (test-file #P"./tests/test_var_decl.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
@@ -2692,10 +2691,10 @@ a source unit or within a contract, library or interface.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-stmnt
-   (%yul-stmnt-contents #'(lambda (last) `(:src (,last))))
+   (%yul-stmnt-contents #'(lambda (last) `(:yul-src (,last))))
    (%yul-stmnt-contents %yul-stmnt
                        #'(lambda (head rest)
-                           `(:src ,(append (list head) (cadr rest)))))
+                           `(:yul-src ,(append (list head) (cadr rest)))))
    )
 
 
@@ -2703,7 +2702,7 @@ a source unit or within a contract, library or interface.
    (%yul-block #'(lambda (yb) `(:y-block ,yb)))
    (%yul-var-decl #'(lambda (yvs) `(:y-var ,yvs)))
    ;; (%yul-assignmnt #'(lambda (ya) `(:y-assignmnt ,ya)))
-   ;; (%yul-func-call #'(lambda (yfc) `(:y-f-call ,yfc)))
+   (%yul-func-call #'(lambda (yfc) `(:y-f-call ,yfc)))
    ;; (%yul-if-stmnt #'(lambda (yi) `(:y-if-stmnt ,yi)))
    ;; (%yul-for #'(lambda (yf) `(:y-for ,yf)))
    ;; (%yul-switch #'(lambda (ys) `(:y-switch ,ys)))
@@ -2804,7 +2803,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulIdentif
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-expr
-   (%yul-path #'(lambda (yp) `(:y-path ,yp)))
+   ;; (%ident-path #'(lambda (yp) `(:y-path ,yp)))
+   (%yul-path #'(lambda (yfc) `(:y-fcall ,yfc)))
    (%yul-func-call #'(lambda (yfc) `(:y-fcall ,yfc)))
    ;; (%yul-literal #'(lambda (yl) `(:y-lit ,yl)))
    )
@@ -2812,7 +2812,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulIdentif
 
 ***** START yul-path
 
-[[TODO:gmm]] заменить yul-identifier на identifier везде
+ Yul-path полностью дуюлирует ident-path.
+
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-path
    (%identifier #'(lambda (yid) `(:y-path-head ,yid)))
@@ -2828,25 +2829,122 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   (%yul-func-call
    (%identifier |%(| |%)|
                 #'(lambda (yid lsc rsc) `(:y-id ,yid)))
-   ;; (%yul-envbuiltin |%(| |%)|
-   ;;                  #'(lambda (yenv lsc rsc) `(:y-env ,yenv)))
-
+   (%yul-envbuiltin |%(| |%)|
+                    #'(lambda (yenv lsc rsc) `(:y-env ,yenv)))
    (%identifier |%(| %yul-func-call-body |%)|
                 #'(lambda (yid lsc fcbody rsc) `(:y-id ,yid :y-fbody ,fcbody)))
    (%yul-envbuiltin |%(| %yul-func-call-body |%)|
                     #'(lambda (yenv lsc  fcbody rsc) `(:y-env ,yenv :y-fbody ,fcbody)))
-   )
 
 
-  (%yul-func-call-body
-   (%yul-expr #'(lambda (exp) `(:y-exp ,exp)))
-   (%yul-expr |%,| %yul-func-call-body
-              #'(lambda (exp1 cm exp2)
-                  `(:y-fcallb-head ,exp :y-fcallb-rest ,exp2))))
+   (%yul-func-call-body
+    (%yul-expr #'(lambda (exp) `(:y-exp ,exp)))
+    (%yul-expr |%,| %yul-func-call-body
+               #'(lambda (exp1 cm exp2)
+                   `(:y-fcallb-head ,exp :y-fcallb-rest ,exp2))))
 
 
 #+END_SRC
 
+***** START yul-envbuiltin
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-envbuiltin
+   (%asm-command #'(lambda (cmd) `(:asm-cmd ,cmd ))))
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bstop\\b" '%asm-command 'stop)
+  ("\\badd\\b" '%asm-command 'add)
+  ("\\bsub\\b" '%asm-command 'sub)
+  ("\\bmul\\b" '%asm-command 'mul)
+  ("\\bdiv\\b" '%asm-command 'div)
+  ("\\bsdiv\\b" '%asm-command 'sdiv)
+  ("\\bmod\\b" '%asm-command 'mod)
+  ("\\bsmod\\b" '%asm-command 'smod)
+  ("\\bexp\\b" '%asm-command 'exp)
+  ("\\bnot\\b" '%asm-command 'not)
+  ("\\blt\\b" '%asm-command 'lt)
+  ("\\bgt\\b" '%asm-command 'gt)
+  ("\\bslt\\b" '%asm-command 'slt)
+  ("\\bsgt\\b" '%asm-command 'sgt)
+  ("\\beq\\b" '%asm-command 'eq)
+  ("\\biszero\\b" '%asm-command 'iszero)
+  ("\\band\\b" '%asm-command 'and)
+  ("\\bor\\b" '%asm-command 'or)
+  ("\\bxor\\b" '%asm-command 'xor)
+  ("\\bshl\\b" '%asm-command 'shl)
+  ("\\bshr\\b" '%asm-command 'shr)
+  ("\\bsar\\b" '%asm-command 'sar)
+  ("\\baddmod\\b" '%asm-command 'addmod)
+  ("\\bmulmod\\b" '%asm-command 'mulmod)
+  ("\\bsignextend\\b" '%asm-command 'signextend)
+  ("\\bkeccak256\\b" '%asm-command 'keccak256)
+  ("\\bpop\\b" '%asm-command 'pop)
+  ("\\bmload\\b" '%asm-command 'mload)
+  ("\\bmstore\\b" '%asm-command 'mstore)
+  ("\\bmstore8\\b" '%asm-command 'mstore8)
+  ("\\bsload\\b" '%asm-command 'sload)
+  ("\\bsstore\\b" '%asm-command 'sstore)
+  ("\\bmsize\\b" '%asm-command 'msize)
+  ("\\bgas\\b" '%asm-command 'gas)
+  ("\\bbalance\\b" '%asm-command 'balance)
+  ("\\bselfbalance\\b" '%asm-command 'selfbalance)
+  ("\\bcaller\\b" '%asm-command 'caller)
+  ("\\bcallvalue\\b" '%asm-command 'callvalue)
+  ("\\bcalldataload\\b" '%asm-command 'calldataload)
+  ("\\bcalldatasize\\b" '%asm-command 'calldatasize)
+  ("\\bcalldatacopy\\b" '%asm-command 'calldatacopy)
+  ("\\bextcodesize\\b" '%asm-command 'extcodesize)
+  ("\\bextcodecopy\\b" '%asm-command 'extcodecopy)
+  ("\\breturndatasize\\b" '%asm-command 'returndatasize)
+  ("\\breturndatacopy\\b" '%asm-command 'returndatacopy)
+  ("\\bextcodehash\\b" '%asm-command 'extcodehash)
+  ("\\bcreate\\b" '%asm-command 'create)
+  ("\\bcreate2\\b" '%asm-command 'create2)
+  ("\\bcall\\b" '%asm-command 'call)
+  ("\\bcallcode\\b" '%asm-command 'callcode)
+  ("\\bdelegatecall\\b" '%asm-command 'delegatecall)
+  ("\\bstaticcall\\b" '%asm-command 'staticcall)
+  ("\\breturn\\b" '%asm-command 'return)
+  ("\\bbyte\\b" '%asm-command 'byte)
+  ("\\brevert\\b" '%asm-command 'revert)
+  ("\\bselfdestruct\\b" '%asm-command 'selfdestruct)
+  ("\\binvalid\\b" '%asm-command 'invalid)
+  ("\\blog0\\b" '%asm-command 'log0)
+  ("\\blog1\\b" '%asm-command 'log1)
+  ("\\blog2\\b" '%asm-command 'log2)
+  ("\\blog3\\b" '%asm-command 'log3)
+  ("\\blog4\\b" '%asm-command 'log4)
+  ("\\bchainid\\b" '%asm-command 'chainid)
+  ("\\borigin\\b" '%asm-command 'origin)
+  ("\\bgasprice\\b" '%asm-command 'gasprice)
+  ("\\bblockhash\\b" '%asm-command 'blockhash)
+  ("\\bcoinbase\\b" '%asm-command 'coinbase)
+  ("\\btimestamp\\b" '%asm-command 'timestamp)
+  ("\\bnumber\\b" '%asm-command 'number)
+  ("\\bdifficulty\\b" '%asm-command 'difficulty)
+  ("\\bgaslimit\\b" '%asm-command 'gaslimit)
+  ("\\bbasefee\\b" '%asm-command 'basefee)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %asm-command
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_fuccall.sol :mkdirp yes :noweb yes
+  contract test_empty_yul_block
+  {
+      function fn_yul_var_decl (uint p_one) returns (uint r_one) {
+          assembly {
+                      some(obj.IsOk)
+                          stop(add(smth))
+                          add()
+                          sub()
+                   }
+      }
+  }
+#+END_SRC
 
 ***** TODO yul-literal
 ***** TODO yul-assignment
