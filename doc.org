@@ -134,7 +134,7 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (get-filtered-comments-file-contents #P"/home/rigidus/src/solipsism/test_contract.sol")
 #+END_SRC
 
-* Tests
+* COMMENT Tests
 
 Для тестирования будем генерировать файлы с Solidity-кодом в подпапках
 папки ~./tests~.
@@ -235,7 +235,15 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_const_def.sol")
   ;; (test-file #P"./tests/test_yul_block.sol")
   ;; (test-file #P"./tests/test_yul_var_decl.sol")
-  ;; (test-file #P"./tests/test_fuccall.sol")
+  ;; (test-file #P"./tests/test_yul_funccall.sol")
+  ;; (test-file #P"./tests/test_yul_bool_lit.sol")
+  ;; (test-file #P"./tests/test_yul_hexnum.sol")
+  ;; (test-file #P"./tests/test_yul_dec_lit.sol")
+  ;; (test-file #P"./tests/test_yul_str_lit.sol")
+  ;; (test-file #P"./tests/test_yul_str_lit.sol")
+  ;; (test-file #P"./tests/test_yul_assignmt.sol")
+  ;; (test-file #P"./tests/test_yul_if.sol")
+  ;; (test-file #P"./tests/test_yul_func_def.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
 
@@ -2701,12 +2709,12 @@ a source unit or within a contract, library or interface.
   (%yul-stmnt-contents
    (%yul-block #'(lambda (yb) `(:y-block ,yb)))
    (%yul-var-decl #'(lambda (yvs) `(:y-var ,yvs)))
-   ;; (%yul-assignmnt #'(lambda (ya) `(:y-assignmnt ,ya)))
+   (%yul-assignmnt #'(lambda (ya) `(:y-assignmnt ,ya)))
    (%yul-func-call #'(lambda (yfc) `(:y-f-call ,yfc)))
-   ;; (%yul-if-stmnt #'(lambda (yi) `(:y-if-stmnt ,yi)))
+   (%yul-if-stmnt #'(lambda (yi) `(:y-if-stmnt ,yi)))
    ;; (%yul-for #'(lambda (yf) `(:y-for ,yf)))
    ;; (%yul-switch #'(lambda (ys) `(:y-switch ,ys)))
-   ;; (%yul-func-def #'(lambda (yfd) `(:y-func-def ,yfd)))
+   (%yul-func-def #'(lambda (yfd) `(:y-func-def ,yfd)))
    )
 
 #+END_SRC
@@ -2716,8 +2724,9 @@ a source unit or within a contract, library or interface.
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-block
    ( |%{| |%}| #'(lambda (lb rb) `(:empty-y-block nil)))
-   ( %yul-stmnt-contents #'(lambda (y-stmnt)
-                             `(:stmnt ,y-stmnt))))
+   ;; ( %yul-stmnt-contents #'(lambda (y-stmnt)
+   ;;                           `(:stmnt ,y-stmnt)))
+   )
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_yul_block.sol :mkdirp yes :noweb yes
@@ -2730,7 +2739,7 @@ a source unit or within a contract, library or interface.
   }
 #+END_SRC
 
-***** START yul-variable-declaration
+***** yul-variable-declaration
 
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulBlock
 
@@ -2803,16 +2812,16 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulIdentif
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-expr
-   ;; (%ident-path #'(lambda (yp) `(:y-path ,yp)))
    (%yul-path #'(lambda (yfc) `(:y-fcall ,yfc)))
    (%yul-func-call #'(lambda (yfc) `(:y-fcall ,yfc)))
-   ;; (%yul-literal #'(lambda (yl) `(:y-lit ,yl)))
+   (%yul-lit #'(lambda (yl) `(:y-lit ,yl)))
    )
 #+END_SRC
 
-***** START yul-path
+***** yul-path
 
  Yul-path полностью дуюлирует ident-path.
+[[TODO:gmm]] проверить, что yul-path не конфликтует с ident-path
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-path
@@ -2821,7 +2830,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulIdentif
                                        `(:y-id-head ,yid1 :y-id-rest ,yid2))))
 #+END_SRC
 
-***** START yul-func-call
+***** yul-func-call
 
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFunctionCall
 
@@ -2932,7 +2941,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   %asm-command
 #+END_SRC
 
-#+BEGIN_SRC solidity :tangle tests/test_yul_fuccall.sol :mkdirp yes :noweb yes
+[[TODO:gmm]] решить конфликт с revert и return
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_funccall.sol :mkdirp yes :noweb yes
   contract test_empty_yul_block
   {
       function fn_yul_funccall (uint p_one) returns (uint r_one) {
@@ -3015,12 +3026,234 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   }
 #+END_SRC
 
-***** TODO yul-literal
-***** TODO yul-assignment
-***** TODO yul-if-statement
+***** START yul-literal
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulLiteral
+
+yul-литералы практически полностью копируют ранее определенный литералы -
+отличается только decimal немного.
+Это вызывает конфликты.
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-lit
+   (%dec-num #'(lambda (lt) `(:num-lit ,lt)))
+   (%str-lit #'(lambda (lt) `(:str-lit ,lt)))
+   ;; (%yul-str-lit #'(lambda (lt) `(:str-lit ,lt)))
+   (%bool-lit #'(lambda (lt) `(:bool-lit ,lt)))
+   ;; (%yul-bool-lit #'(lambda (lt) `(:bool-lit ,lt)))
+   ;; (%yul-hex-num #'(lambda (lt) `(:hexstr-lit ,lt)))
+   (%hex-num #'(lambda (lt) `(:hexstr-lit ,lt)))
+   (%hex-str #'(lambda (lt) `(:hexstr-lit ,lt)))
+   )
+
+#+END_SRC
+
+***** yul-decimal-literal
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulDecimalNumber
+
+yul-decimal отличается от обычного decimal тем, что это могут быть только
+цифры без пробелов, подчеркиваний и т.д. И число не может начинаться с
+лидирующего нуля.
+
+Как это воплотить в регулярке и в правилах?
+Пока что вариант ниже реализует только правило "любые цифры от 0 до 9".
+#+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
+  ;; ("\\b[0-9]+\\b" '%yul-dec-lit $@)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  ;; (%yul-dec-lit  #'(lambda (lt)
+  ;;                    `(:yul-dec-lit ,lt)))
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  ;; %yul-dec-lit
+#+END_SRC
+
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_dec_lit.sol :mkdirp yes :noweb yes
+  contract test_empty_yul_block
+  {
+      function fn_yul_dec_lit (uint p_one) returns (uint r_one) {
+          1924;
+          assembly {
+                     let smth := 1924740
+                     let smth := 001924740
+                   }
+      }
+  }
+#+END_SRC
+***** yul-string-literal
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulStringLiteral
+Это полня копия str-lit
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  ;; (%yul-str-lit
+  ;;  (%empty-str #'(lambda (lt) `(:str-lit ,lt)))
+  ;;  (%non-empty-str #'(lambda (lt) `(:str-lit ,lt)))
+  ;;  )
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_str_lit.sol :mkdirp yes :noweb yes
+  contract test_yul_dec_lit
+  {
+      function fn_yul_dec_lit (uint p_one) returns (uint r_one) {
+          "";
+          assembly {
+                     let smth := ""
+                     let smth2 := "andjc"
+                   }
+      }
+  }
+#+END_SRC
+
+***** yul-bool-literal
+ [[TODO:gmm ]] убедиться, что yul-bool-lit не конфликтует с bool-lit
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %yul-bool-lit
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\btrue\\b" '%yul-bool-lit 'true)
+  ("\\bfalse\\b" '%yul-bool-lit 'false)
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_bool_lit.sol :mkdirp yes :noweb yes
+  contract test_yul_bool_lit
+  {
+      function fn_bool_lit (uint p_one) returns (uint r_one) {
+          assembly {
+              let smth := true
+                  smth2(false)
+                  }
+
+      }
+  }
+#+END_SRC
+
+***** yul-hex-number
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulHexNumber
+
+#+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
+  ;; ("\\b0x[0-9A-Fa-f]+\\b" '%yul-hex-num $@)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  ;; %yul-hex-num
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  ;; (%yul-hex-num
+  ;;  #'(lambda (hn) `(:yul-hex-num ,hn)))
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_hexnum.sol :mkdirp yes :noweb yes
+  contract test_hexnum
+  {
+      function fn_test_yul_hexnum () {
+          assembly {
+                  let smth := 0xFDc457
+                  }
+      }
+  }
+#+END_SRC
+
+***** yul-assignment
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulAssignment
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-assignmnt
+   (%yul-assignmnt-left-side |%:=| %yul-expr
+                             #'(lambda (lsd assign exp)
+                                 `(:lsd-asgmnt ,lsd :assign-exp ,exp))))
+
+  (%yul-assignmnt-left-side
+   (%yul-path  #'(lambda (lsd) `(:lsd-head ,lsd)))
+   (%yul-path |%,| %yul-assignmnt-left-side
+              #'(lambda (lsd1 comma lsd2)
+                  `(:lsd-head ,lsd1 :lsd-rest ,lsd2))))
+
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_assignmt.sol :mkdirp yes :noweb yes
+  contract test_assignment
+  {
+      function fn_test_yul_assignment () {
+          assembly {
+              smth := ""
+              smth, obj.IsOk := some_call()
+              smth := "abc"
+              smth := 1234
+              smth := obj.IsOk
+              smth := some_call(obj.IsOk)
+
+                 }
+      }
+  }
+#+END_SRC
+
+***** yul-if-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-if-stmnt
+   (%if %yul-expr %yul-stmnt
+        #'(lambda (condit exp block)
+            `(:y-if-expr ,exp :y-if-block ,block))))
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_if.sol :mkdirp yes :noweb yes
+  contract test_if_yul
+  {
+      function fn_test_yul_if () {
+          if ( 123 ) 345 ;
+
+          assembly {
+              if 123 let smth := 1234
+              if ""  smth := some_call()
+              if "absgd"  smth := some_call(obj.done)
+              if obj.IsOk  {}
+          }
+      }
+  }
+#+END_SRC
+
 ***** TODO yul-for-statement
 ***** TODO yul-switch-statementleavebreakcontinue
-***** TODO yul-function-definition
+***** START yul-function-definition
+
+https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFunctionDefinition
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-func-def
+   (%function %identifier |%(| |%)| |%->|
+              %multi-ident-path %yul-stmmnt
+        #'(lambda (func y-id lsc rsc thfr m-id fbody)
+            `(:func-y-id ,y-id :multi-id ,m-id :y-fbody ,fbody)))
+
+   (%function %identifier |%(| %multi-ident-path |%)| |%->|
+              %multi-ident-path %yul-stmnt
+              #'(lambda (func y-id lsc m-id1 rsc thfr m-id2 fbody)
+                  `(:func-y-id ,y-id :multi-id1 ,m-id1
+                    :multi-id2 ,m-id2 :y-fbody ,fbody))))
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+|%->|
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_func_def.sol :mkdirp yes :noweb yes
+  contract test_funcdef_yul
+  {
+      function fn_test_yul_funcdef () {
+          assembly {
+              function some_function () -> smth1, smth2
+              if 123 let smth := 1234
+          }
+      }
+  }
+#+END_SRC
 
 ** START Expression
 
@@ -3142,6 +3375,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   ("[/]{1}[=]{1}" '|%/=| '|%/=|)
   ("[%]{1}[=]{1}" '|%%=| '|%%=|)
 
+  ("[->]" '|%->| '|%->|)
   ("[*]{2}" '|%**| '|%**|)
   ("[>]{2}" '|%>>| '|%>>|)
   ("[<]{2}" '|%<<| '|%<<|)
