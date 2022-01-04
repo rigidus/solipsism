@@ -134,7 +134,7 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (get-filtered-comments-file-contents #P"/home/rigidus/src/solipsism/test_contract.sol")
 #+END_SRC
 
-* COMMENT Tests
+* Tests
 
 Для тестирования будем генерировать файлы с Solidity-кодом в подпапках
 папки ~./tests~.
@@ -244,6 +244,7 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_yul_assignmt.sol")
   ;; (test-file #P"./tests/test_yul_if.sol")
   ;; (test-file #P"./tests/test_yul_func_def.sol")
+  ;; (test-file #P"./tests/test_yul_for.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
 
@@ -2671,9 +2672,9 @@ a source unit or within a contract, library or interface.
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%assembly-stmnt
    (%assembly |%{| |%}| #'(lambda (as lb rb) `(:asm-empty nil)))
-   (%assembly |%{| %yul-stmnt |%}| #'(lambda (as lb yu rb) `(:asm ,yu)))
+   (%assembly |%{| %yul-stmnt-contents |%}| #'(lambda (as lb yu rb) `(:asm ,yu)))
    (%assembly %evmasm |%{|  |%}| #'(lambda (as em lb rb) `(:asm-empty nil)))
-   (%assembly %evmasm |%{| %yul-stmnt |%}| #'(lambda (as em lb yu rb) `(:asm nil)))
+   (%assembly %evmasm |%{| %yul-stmnt-contents |%}| #'(lambda (as em lb yu rb) `(:asm nil)))
    )
 #+END_SRC
 
@@ -2698,25 +2699,21 @@ a source unit or within a contract, library or interface.
 **** START Yul-statement
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%yul-stmnt
-   (%yul-stmnt-contents #'(lambda (last) `(:yul-src (,last))))
-   (%yul-stmnt-contents %yul-stmnt
-                       #'(lambda (head rest)
-                           `(:yul-src ,(append (list head) (cadr rest)))))
-   )
-
-
   (%yul-stmnt-contents
+   (%yul-stmnt #'(lambda (last) `(:yul-src (,last))))
+   (%yul-stmnt %yul-stmnt-contents
+                        #'(lambda (head rest)
+                            `(:yul-src ,(append (list head) (cadr rest))))))
+  (%yul-stmnt
    (%yul-block #'(lambda (yb) `(:y-block ,yb)))
    (%yul-var-decl #'(lambda (yvs) `(:y-var ,yvs)))
    (%yul-assignmnt #'(lambda (ya) `(:y-assignmnt ,ya)))
    (%yul-func-call #'(lambda (yfc) `(:y-f-call ,yfc)))
    (%yul-if-stmnt #'(lambda (yi) `(:y-if-stmnt ,yi)))
-   ;; (%yul-for #'(lambda (yf) `(:y-for ,yf)))
+   (%yul-for #'(lambda (yf) `(:y-for ,yf)))
    ;; (%yul-switch #'(lambda (ys) `(:y-switch ,ys)))
    (%yul-func-def #'(lambda (yfd) `(:y-func-def ,yfd)))
    )
-
 #+END_SRC
 
 ***** START yul-block
@@ -2724,8 +2721,8 @@ a source unit or within a contract, library or interface.
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-block
    ( |%{| |%}| #'(lambda (lb rb) `(:empty-y-block nil)))
-   ;; ( %yul-stmnt-contents #'(lambda (y-stmnt)
-   ;;                           `(:stmnt ,y-stmnt)))
+   ( |%{| %yul-stmnt-contents |%}| #'(lambda ( lbr y-stmnt rbr)
+                                       `(:stmnt ,y-stmnt)))
    )
 #+END_SRC
 
@@ -3219,21 +3216,63 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulAssign
   }
 #+END_SRC
 
-***** TODO yul-for-statement
+***** yul-for-statement
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-for
+   (%for %yul-block %yul-expr %yul-block %yul-block
+         #'(lambda (op block1 exp block2 block3)
+             `(:for-block1 ,block1 :for-exp ,exp
+               :for-block1 ,block2 :for-block1 ,block3))))
+
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_for.sol :mkdirp yes :noweb yes
+  contract test_funcdef_yul
+  {
+      function fn_test_yul_for () {
+          assembly {
+          for { } lt(i, 0x100) { } {
+             x := add(x, mload(i))
+             i := add(i, 0x20)
+            }
+          }
+      }
+  }
+#+END_SRC
+
 ***** TODO yul-switch-statementleavebreakcontinue
-***** START yul-function-definition
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_switch.sol :mkdirp yes :noweb yes
+  contract test_funcdef_yul
+  {
+      function fn_test_yul_funcdef () {
+          assembly {
+              function some_function () -> smth1, smth2 {
+
+              }
+          }
+      }
+  }
+#+END_SRC
+
+***** yul-function-definition
 
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFunctionDefinition
 
+Пока что не проходят тесты, хз почему
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-func-def
    (%function %identifier |%(| |%)| |%->|
-              %multi-ident-path %yul-stmmnt
+              %multi-ident-path %yul-block
         #'(lambda (func y-id lsc rsc thfr m-id fbody)
             `(:func-y-id ,y-id :multi-id ,m-id :y-fbody ,fbody)))
 
    (%function %identifier |%(| %multi-ident-path |%)| |%->|
-              %multi-ident-path %yul-stmnt
+              %multi-ident-path %yul-block
               #'(lambda (func y-id lsc m-id1 rsc thfr m-id2 fbody)
                   `(:func-y-id ,y-id :multi-id1 ,m-id1
                     :multi-id2 ,m-id2 :y-fbody ,fbody))))
@@ -3248,8 +3287,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   {
       function fn_test_yul_funcdef () {
           assembly {
-              function some_function () -> smth1, smth2
+              function some_function () -> smth1, smth2 {
               if 123 let smth := 1234
+             }
           }
       }
   }
@@ -3374,8 +3414,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   ("[\\*]{1}[=]{1}" '|%*=| '|%*=|)
   ("[/]{1}[=]{1}" '|%/=| '|%/=|)
   ("[%]{1}[=]{1}" '|%%=| '|%%=|)
+  ("[-]{1}[>]{1}" '|%->| '|%->|)
 
-  ("[->]" '|%->| '|%->|)
   ("[*]{2}" '|%**| '|%**|)
   ("[>]{2}" '|%>>| '|%>>|)
   ("[<]{2}" '|%<<| '|%<<|)
