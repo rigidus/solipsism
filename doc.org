@@ -419,6 +419,11 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.constantV
                    `(:c-t-name ,t-name :c-id ,id :c-expr ,ex))))
 #+END_SRC
 
+[[TODO:gmm]] выяснить, какие команды из yul-envbuildin могут встречаться вне
+асмового блока. В данный момент (4.01.2022) этот тест валится, поскольку
+keccak256 - это команда из yul-envbuildin и в контексте объявления
+контанты ее быть не может.
+
 #+BEGIN_SRC solidity :tangle tests/test_const_def.sol :mkdirp yes :noweb yes
   contract test_const_def
   {
@@ -3108,18 +3113,19 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulStringL
 ***** yul-bool-literal
  [[TODO:gmm ]] убедиться, что yul-bool-lit не конфликтует с bool-lit
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %yul-bool-lit
+  ;; %yul-bool-lit
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("\\btrue\\b" '%yul-bool-lit 'true)
-  ("\\bfalse\\b" '%yul-bool-lit 'false)
+  ;; ("\\btrue\\b" '%yul-bool-lit 'true)
+  ;; ("\\bfalse\\b" '%yul-bool-lit 'false)
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_yul_bool_lit.sol :mkdirp yes :noweb yes
   contract test_yul_bool_lit
   {
       function fn_bool_lit (uint p_one) returns (uint r_one) {
+          true;
           assembly {
               let smth := true
                   smth2(false)
