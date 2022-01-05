@@ -233,6 +233,8 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_inline_arr_expr.sol")
   ;; (test-file #P"./tests/test_using_def.sol")
   ;; (test-file #P"./tests/test_const_def.sol")
+  ;; (test-file #P"./tests/test_break_stmnt.sol")
+  ;; (test-file #P"./tests/test_continue_stmnt.sol")C
   ;; (test-file #P"./tests/test_yul_block.sol")
   ;; (test-file #P"./tests/test_yul_var_decl.sol")
   ;; (test-file #P"./tests/test_yul_funccall.sol")
@@ -240,12 +242,12 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_yul_hexnum.sol")
   ;; (test-file #P"./tests/test_yul_dec_lit.sol")
   ;; (test-file #P"./tests/test_yul_str_lit.sol")
-  ;; (test-file #P"./tests/test_yul_str_lit.sol")
   ;; (test-file #P"./tests/test_yul_assignmt.sol")
   ;; (test-file #P"./tests/test_yul_if.sol")
   ;; (test-file #P"./tests/test_yul_func_def.sol")
   ;; (test-file #P"./tests/test_yul_for.sol")
   ;; (test-file #P"./tests/test_yul_switch.sol")
+  ;; (test-file #P"./tests/test_yul_leave_break_continue.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
 
@@ -419,10 +421,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.constantV
                    `(:c-t-name ,t-name :c-id ,id :c-expr ,ex))))
 #+END_SRC
 
-[[TODO:gmm]] выяснить, какие команды из yul-envbuildin могут встречаться вне
-асмового блока. В данный момент (4.01.2022) этот тест валится, поскольку
-keccak256 - это команда из yul-envbuildin и в контексте объявления
-контанты ее быть не может.
+[[TODO:gmm]] добавить
 
 #+BEGIN_SRC solidity :tangle tests/test_const_def.sol :mkdirp yes :noweb yes
   contract test_const_def
@@ -2472,9 +2471,14 @@ a source unit or within a contract, library or interface.
 
 *** continue-statement
 
+Включаем в cont-stmnt yul-continue, поскольку в асм-блоке тоже может
+встречаться continue, только без |;|. Yul-continue ожидает токен continue и
+возвращает nil - т.е. смысл правила не меняется, но такая рокировка
+позволяет избежать конфликтов.
+
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%cont-stmnt
-   (%continue |%;|
+   (%yul-continue |%;|
          #'(lambda (co sc)
              `(:cont nil)))
    )
@@ -2499,9 +2503,11 @@ a source unit or within a contract, library or interface.
 
 *** break-statement
 
+Аналогично с continue.
+
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%break-stmnt
-   (%break |%;|
+   (%yul-break |%;|
          #'(lambda (br sc)
              `(:break nil)))
    )
@@ -2519,7 +2525,7 @@ a source unit or within a contract, library or interface.
   contract test_break_stmnt
   {
       function fn_break_stmnt (uint p_one) returns (uint r_one) {
-          continue ;
+          break ;
       }
   }
 #+END_SRC
@@ -2718,8 +2724,42 @@ a source unit or within a contract, library or interface.
    (%yul-if-stmnt #'(lambda (yi) `(:y-if-stmnt ,yi)))
    (%yul-for #'(lambda (yf) `(:y-for ,yf)))
    (%yul-switch #'(lambda (ys) `(:y-switch ,ys)))
+   (%yul-break #'(lambda (yb) `(:y-break ,yb)))
+   (%yul-leave #'(lambda (yl) `(:y-leave ,yl)))
+   (%yul-continue #'(lambda (yc) `(:y-continue ,yc)))
    (%yul-func-def #'(lambda (yfd) `(:y-func-def ,yfd)))
    )
+#+END_SRC
+
+***** yul-leave/continue/break
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bleave\\b" '%leave 'leave)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+ %leave
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%yul-break
+   (%break #'(lambda (yb) `(:y-break nil))))
+
+  (%yul-leave
+   (%leave #'(lambda (yl) `(:y-leave nil))))
+
+  (%yul-continue
+   (%continue #'(lambda (yc) `(:y-continue nil))))
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_yul_leave_break_continue.sol :mkdirp yes :noweb yes
+  contract test_empty_yul_block
+  {
+        function fn_yul_empty_stmnt (uint p_one) returns (uint r_one) {
+
+            assembly { continue break leave }
+        }
+  }
 #+END_SRC
 
 ***** START yul-block
@@ -2860,9 +2900,14 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 
 ***** START yul-envbuiltin
 
+Выносим return и revert в отдельные подправила, чтоб избежать конфликтов
+
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-envbuiltin
-   (%asm-command #'(lambda (cmd) `(:asm-cmd ,cmd ))))
+   (%asm-command #'(lambda (cmd) `(:asm-cmd ,cmd )))
+   (%built-in-func #'(lambda (cmd) `(:asm-cmd ,cmd )))
+   (%return #'(lambda (cmd) `(:asm-cmd ,cmd )))
+   (%revert #'(lambda (cmd) `(:asm-cmd ,cmd ))))
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
@@ -2888,10 +2933,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   ("\\bshl\\b" '%asm-command 'shl)
   ("\\bshr\\b" '%asm-command 'shr)
   ("\\bsar\\b" '%asm-command 'sar)
-  ("\\baddmod\\b" '%asm-command 'addmod)
-  ("\\bmulmod\\b" '%asm-command 'mulmod)
   ("\\bsignextend\\b" '%asm-command 'signextend)
-  ("\\bkeccak256\\b" '%asm-command 'keccak256)
   ("\\bpop\\b" '%asm-command 'pop)
   ("\\bmload\\b" '%asm-command 'mload)
   ("\\bmstore\\b" '%asm-command 'mstore)
@@ -2918,9 +2960,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   ("\\bcallcode\\b" '%asm-command 'callcode)
   ("\\bdelegatecall\\b" '%asm-command 'delegatecall)
   ("\\bstaticcall\\b" '%asm-command 'staticcall)
-  ("\\breturn\\b" '%asm-command 'return)
   ("\\bbyte\\b" '%asm-command 'byte)
-  ("\\brevert\\b" '%asm-command 'revert)
   ("\\bselfdestruct\\b" '%asm-command 'selfdestruct)
   ("\\binvalid\\b" '%asm-command 'invalid)
   ("\\blog0\\b" '%asm-command 'log0)
@@ -3004,9 +3044,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
                           callcode()
                           delegatecall()
                           staticcall()
-                          /* return() */
+                          return()
                           byte()
-                          /* revert() */
+                          revert()
                           selfdestruct()
                           invalid()
                           log0()
@@ -3248,7 +3288,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulAssign
   }
 #+END_SRC
 
-***** START yul-switch-statementleavebreakcontinue
+***** START yul-switch-statement
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-switch
@@ -3350,7 +3390,18 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 
 ** START Expression
 
-Это один из самых сложных нетерминалов
+Это один из самых сложных нетерминалов.
+
+Здеcь мы вводим новое понятие - built-in-func - встроенныe функциии.
+языка, которые могут встречаться как в блоке assembly {}, так и вне его. Важно, что в
+это правило попадают только те функции, которые могут встречаться и там,
+и там - некоторые, например sha256(), в асмовом блоке не встречаются (по
+крайней мере в грамматике этого нет)
+
+Если не вынести их в отдельну категорию, то возникают конликты - см. yul-envbuiltin.
+
+[TODO:gmm] Узнать полный список функций, встречающихся и там, и там,
+проверить, что их вызовы распарсиваются правильно в асмовом блоке и вне его.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%expr
@@ -3420,6 +3471,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (%expr |%*=|    %expr #'(lambda (e1 op e2) `(:expr-mul-eq   ,e1 :arg ,e2)))
    (%expr |%/=|    %expr #'(lambda (e1 op e2) `(:expr-div-eq   ,e1 :arg ,e2)))
    (%expr |%%=|    %expr #'(lambda (e1 op e2) `(:expr-mod-eq   ,e1 :arg ,e2)))
+   (%built-in-func #'(lambda (func-name) `(:built-in-func, func-name)))
    (%new %type-name #'(lambda (new tn) `(:new ,tn)))
    (%tuple-expression #'(lambda (te) `(:expr-tuple ,te)))
    (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
@@ -3449,6 +3501,11 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   ("0x[a-fA-F0-9]{40}" '%addr $@)
   ("\\btype\\b" '%type 'type)
   ("\\bdelete\\b" '%delete '%delete)
+
+  ("\\bkeccak256\\b"  '%built-in-func 'keccak256)
+  ("\\addmod\\b" '%built-in-func 'addmod)
+  ("\\mulmod\\b" '%built-in-func 'mulmod)
+
 
   ("[>]{3}[=]{1}" '|%>>>=| '|%>>>=|)
   ("[>]{3}" '|%>>>| '|%>>>|)
@@ -3506,6 +3563,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
   |%[| |%]| |.| %addr %type |%++| |%--| |%!| |%~| %delete |%-| |%*| |%**| |%/| |%%| |%+| |%-| |%>>>| |%>>| |%<<| |%&| |%^| |%pipe| |%<| |%>| |%<=| |%>=| |%==| |%=| |%!=| |%&&| |%pipepipe| |%?| |%pipe=| |%^=| |%&=| |%<<=| |%>>=| |%>>>=| |%+=| |%-=| |%*=| |%/=| |%%=| %new
+  %built-in-func
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_expr_idx_stmnt.sol :mkdirp yes :noweb yes
@@ -3572,6 +3630,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
           321 %= 123 ;
           new bytes ;
           (1, 2) ;
+          keccak256();
       }
   }
 #+END_SRC
