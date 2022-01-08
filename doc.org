@@ -36,6 +36,7 @@ Solidity. Каждое грамматическое правило, найден
 solidity-конструкциями и ожидаю получить дерево разбора на выходе.
 
 #+BEGIN_SRC lisp :tangle result.lisp :noweb tangle :comments noweb
+  ;;;; <<copyright>>
   (eval-when (:compile-toplevel :load-toplevel :execute)
     (ql:quickload '(:yacc :cl-lex :alexandria :anaphora)))
 
@@ -70,6 +71,126 @@ solidity-конструкциями и ожидаю получить дерев�
   ;;     ))
 
   <<tests>>
+#+END_SRC
+
+** System
+
+Файл определения системы содержит в себе определение системы:
+- библиотеки, от которых зависит система
+- набор всех файлов, который должны быть загружены в образ.
+
+Определение системы экпортируется из литературного исходника в
+корневой каталог проекта.
+
+#+NAME: defsystem
+#+BEGIN_SRC lisp :tangle solipsism.asd :noweb tangle :exports code :padline no :comments link
+  ;;;; <<copyright>>
+  (asdf:defsystem #:solipsism
+    :version      "0.0.1"
+    :author       "rigidus <i.am.rigidus@gmail.com>"
+    :licence      "AGPLv3"
+    :description  "solipsism"
+    :depends-on   (#:yacc #:cl-lex #:alexandria #:anaphora)
+    :serial       t
+    :components   ((:file "result.lisp")))
+#+END_SRC
+
+** Copyright
+
+Копирайт вставляется в каждый сгенерированный файл для того чтобы
+соблюсти требования лицензии AGPL
+
+#+NAME: copyright
+#+BEGIN_SRC lisp
+  Copyright © 2021-2022 Glukhov Mikhail. All rights reserved. Licensed
+  under the GNU AGPLv3
+#+END_SRC
+
+** Executable
+
+#+BEGIN_SRC lisp :tangle exec.lisp
+  (load "result.lisp")
+
+  (ql:quickload "unix-opts")
+
+  (in-package :sol-parser)
+
+  (defun parse-filename (str)
+    str)
+
+  (opts:define-opts
+    (:name :usage
+     :description "Usage solidity checher."
+     :short #\u
+     :long "usage")
+    (:name :parse
+     :description "Parse solidity file"
+     :short #\p
+     :long "parse"
+     ;; :required t
+     :arg-parser #'parse-filename
+     :meta-var "<filename>")
+    (:name :output
+     :description "Output file"
+     :short #\o
+     :long "output"
+     ;; :required t
+     :arg-parser #'parse-filename
+     :meta-var "<filename>")
+    (:name :base
+     :description "Base contract"
+     :short #\b
+     :long "base"
+     ;; :required t
+     :arg-parser #'parse-filename
+     :meta-var "<filename>")
+    (:name :check
+     :description "Contract for checking"
+     :short #\c
+     :long "check"
+     ;; :required t
+     :arg-parser #'parse-filename
+     :meta-var "<filename>")
+    )
+
+  (defun unknown-option (condition)
+    (format t "WARNING: ~s option is unknown!~%~%" (opts:option condition))
+    (invoke-restart 'opts:skip-option))
+
+  (defmacro when-option ((options opt) &body body)
+    `(let ((it (getf ,options ,opt)))
+       (when it
+         ,@body)))
+
+  (defun main ()
+    (multiple-value-bind (options free-args)
+        (handler-case
+            (handler-bind ((opts:unknown-option #'unknown-option))
+              (opts:get-opts))
+          (opts:missing-arg (condition)
+            (format t "FATAL: option ~s needs an argument!~%~%"
+                    (opts:option condition)))
+          (opts:arg-parser-failed (condition)
+            (format t "FATAL: cannot parse ~s as argument of ~s~%~%"
+                    (opts:raw-arg condition)
+                    (opts:option condition)))
+          (opts:missing-required-option (con)
+            (format t "FATAL: ~a~%%" con)
+            (opts:exit 1)))
+      (if (null options)
+          (setf options '(:usage t)))
+      (when-option (options :usage)
+        (opts:describe
+         :prefix "Solidity checker. Usage:"
+         :suffix "To find differences between the base contract and the checked one, use: solcheck -b base.sol -c checked.sol"
+         :usage-of "./solcheck"
+         ;; :args "[keywords]"
+         ))
+      (when-option (options :parse)
+        (format t "Solidity checker. Parse file: ~A ~%" it)
+        (test-contract-file it))))
+
+  (sb-ext:save-lisp-and-die #P"solcheck" :toplevel #'sol-parser::main :executable t)
 #+END_SRC
 
 * Deleting comments
@@ -2898,7 +3019,11 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 
 #+END_SRC
 
-***** START yul-envbuiltin
+***** START COMMENT yul-envbuiltin
+
+[TODO:gmm] Я закомментировал этот параграф, потому что он находит
+balance как %asm-command в то время, как в тестовом контракте есть
+конструкции вида address(this).balance()
 
 Выносим return и revert в отдельные подправила, чтоб избежать конфликтов
 
