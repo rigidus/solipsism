@@ -1372,16 +1372,138 @@ NB: Опережающая ссылка на elt-type-name (ElementaryTypeName)
 
 NB: Закомментированое определение конфликтует с [[*Inline-array-expression][Inline-array-expression]]
 
+----- Разбор проблемы ------
+
+Type name определяется как ~new some_shit [smth]~, а inline-array-expr
+определяется как ~smth = [smth]~.
+
+И то, и то - это варианты expr. Ключевое здесь - это слово ~new~, которое
+обнозначно должно указывать парсеру, что ща будет тайп-нейм. Но конфликт
+возникает в smth = [smth] на символе ~=~ - парсер говорит, что хочет [,
+идентифаер или data-location. Ожидаемый символ [ намекает, что парсер
+считал выражение как typeName.
+
+Вопросы:
+- слово ~new~ однозначно указывает на определение нового типа,
+  следовательно парсер должен однозначно отличать два разных
+  выражения. Почему не отличает?
+
+~Гипотеза 1:~
+Парсер читает токен smth и понимает, что это ident.
+А дальше есть несколько правил, и первое подходящее - type-name. Дальше
+он ждет [, а получает =.
+
+~Не подтвердилась~, потому что если поместить определение inline-array-expr
+в expr выше, чем type-name, тест на inline-array-expr все равно
+валится. Хотя не должен.
+
+
+~Гипотеза 2:~
+Проблема конфликта не в type name -> inline-array-expr, а в каком-то
+другом месте. Просто выстреливает при разблокировке type name.
+
+Как проверить? Только если найти все похожие конструкции, закомментить
+их, оставив type name раскомменченным и посмотреть, свалится ли
+inline-array-expr. Если нет, постепено раскомментировать конструкции.
+
+~Гипотеза 3:~
+Хз, что происходит, открыть исходники либы, обложить отладочной печатью
+все и проследить весь путь работы парсера.
+
+Пока что идея работы такая:
+- парсер читает токен за токеном
+- если парсер видит токен, который подходит под несколько правил, он
+  читает следующий токен и так до тех пор, пока не станет однозначно
+  понятно, какое правило подходит.
+
+Это определение ~parse-with-lexer~ отсюда
+https://github.com/jech/cl-yacc/blob/master/yacc.lisp
+
+Принимает на вход лексер и парсер. Лексер должен быть функцией, не
+пинимающей аргументов, и возвращающей символ и его значение. Парсит поток
+символов, предоставляемых лексером, используя парсер.
+
+#+BEGIN_SRC lisp
+  (defun parse-with-lexer (lexer parser)
+    "Parse the stream of symbols provided by LEXER using PARSER.
+  LEXER is a function of no arguments returning a symbol and a semantic value,
+  and should return (VALUES NIL NIL) when the end of input is reached.
+  Handle YACC-PARSE-ERROR to provide custom error reporting."
+    (declare (type (function () (values symbol t)) lexer))
+    (declare (type parser parser))
+    (let ((action-array (parser-action parser))
+          (goto-array (parser-goto parser)))
+      (flet ((action (i a)
+               (declare (type index i) (symbol a))
+               (cdr (assoc a (aref action-array i))))
+             (goto (i a)
+               (declare (type index i) (symbol a))
+               (or (cdr (assoc a (aref goto-array i)))
+                   (error "This cannot happen."))))
+        (let ((stack (list 0)) symbol value)
+          (flet ((next-symbol ()
+                   (multiple-value-bind (s v) (funcall lexer)
+                     (setq symbol (or s 'yacc-eof-symbol) value v))))
+            (next-symbol)
+            (loop
+              (let* ((state (car stack))
+                     (action (action state symbol)))
+                (etypecase action
+                  (shift-action
+                   (push value stack)
+                   (push (shift-action-state action) stack)
+                   (next-symbol))
+                  (reduce-action
+                   (let ((vals '()))
+                     (dotimes (n (reduce-action-length action))
+                       (pop stack)
+                       (push (pop stack) vals))
+                     (let ((s* (car stack)))
+                       (push (apply (reduce-action-action action) vals) stack)
+                       (push (goto s* (reduce-action-symbol action)) stack))))
+                  (accept-action
+                   (pop stack)
+                   (return (pop stack)))
+                  (null
+                   (error (make-condition
+                           'yacc-parse-error
+                           :terminal (if (eq symbol 'yacc-eof-symbol) nil symbol)
+                           :value value
+                           :expected-terminals
+                           (mapcan
+                            #'(lambda (e)
+                                (and (cdr e)
+                                     (list
+                                      (if (eq (car e) 'yacc-eof-symbol)
+                                          nil
+                                          (car e)))))
+                            (aref action-array state)))))
+                  ))))))))
+#+END_SRC
+
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%type-name
    (%elt-type-name #'(lambda (par) `(:elt-type-name ,par)))
    (%func-type-name #'(lambda (par) `(:func-type-name ,par)))
    (%mapping-type #'(lambda (par) `(:mapping-type ,par)))
    (%ident-path #'(lambda (par) `(:identifier-path ,par)))
-   ;; (%type-name |%[| %expr |%]|
-   ;;             #'(lambda (par lb ex rb) `(:type-name-expr ,par :expr ,ex)))
+   (%type-name |%[| |%]|
+               #'(lambda (par lb rb) `(:type-name-expr ,par)))
+   (%type-name |%[| %expr |%]|
+               #'(lambda (par lb ex rb) `(:type-name-expr ,par :t-array ,ex)))
    )
+
 #+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_type_name_with_array.sol :mkdirp yes :noweb yes
+  pragma solidity ^0.8.0;
+  library Strings {
+      function test() {
+          new bytes buffer [elt];
+      }
+  }
+#+END_SRC
+
 
 *** FunctionTypeName
 
@@ -3473,6 +3595,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (%expr |%%=|    %expr #'(lambda (e1 op e2) `(:expr-mod-eq   ,e1 :arg ,e2)))
    (%built-in-func #'(lambda (func-name) `(:built-in-func, func-name)))
    (%new %type-name #'(lambda (new tn) `(:new ,tn)))
+   (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
    (%tuple-expression #'(lambda (te) `(:expr-tuple ,te)))
    (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
    (%ident #'(lambda (id) `(:expr-ident ,id)))
