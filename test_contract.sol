@@ -913,9 +913,8 @@ abstract contract ERC165 is IERC165 {
 
 }
 
+
 // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol
-
-
 
 
 pragma solidity ^0.8.0;
@@ -1068,9 +1067,6 @@ interface IERC721Receiver {
 
 // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/IERC721Enumerable.sol
 
-
-
-
 pragma solidity ^0.8.0;
 
 
@@ -1101,8 +1097,6 @@ interface IERC721Enumerable is IERC721 {
 // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/IERC721Metadata.sol
 
 
-
-
 pragma solidity ^0.8.0;
 
 
@@ -1128,14 +1122,10 @@ interface IERC721Metadata is IERC721 {
     function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 
+
 // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/introspection/IERC165.sol
 
-
-
 // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/utils/Context.sol
-
-
-
 
 pragma solidity ^0.8.0;
 
@@ -1163,20 +1153,7 @@ abstract contract Context {
 
 
 // File: http://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol
-
-
-
-
 pragma solidity ^0.8.0;
-
-
-
-
-
-
-
-
-
 
 
 /**
