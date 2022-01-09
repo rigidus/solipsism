@@ -36,7 +36,7 @@ Solidity. Каждое грамматическое правило, найден
 solidity-конструкциями и ожидаю получить дерево разбора на выходе.
 
 #+BEGIN_SRC lisp :tangle result.lisp :noweb tangle :comments noweb
-  ;;;; <<copyright>>
+  ;; <<copyright>>
   (eval-when (:compile-toplevel :load-toplevel :execute)
     (ql:quickload '(:yacc :cl-lex :alexandria :anaphora)))
 
@@ -84,7 +84,7 @@ solidity-конструкциями и ожидаю получить дерев�
 
 #+NAME: defsystem
 #+BEGIN_SRC lisp :tangle solipsism.asd :noweb tangle :exports code :padline no :comments link
-  ;;;; <<copyright>>
+  ;; <<copyright>>
   (asdf:defsystem #:solipsism
     :version      "0.0.1"
     :author       "rigidus <i.am.rigidus@gmail.com>"
@@ -371,6 +371,7 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-file #P"./tests/test_yul_leave_break_continue.sol")
 
   ;; (test-contract-file #P"./test_contract.sol")
+  ;; (test-contract-file #P"./test_dbg.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
