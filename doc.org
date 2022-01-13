@@ -3734,8 +3734,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (%expr |%%=|    %expr #'(lambda (e1 op e2) `(:expr-mod-eq   ,e1 :arg ,e2)))
    ;; (%built-in-func #'(lambda (func-name) `(:built-in-func, func-name)))
    (%new %type-name #'(lambda (new tn) `(:new ,tn)))
-   (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
    (%tuple-expression #'(lambda (te) `(:expr-tuple ,te)))
+   (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
    (%ident #'(lambda (id) `(:expr-ident ,id)))
    (%lit #'(lambda (lit) `(:expr-lit ,lit)))
    (%elt-type-name #'(lambda (etn) `(:elt-type-name ,etn)))
@@ -3911,10 +3911,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (|%[| %expr-comma-list |%]| #'(lambda (lb ex rb) `(:inline-array-expr ,ex)))
    (|%[| |%]| #'(lambda (lb ex rb) `(:inline-array-expr nil)))
    )
-
-  ;; (%inline-array-expr2
-  ;;  (|%[| %expr |%]| #'(lambda (lb ex rb) `(:inline-array-expr ,ex)))
-  ;;  )
 #+END_SRC
 
 Тест:
