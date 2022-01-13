@@ -626,7 +626,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.constantV
   }
 #+END_SRC
 
-** START ContractBodyElement
+** ContractBodyElement
 
 Так как contract-body-elt-ов может быть несколько - выносим их в
 рекурсивное правило ctract-body-elt-contents, которое будем
