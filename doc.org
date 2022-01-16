@@ -1639,9 +1639,9 @@ reduce-reduce конфликт.
    (%elt-type-name #'(lambda (par) `(:elt-type-name ,par)))
    (%func-type-name #'(lambda (par) `(:func-type-name ,par)))
    (%mapping-type #'(lambda (par) `(:mapping-type ,par)))
-   (%ident-path #'(lambda (par) `(:identifier-path ,par)))
-   (%type-name inline-array-expr
+   (%type-name %inline-array-expr
                #'(lambda (par inline-expr) `(:type-name ,par :type-name-expr ,inline-expr)))
+   (%ident-path #'(lambda (par) `(:identifier-path ,par)))
    )
 
 #+END_SRC
@@ -3171,7 +3171,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 
 #+END_SRC
 
-***** START COMMENT yul-envbuiltin
+***** yul-envbuiltin
 
 [TODO:gmm] Я закомментировал этот параграф, потому что он находит
 balance как %asm-command в то время, как в тестовом контракте есть
@@ -3186,6 +3186,7 @@ NB: принято решение, что встроенные функции я
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-envbuiltin
+   (%revert #'(lambda (cmd) `(:asm-cmd ,cmd )))
    (%identifier #'(lambda (cmd) `(:asm-cmd ,cmd ))))
 
 #+END_SRC
@@ -3738,6 +3739,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
    (%ident #'(lambda (id) `(:expr-ident ,id)))
    (%lit #'(lambda (lit) `(:expr-lit ,lit)))
+   (%type-name #'(lambda (tn) `(:expr-tn ,tn)))
    (%elt-type-name #'(lambda (etn) `(:elt-type-name ,etn)))
    )
   (%idex-contents ;; TODO: Кажется это multi-ident-path
@@ -3909,7 +3911,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%inline-array-expr
    (|%[| %expr-comma-list |%]| #'(lambda (lb ex rb) `(:inline-array-expr ,ex)))
-   (|%[| |%]| #'(lambda (lb ex rb) `(:inline-array-expr nil)))
+   (|%[| |%]| #'(lambda (lb rb) `(:inline-array-expr nil)))
    )
 #+END_SRC
 
