@@ -290,9 +290,9 @@ solidity-конструкциями и ожидаю получить дерев�
               (reverse test-files))))
 
   ;; run-tests
-  (defun test-all ()
+  (defun test-all ( dir )
     (map-subdir-files
-     "./tests"
+     dir
      #'(lambda (file)
          (print file)
          (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
@@ -314,7 +314,7 @@ solidity-конструкциями и ожидаю получить дерев�
                    (print (parse-with-lexer clj-lex *sol-parser*))))
              pathname))
 
-  ;; (test-all)
+  ;; (test-all "./tests")
   ;; (test-file #P"./tests/test_lib_def.sol")
   ;; (test-file #P"./tests/test_ctract_def.sol")
   ;; (test-file #P"./tests/test_ctract_body_elt.sol")
@@ -372,6 +372,8 @@ solidity-конструкциями и ожидаю получить дерев�
 
   ;; (test-contract-file #P"./test_contract.sol")
   ;; (test-contract-file #P"./test_dbg.sol")
+
+  ;; (test-all "./contracts")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
@@ -513,7 +515,7 @@ identifier, он может совпасть с практически любы�
    )
   (%src-unit-contents
    (%pragma-def #'(lambda (df) `(:pragma-def ,df)))
-   ;; import - пока не нужен, т.к. контракт flattened
+   (%import-def #'(lambda (df) `(:import-def ,df)))
    (%ctract-def #'(lambda (df) `(:ctract-def ,df)))
    (%iface-def  #'(lambda (df) `(:iface-def ,df)))
    (%lib-def    #'(lambda (df) `(:lib-def ,df)))
@@ -525,6 +527,66 @@ identifier, он может совпасть с практически любы�
    (%error-def #'(lambda (df) `(:error-def ,df)))
    )
 #+END_SRC
+
+** START import
+
+#+BEGIN_SRC lisp :noweb-ref lexer_tokens
+  ("\\bimport\\b" '%import 'import)
+  ("\\bas\\b" '%as 'as)
+  ("\\from\\b" '%from 'from)
+#+END_SRC
+
+#+BEGIN_SRC lisp :noweb-ref grammar_terminals
+  %import %as
+#+END_SRC
+
+[[TODO:gmm]] в symbol-alliases-body пока закомменчена рекурсия, потому что
+иначе почему-то ожидается бесконечная рекурсия + дореализовать остальные
+правила для import.
+
+#+BEGIN_SRC lisp :noweb-ref grammar_rules
+  (%import-def
+   (%import %non-empty-str %ident |%;|
+            #'(lambda (im str id sc) `(:str-lit ,str :ident-allias ,id)))
+   (%import %non-empty-str |%;|
+            #'(lambda (im str sc) `(:str-lit ,str)))
+   (%import %symbol-alliases %from %non-empty-str |%;|
+            #'(lambda (im allias fr str sc)
+                `(:allias ,allias :str-lit ,str)))
+
+   )
+
+  (%symbol-alliases
+   ( |%{| %symbol-alliases-body |}%| #'(lambda (df) `(:error-def ,df))))
+
+  (%symbol-alliases-body
+   (%ident #'(lambda (head) `(:ident-allias ,head)))
+   ;; (%ident |%,| %symbol-alliases-body
+   ;;         #'(lambda (head comma rest)
+   ;;             `(:ident-allias ,(append (list head) (cadr rest)))))
+
+   ;; ;
+                                          ; ( %ident %as %ident #'(lambda (id1 as id2)
+   ;;                         `(:ident1-allias ,id1 :ident2-allias ,id2)))
+   ;; ( %ident %as %ident |%,| %symbol-alliases-body
+   ;;          #'(lambda (id1 as id2 comma symb-rest)
+   ;;              `(:ident1-allias ,id1 :ident2-allias ,id2 :sybl-body-rest ,symb-rest)))
+   )
+
+
+#+END_SRC
+
+#+BEGIN_SRC solidity :tangle tests/test_import_def.sol :mkdirp yes :noweb yes
+  pragma solidity ^0.8.0;
+
+  import "../proxy/Clones.sol";
+  import {smth} from smth3;
+  import {smth, snth1} from smth3;
+  /* import {smth as smth2} from smth3; */
+  /* import {smth as smth2, smth as smth2} from smth3; */
+
+#+END_SRC
+
 ** Const-var
 https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.constantVariableDeclaration
 
@@ -1475,7 +1537,7 @@ multi-identifier-path, поэтому нам понадобится раскры
    )
   (%ident
    (%identifier #'(lambda (id) `(:id ,id)))
-   ;; (%from #'(lambda (fr) `(:from ,fr)))
+   (%from #'(lambda (fr) `(:from ,fr)))
    ;; (%error #'(lambda (er) `(:error ,er)))
    ;; (%revert #'(lambda (rv) `(:revert ,rv)))
    )
