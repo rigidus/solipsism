@@ -13,19 +13,19 @@ contract GovernorCompatibilityBravoMock is
     GovernorTimelockCompound,
     GovernorVotesComp
 {
-    constructor(
-        string memory name_,
-        ERC20VotesComp token_,
-        uint256 votingDelay_,
-        uint256 votingPeriod_,
-        uint256 proposalThreshold_,
-        ICompoundTimelock timelock_
-    )
-        Governor(name_)
-        GovernorTimelockCompound(timelock_)
-        GovernorSettings(votingDelay_, votingPeriod_, proposalThreshold_)
-        GovernorVotesComp(token_)
-    {}
+    /* constructor( */
+    /*     string memory name_, */
+    /*     ERC20VotesComp token_, */
+    /*     uint256 votingDelay_, */
+    /*     uint256 votingPeriod_, */
+    /*     uint256 proposalThreshold_, */
+    /*     ICompoundTimelock timelock_ */
+    /* ) */
+    /*     Governor(name_) */
+    /*     GovernorTimelockCompound(timelock_) */
+    /*     GovernorSettings(votingDelay_, votingPeriod_, proposalThreshold_) */
+    /*     GovernorVotesComp(token_) */
+    /* {} */
 
     function supportsInterface(bytes4 interfaceId)
         public

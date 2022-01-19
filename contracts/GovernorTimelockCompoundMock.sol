@@ -13,20 +13,20 @@ contract GovernorTimelockCompoundMock is
     GovernorVotesQuorumFraction,
     GovernorCountingSimple
 {
-    constructor(
-        string memory name_,
-        IVotes token_,
-        uint256 votingDelay_,
-        uint256 votingPeriod_,
-        ICompoundTimelock timelock_,
-        uint256 quorumNumerator_
-    )
-        Governor(name_)
-        GovernorTimelockCompound(timelock_)
-        GovernorSettings(votingDelay_, votingPeriod_, 0)
-        GovernorVotes(token_)
-        GovernorVotesQuorumFraction(quorumNumerator_)
-    {}
+    /* constructor( */
+    /*     string memory name_, */
+    /*     IVotes token_, */
+    /*     uint256 votingDelay_, */
+    /*     uint256 votingPeriod_, */
+    /*     ICompoundTimelock timelock_, */
+    /*     uint256 quorumNumerator_ */
+    /* ) */
+    /*     Governor(name_) */
+    /*     GovernorTimelockCompound(timelock_) */
+    /*     GovernorSettings(votingDelay_, votingPeriod_, 0) */
+    /*     GovernorVotes(token_) */
+    /*     GovernorVotesQuorumFraction(quorumNumerator_) */
+    /* {} */
 
     function supportsInterface(bytes4 interfaceId)
         public
