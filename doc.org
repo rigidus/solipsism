@@ -3823,7 +3823,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (%new %type-name #'(lambda (new tn) `(:new ,tn)))
    (%tuple-expression #'(lambda (te) `(:expr-tuple ,te)))
    (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
-   (%ident#'(lambda (id) `(:expr-ident ,id)))
+   (%ident #'(lambda (id) `(:expr-ident ,id)))
    (%lit #'(lambda (lit) `(:expr-lit ,lit)))
    (%addr #'(lambda (addr) `(:expr-addr ,addr)))
    (%type-name #'(lambda (tn) `(:expr-tn ,tn)))
