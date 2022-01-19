@@ -3,11 +3,11 @@
 
 pragma solidity ^0.8.0;
 
-/* import "./draft-ERC20Permit.sol"; */
-/* import "../../../utils/math/Math.sol"; */
-/* import "../../../governance/utils/IVotes.sol"; */
-/* import "../../../utils/math/SafeCast.sol"; */
-/* import "../../../utils/cryptography/ECDSA.sol"; */
+import "./draft-ERC20Permit.sol";
+import "../../../utils/math/Math.sol";
+import "../../../governance/utils/IVotes.sol";
+import "../../../utils/math/SafeCast.sol";
+import "../../../utils/cryptography/ECDSA.sol";
 
 /**
  * @dev Extension of ERC20 to support Compound-like voting and delegation. This version is more generic than Compound's,
@@ -63,7 +63,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
      */
     function getVotes(address account) public view virtual override returns (uint256) {
         uint256 pos = _checkpoints[account].length;
-        /* return pos == 0 ? 0 : _checkpoints[account][pos - 1].votes; */
+        return pos == 0 ? 0 : _checkpoints[account][pos - 1].votes;
     }
 
     /**
@@ -74,7 +74,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
      * - `blockNumber` must have been already mined
      */
     function getPastVotes(address account, uint256 blockNumber) public view virtual override returns (uint256) {
-        /* require(blockNumber < block.number, "ERC20Votes: block not yet mined"); */
+        require(blockNumber < block.number, "ERC20Votes: block not yet mined");
         return _checkpointsLookup(_checkpoints[account], blockNumber);
     }
 
@@ -87,7 +87,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
      * - `blockNumber` must have been already mined
      */
     function getPastTotalSupply(uint256 blockNumber) public view virtual override returns (uint256) {
-        /* require(blockNumber < block.number, "ERC20Votes: block not yet mined"); */
+        require(blockNumber < block.number, "ERC20Votes: block not yet mined");
         return _checkpointsLookup(_totalSupplyCheckpoints, blockNumber);
     }
 
@@ -117,7 +117,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
             }
         }
 
-        /* return high == 0 ? 0 : ckpts[high - 1].votes; */
+        return high == 0 ? 0 : ckpts[high - 1].votes;
     }
 
     /**
@@ -138,14 +138,14 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         bytes32 r,
         bytes32 s
     ) public virtual override {
-        /* require(block.timestamp <= expiry, "ERC20Votes: signature expired"); */
+        require(block.timestamp <= expiry, "ERC20Votes: signature expired");
         address signer = ECDSA.recover(
             _hashTypedDataV4(keccak256(abi.encode(_DELEGATION_TYPEHASH, delegatee, nonce, expiry))),
             v,
             r,
             s
         );
-        /* require(nonce == _useNonce(signer), "ERC20Votes: invalid nonce"); */
+        require(nonce == _useNonce(signer), "ERC20Votes: invalid nonce");
         _delegate(signer, delegatee);
     }
 
@@ -161,7 +161,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
      */
     function _mint(address account, uint256 amount) internal virtual override {
         super._mint(account, amount);
-        /* require(totalSupply() <= _maxSupply(), "ERC20Votes: total supply risks overflowing votes"); */
+        require(totalSupply() <= _maxSupply(), "ERC20Votes: total supply risks overflowing votes");
 
         _writeCheckpoint(_totalSupplyCheckpoints, _add, amount);
     }
@@ -229,13 +229,13 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         uint256 delta
     ) private returns (uint256 oldWeight, uint256 newWeight) {
         uint256 pos = ckpts.length;
-        /* oldWeight = pos == 0 ? 0 : ckpts[pos - 1].votes; */
+        oldWeight = pos == 0 ? 0 : ckpts[pos - 1].votes;
         newWeight = op(oldWeight, delta);
 
         if (pos > 0 && ckpts[pos - 1].fromBlock == block.number) {
             ckpts[pos - 1].votes = SafeCast.toUint224(newWeight);
-        /* } else { */
-        /*     ckpts.push(Checkpoint({fromBlock: SafeCast.toUint32(block.number), votes: SafeCast.toUint224(newWeight)})); */
+        } else {
+            ckpts.push(Checkpoint({fromBlock: SafeCast.toUint32(block.number), votes: SafeCast.toUint224(newWeight)}));
         }
     }
 

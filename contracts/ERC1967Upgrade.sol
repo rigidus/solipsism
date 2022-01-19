@@ -3,10 +3,10 @@
 
 pragma solidity ^0.8.2;
 
-/* import "../beacon/IBeacon.sol"; */
-/* import "../../interfaces/draft-IERC1822.sol"; */
-/* import "../../utils/Address.sol"; */
-/* import "../../utils/StorageSlot.sol"; */
+import "../beacon/IBeacon.sol";
+import "../../interfaces/draft-IERC1822.sol";
+import "../../utils/Address.sol";
+import "../../utils/StorageSlot.sol";
 
 /**
  * @dev This abstract contract provides getters and event emitting update functions for
@@ -43,7 +43,7 @@ abstract contract ERC1967Upgrade {
      * @dev Stores a new address in the EIP1967 implementation slot.
      */
     function _setImplementation(address newImplementation) private {
-        /* require(Address.isContract(newImplementation), "ERC1967: new implementation is not a contract"); */
+        require(Address.isContract(newImplementation), "ERC1967: new implementation is not a contract");
         StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value = newImplementation;
     }
 
@@ -90,9 +90,9 @@ abstract contract ERC1967Upgrade {
             _setImplementation(newImplementation);
         } else {
             try IERC1822Proxiable(newImplementation).proxiableUUID() returns (bytes32 slot) {
-                /* require(slot == _IMPLEMENTATION_SLOT, "ERC1967Upgrade: unsupported proxiableUUID"); */
+                require(slot == _IMPLEMENTATION_SLOT, "ERC1967Upgrade: unsupported proxiableUUID");
             } catch {
-                /* revert("ERC1967Upgrade: new implementation is not UUPS"); */
+                revert("ERC1967Upgrade: new implementation is not UUPS");
             }
             _upgradeToAndCall(newImplementation, data, forceCall);
         }
@@ -103,7 +103,7 @@ abstract contract ERC1967Upgrade {
      * This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1, and is
      * validated in the constructor.
      */
-    /* bytes32 internal constant _ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103; */
+    bytes32 internal constant _ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
     /**
      * @dev Emitted when the admin account has changed.
@@ -121,7 +121,7 @@ abstract contract ERC1967Upgrade {
      * @dev Stores a new address in the EIP1967 admin slot.
      */
     function _setAdmin(address newAdmin) private {
-        /* require(newAdmin != address(0), "ERC1967: new admin is the zero address"); */
+        require(newAdmin != address(0), "ERC1967: new admin is the zero address");
         StorageSlot.getAddressSlot(_ADMIN_SLOT).value = newAdmin;
     }
 
@@ -139,7 +139,7 @@ abstract contract ERC1967Upgrade {
      * @dev The storage slot of the UpgradeableBeacon contract which defines the implementation for this proxy.
      * This is bytes32(uint256(keccak256('eip1967.proxy.beacon')) - 1)) and is validated in the constructor.
      */
-    /* bytes32 internal constant _BEACON_SLOT = 0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50; */
+    bytes32 internal constant _BEACON_SLOT = 0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50;
 
     /**
      * @dev Emitted when the beacon is upgraded.
@@ -157,11 +157,11 @@ abstract contract ERC1967Upgrade {
      * @dev Stores a new beacon in the EIP1967 beacon slot.
      */
     function _setBeacon(address newBeacon) private {
-        /* require(Address.isContract(newBeacon), "ERC1967: new beacon is not a contract"); */
-        /* require( */
-        /*     Address.isContract(IBeacon(newBeacon).implementation()), */
-        /*     "ERC1967: beacon implementation is not a contract" */
-        /* ); */
+        require(Address.isContract(newBeacon), "ERC1967: new beacon is not a contract");
+        require(
+            Address.isContract(IBeacon(newBeacon).implementation()),
+            "ERC1967: beacon implementation is not a contract"
+        );
         StorageSlot.getAddressSlot(_BEACON_SLOT).value = newBeacon;
     }
 

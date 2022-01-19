@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.0;
 
-/* import "./IERC1820Implementer.sol"; */
+import "./IERC1820Implementer.sol";
 
 /**
  * @dev Implementation of the {IERC1820Implementer} interface.
@@ -28,7 +28,7 @@ contract ERC1820Implementer is IERC1820Implementer {
         override
         returns (bytes32)
     {
-        /* return _supportedInterfaces[interfaceHash][account] ? _ERC1820_ACCEPT_MAGIC : bytes32(0x00); */
+        return _supportedInterfaces[interfaceHash][account] ? _ERC1820_ACCEPT_MAGIC : bytes32(0x00);
     }
 
     /**

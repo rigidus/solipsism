@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.0;
 
-/* import "../ERC1155.sol"; */
-/* import "../../../security/Pausable.sol"; */
+import "../ERC1155.sol";
+import "../../../security/Pausable.sol";
 
 /**
  * @dev ERC1155 token with pausable token transfers, minting and burning.
@@ -32,7 +32,6 @@ abstract contract ERC1155Pausable is ERC1155, Pausable {
         bytes memory data
     ) internal virtual override {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-
-        /* require(!paused(), "ERC1155Pausable: token transfer while paused"); */
+        require(!paused(), "ERC1155Pausable: token transfer while paused");
     }
 }

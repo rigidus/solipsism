@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/* import "./math/Math.sol"; */
-/* import "./math/SafeCast.sol"; */
+import "./math/Math.sol";
+import "./math/SafeCast.sol";
 
 /**
  * @dev This library defines the `History` struct, for checkpointing values as they change at different points in
@@ -28,8 +28,7 @@ library Checkpoints {
      */
     function latest(History storage self) internal view returns (uint256) {
         uint256 pos = self._checkpoints.length;
-        /* return pos == 0 ? 0 : self._checkpoints[pos - 1]._value; */
-        return self._checkpoints[pos - 1]._value;
+        return pos == 0 ? 0 : self._checkpoints[pos - 1]._value;
     }
 
     /**
@@ -50,9 +49,7 @@ library Checkpoints {
                 low = mid + 1;
             }
         }
-        /* return high == 0 ? 0 : self._checkpoints[high - 1]._value; */
-        return self._checkpoints[high - 1]._value;
-
+        return high == 0 ? 0 : self._checkpoints[high - 1]._value;
     }
 
     /**
@@ -67,7 +64,7 @@ library Checkpoints {
             self._checkpoints[pos - 1]._value = SafeCast.toUint224(value);
         } else {
             self._checkpoints.push(
-                /* Checkpoint({_blockNumber: SafeCast.toUint32(block.number), _value: SafeCast.toUint224(value)}) */
+                Checkpoint({_blockNumber: SafeCast.toUint32(block.number), _value: SafeCast.toUint224(value)})
             );
         }
         return (old, value);
