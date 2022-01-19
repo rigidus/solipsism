@@ -120,7 +120,7 @@ library EnumerableMap {
 
     struct Map {
         // Storage of map keys and values
-        /* MapEntry[] _entries; */
+        MapEntry[] _entries;
 
         // Position of the entry defined by a key in the `entries` array, plus 1
         // because index 0 means a key is not in the map.
@@ -139,13 +139,13 @@ library EnumerableMap {
         uint256 keyIndex = map._indexes[key];
 
         if (keyIndex == 0) { // Equivalent to !contains(map, key)
-    /*         map._entries.push(MapEntry({ _key: key, _value: value })); */
+            map._entries.push(MapEntry({ _key: key, _value: value }));
             // The entry is stored at length-1, but we add 1 to all indexes
             // and use 0 as a sentinel value
-            /* map._indexes[key] = map._entries.length; */
+            map._indexes[key] = map._entries.length;
             return true;
         } else {
-    /*         map._entries[keyIndex - 1]._value = value; */
+            map._entries[keyIndex - 1]._value = value;
             return false;
         }
     }
@@ -157,7 +157,7 @@ library EnumerableMap {
      */
     function _remove(Map storage map, bytes32 key) private returns (bool) {
         // We read and store the key's index to prevent multiple reads from the same storage slot
-    /*     uint256 keyIndex = map._indexes[key]; */
+        uint256 keyIndex = map._indexes[key];
 
         if (keyIndex != 0) { // Equivalent to contains(map, key)
             // To delete a key-value pair from the _entries array in O(1), we swap the entry to delete with the last one
@@ -173,12 +173,12 @@ library EnumerableMap {
             MapEntry storage lastEntry = map._entries[lastIndex];
 
             // Move the last entry to the index where the entry to delete is
-    /*         map._entries[toDeleteIndex] = lastEntry; */
+            map._entries[toDeleteIndex] = lastEntry;
             // Update the index for the moved entry
-    /*         map._indexes[lastEntry._key] = toDeleteIndex + 1; // All indexes are 1-based */
+            map._indexes[lastEntry._key] = toDeleteIndex + 1; // All indexes are 1-based
 
             // Delete the slot where the moved entry was stored
-    /*         map._entries.pop(); */
+            map._entries.pop();
 
             // Delete the index for the deleted slot
             delete map._indexes[key];
@@ -385,7 +385,7 @@ library EnumerableSet {
 
     struct Set {
         // Storage of set values
-        /* bytes32[] _values; */
+        bytes32[] _values;
 
         // Position of the value in the `values` array, plus 1 because index 0
         // means a value is not in the set.
@@ -400,10 +400,10 @@ library EnumerableSet {
      */
     function _add(Set storage set, bytes32 value) private returns (bool) {
         if (!_contains(set, value)) {
-/*             set._values.push(value); */
+            set._values.push(value);
             // The value is stored at length-1, but we add 1 to all indexes
             // and use 0 as a sentinel value
-/*             set._indexes[value] = set._values.length; */
+            set._indexes[value] = set._values.length;
             return true;
         } else {
             return false;
@@ -434,12 +434,12 @@ library EnumerableSet {
             bytes32 lastvalue = set._values[lastIndex];
 
             // Move the last value to the index where the value to delete is
-/*             set._values[toDeleteIndex] = lastvalue; */
+            set._values[toDeleteIndex] = lastvalue;
             // Update the index for the moved value
-/*             set._indexes[lastvalue] = toDeleteIndex + 1; // All indexes are 1-based */
+            set._indexes[lastvalue] = toDeleteIndex + 1; // All indexes are 1-based
 
             // Delete the slot where the moved value was stored
-/*             set._values.pop(); */
+            set._values.pop();
 
             // Delete the index for the deleted slot
             delete set._indexes[value];
@@ -825,10 +825,10 @@ library Address {
                 // The easiest way to bubble the revert reason is using memory via assembly
 
                 /* // solhint-disable-next-line no-inline-assembly */
-                /* assembly { */
-                /*     let returndata_size := mload(returndata) */
-                /*     revert(add(32, returndata), returndata_size) */
-                /* } */
+                assembly {
+                    let returndata_size := mload(returndata)
+                    revert(add(32, returndata), returndata_size)
+                }
             } else {
                 revert(errorMessage);
             }
@@ -1459,7 +1459,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
 
         _holderTokens[to].add(tokenId);
 
-        /* _tokenOwners.set(tokenId, to); */
+        _tokenOwners.set(tokenId, to);
 
         emit Transfer(address(0), to, tokenId);
     }
@@ -1489,7 +1489,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
 
         _holderTokens[owner].remove(tokenId);
 
-        /* _tokenOwners.remove(tokenId); */
+        _tokenOwners.remove(tokenId);
 
         emit Transfer(owner, address(0), tokenId);
     }
@@ -1564,9 +1564,9 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
                     revert("ERC721: transfer to non ERC721Receiver implementer");
                 } else {
                     // solhint-disable-next-line no-inline-assembly
-                    /* assembly { */
-                    /*     revert(add(32, reason), mload(reason)) */
-                    /* } */
+                    assembly {
+                        revert(add(32, reason), mload(reason))
+                    }
                 }
             }
         } else {
@@ -1911,20 +1911,20 @@ contract SactAvatars is ERC721, Ownable {
         _safeMint(msg.sender,0);
     }
 
-    /* function tokensOfOwner(address _owner) external view returns(uint256[] memory ) { */
-        /* uint256 tokenCount = balanceOf(_owner); */
-        /* if (tokenCount == 0) { */
-        /*     // Return an empty array */
-        /*     return new uint256[](0); */
-        /* } else { */
-        /*     uint256[] memory result = new uint256[](tokenCount); */
-        /*     uint256 index; */
-        /*     for (index = 0; index < tokenCount; index++) { */
-        /*         result[index] = tokenOfOwnerByIndex(_owner, index); */
-        /*     } */
-        /*     return result; */
-        /* } */
-    /* } */
+    function tokensOfOwner(address _owner) external view returns(uint256[] memory ) {
+        uint256 tokenCount = balanceOf(_owner);
+        if (tokenCount == 0) {
+            // Return an empty array
+            return new uint256[](0);
+        } else {
+            uint256[] memory result = new uint256[](tokenCount);
+            uint256 index;
+            for (index = 0; index < tokenCount; index++) {
+                result[index] = tokenOfOwnerByIndex(_owner, index);
+            }
+            return result;
+        }
+    }
 
     function calculatePrice() public view returns (uint256) {
         require(hasSaleStarted == true, "Sale hasn't started");
