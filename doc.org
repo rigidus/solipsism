@@ -372,6 +372,7 @@ solidity-конструкциями и ожидаю получить дерев�
 
   ;; (test-contract-file #P"./test_contract.sol")
   ;; (test-contract-file #P"./test_dbg.sol")
+  ;; (test-contract-file #P"./tests/test_dbg2.sol")
 
   ;; (test-all "./contracts")
 
@@ -1149,6 +1150,17 @@ TypeName определен в параграфе [[*TypeName][TypeName]]
 - тип переменной (рассматривается в параграфе [[*TypeName][TypeName]])
 - локация
 - идентификатор
+
+***** Identifier and error
+
+Судя по разобранным контрактам, это так же возможная комбинация. А с
+учетом того, что мы можем объявлять новые типы, то пусть это будет еще и
+просто identifier.
+
+#+BEGIN_SRC lisp :noweb-ref param_subrules
+  (%type-name %error
+               #'(lambda (id err) `(:par-id ,id)))
+#+END_SRC
 
 ***** TypeName and Identifier
 
@@ -2512,6 +2524,10 @@ a source unit or within a contract, library or interface.
    (%assembly-stmnt #'(lambda (last) `(:assembly-stmnt (,last))))
    (%assembly-stmnt %stmnt #'(lambda (head rest)
                                `(:assembly-stmnt ,(append (list head) (cadr rest)))))
+
+   (%unchecked-block-contents #'(lambda (last) `(:unchecked-stmnt (,last))))
+   (%unchecked-block-contents %stmnt #'(lambda (head rest)
+                                         `(:unchecked-stmnt ,(append (list head) (cadr rest)))))
    )
 #+END_SRC
 
@@ -2925,6 +2941,12 @@ a source unit or within a contract, library or interface.
    (%return %expr |%;|
             #'(lambda (rt ex sc)
                 `(:return ,ex)))
+   (%return %addr |%;|
+            #'(lambda (rt ex sc)
+                `(:return ,ex)))
+   (%return %hex-num |%;|
+            #'(lambda (rt ex sc)
+                `(:return ,ex)))
    )
 #+END_SRC
 
@@ -3193,6 +3215,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.YulIdentif
    (%yul-path #'(lambda (yfc) `(:y-fcall ,yfc)))
    (%yul-func-call #'(lambda (yfc) `(:y-fcall ,yfc)))
    (%yul-lit #'(lambda (yl) `(:y-lit ,yl)))
+   (%addr #'(lambda (yld) `(:y-addrt ,yld)))
    )
 #+END_SRC
 
@@ -3794,13 +3817,15 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (%expr |%-=|    %expr #'(lambda (e1 op e2) `(:expr-minus-eq   ,e1 :arg ,e2)))
    (%expr |%*=|    %expr #'(lambda (e1 op e2) `(:expr-mul-eq   ,e1 :arg ,e2)))
    (%expr |%/=|    %expr #'(lambda (e1 op e2) `(:expr-div-eq   ,e1 :arg ,e2)))
+   (%expr |%:|     %expr #'(lambda (e1 op e2) `(:expr-div-eq   ,e1 :arg ,e2)))
    (%expr |%%=|    %expr #'(lambda (e1 op e2) `(:expr-mod-eq   ,e1 :arg ,e2)))
-   ;; (%built-in-func #'(lambda (func-name) `(:built-in-func, func-name)))
+   (%error #'(lambda (err) `(:expr-err nil)))
    (%new %type-name #'(lambda (new tn) `(:new ,tn)))
    (%tuple-expression #'(lambda (te) `(:expr-tuple ,te)))
    (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
-   (%ident #'(lambda (id) `(:expr-ident ,id)))
+   (%ident#'(lambda (id) `(:expr-ident ,id)))
    (%lit #'(lambda (lit) `(:expr-lit ,lit)))
+   (%addr #'(lambda (addr) `(:expr-addr ,addr)))
    (%type-name #'(lambda (tn) `(:expr-tn ,tn)))
    (%elt-type-name #'(lambda (etn) `(:elt-type-name ,etn)))
    )
@@ -3823,7 +3848,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 раздела.
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ("0x[a-fA-F0-9]{40}" '%addr $@)
+  ;; ("0x[a-fA-F0-9]{40}" '%addr $@)
+  ("0x[a-fA-F0-9]+" '%addr $@)
   ("\\btype\\b" '%type 'type)
   ("\\bdelete\\b" '%delete '%delete)
 
