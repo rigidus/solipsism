@@ -1491,10 +1491,17 @@ call-argument-list, поэтому нам понадобится раскрыв�
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%modifier-invocation
+   (%modifier-invocation-contens #'(lambda (last) `(:src (,last))))
+   (%modifier-invocation-contens %modifier-invocation
+                       #'(lambda (head rest)
+                           `(:src ,(append (list head) (cadr rest))))))
+
+
+  (%modifier-invocation-contens
    (%ident-path #'(lambda (ip) `(:ident-path ,ip)))
    (%ident-path %call-arg-list
-                #'(lambda (ip args) `(:id-path ,ip :args ,args)))
-   )
+                #'(lambda (ip args) `(:id-path ,ip :args ,args))))
+
 #+END_SRC
 
 Тест:

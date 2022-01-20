@@ -4,20 +4,26 @@ import "../proxy/Clones.sol";
 
 contract CompTimelock {
 
-    /* constructor( */
-    /*             string memory name, */
-    /*             string memory symbol, */
-    /*             uint256 cap */
-    /* ) ERC20(name, symbol) ERC20Capped(cap) {} */
+    constructor(
+                string memory name,
+                string memory symbol,
+                uint256 cap
+    ) ERC20(name, symbol) ERC20Capped(cap) {}
 
-    /* constructor( */
-    /*     string memory name, */
-    /*     string memory symbol, */
-    /*     address initialAccount, */
-    /*     uint256 initialBalance */
-    /* ) payable ERC20(name, symbol) ERC20Permit(name) { */
-    /*     _mint(initialAccount, initialBalance); */
-    /* } */
+    constructor(
+                string memory name,
+                string memory symbol,
+                uint256 cap
+    ) ERC20(name, symbol) {}
+
+    constructor(
+        string memory name,
+        string memory symbol,
+        address initialAccount,
+        uint256 initialBalance
+    ) payable ERC20(name, symbol) ERC20Permit(name) {
+        _mint(initialAccount, initialBalance);
+    }
 
     uint256 public constant GRACE_PERIOD = 14 days;
 
