@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.0;
 
-/* import "../ERC20.sol"; */
-/* import "../../../utils/Arrays.sol"; */
-/* import "../../../utils/Counters.sol"; */
+import "../ERC20.sol";
+import "../../../utils/Arrays.sol";
+import "../../../utils/Counters.sol";
 
 /**
  * @dev This contract extends an ERC20 token with a snapshot mechanism. When a snapshot is created, the balances and
@@ -106,7 +106,7 @@ abstract contract ERC20Snapshot is ERC20 {
     function balanceOfAt(address account, uint256 snapshotId) public view virtual returns (uint256) {
         (bool snapshotted, uint256 value) = _valueAt(snapshotId, _accountBalanceSnapshots[account]);
 
-        /* return snapshotted ? value : balanceOf(account); */
+        return snapshotted ? value : balanceOf(account);
     }
 
     /**
@@ -115,7 +115,7 @@ abstract contract ERC20Snapshot is ERC20 {
     function totalSupplyAt(uint256 snapshotId) public view virtual returns (uint256) {
         (bool snapshotted, uint256 value) = _valueAt(snapshotId, _totalSupplySnapshots);
 
-        /* return snapshotted ? value : totalSupply(); */
+        return snapshotted ? value : totalSupply();
     }
 
     // Update balance and/or total supply snapshots before the values are modified. This is implemented
@@ -143,8 +143,8 @@ abstract contract ERC20Snapshot is ERC20 {
     }
 
     function _valueAt(uint256 snapshotId, Snapshots storage snapshots) private view returns (bool, uint256) {
-        /* require(snapshotId > 0, "ERC20Snapshot: id is 0"); */
-        /* require(snapshotId <= _getCurrentSnapshotId(), "ERC20Snapshot: nonexistent id"); */
+        require(snapshotId > 0, "ERC20Snapshot: id is 0");
+        require(snapshotId <= _getCurrentSnapshotId(), "ERC20Snapshot: nonexistent id");
 
         // When a valid snapshot is queried, there are three possibilities:
         //  a) The queried value was not modified after the snapshot was taken. Therefore, a snapshot entry was never

@@ -24,7 +24,7 @@ contract CompTimelock {
 function test1(History storage self, uint256 blockNumber) internal view returns (uint256) {
 
     require(blockNumber < block.number, "Checkpoints: block not yet mined");
-    /* Checkpoint({_blockNumber: SafeCast.toUint32(block.number), _value: SafeCast.toUint224(value)}) */
+    Checkpoint({_blockNumber: SafeCast.toUint32(block.number), _value: SafeCast.toUint224(value)});
     return high == 0 ? 0 : self._checkpoints[high - 1]._value;
 }
 
@@ -32,6 +32,8 @@ function test1(History storage self, uint256 blockNumber) internal view returns 
      assembly {
             let ptr := mload(0x4)
                 mstore(ptr, 0x0000000000000000000000000000000011111142000000)
+
+                 sender := shr(96, calldataload(sub(calldatasize(), 20)))
 
                 }
     return 0x0000000000000000000000000000000011111142;
@@ -54,10 +56,15 @@ function test1(History storage self, uint256 blockNumber) internal view returns 
 
  function increment(Counter storage counter) internal {
 
+     (bool success, bytes memory returndata) = address(proxy).staticcall(hex"dhbj");
+
+     (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(hash, signature);
+
      require(blockNumber < block.number, "Checkpoints: block not yet mined");
 
      unchecked {
          counter._value += 1;
         }
+     return msg.data[:msg.data.length - 20];
     }
 }

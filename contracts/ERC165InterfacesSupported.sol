@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-/* import "../../utils/introspection/IERC165.sol"; */
+import "../../utils/introspection/IERC165.sol";
 
 /**
  * https://eips.ethereum.org/EIPS/eip-214#specification
@@ -15,9 +15,7 @@ pragma solidity ^0.8.0;
  * solidity-coverage ignores the /mocks folder, so we duplicate its implementation here to avoid instrumenting it
  */
 contract SupportsInterfaceWithLookupMock is IERC165 {
-    /*
-     * bytes4(keccak256('supportsInterface(bytes4)')) == 0x01ffc9a7
-     */
+    /* bytes4(keccak256('supportsInterface(bytes4)')) == 0x01ffc9a7 */
     bytes4 public constant INTERFACE_ID_ERC165 = 0x01ffc9a7;
 
     /**
@@ -44,7 +42,7 @@ contract SupportsInterfaceWithLookupMock is IERC165 {
      * @dev Private method for registering an interface.
      */
     function _registerInterface(bytes4 interfaceId) internal {
-        /* require(interfaceId != 0xffffffff, "ERC165InterfacesSupported: invalid interface id"); */
+        require(interfaceId != 0xffffffff, "ERC165InterfacesSupported: invalid interface id");
         _supportedInterfaces[interfaceId] = true;
     }
 }

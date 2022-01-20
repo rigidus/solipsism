@@ -23,18 +23,18 @@ library Counters {
         return counter._value;
     }
 
-    /* function increment(Counter storage counter) internal { */
-    /*     unchecked { */
-    /*         counter._value += 1; */
-    /*     } */
-    /* } */
+    function increment(Counter storage counter) internal {
+        unchecked {
+            counter._value += 1;
+        }
+    }
 
     function decrement(Counter storage counter) internal {
         uint256 value = counter._value;
-        /* require(value > 0, "Counter: decrement overflow"); */
-        /* unchecked { */
-        /*     counter._value = value - 1; */
-        /* } */
+        require(value > 0, "Counter: decrement overflow");
+        unchecked {
+            counter._value = value - 1;
+        }
     }
 
     function reset(Counter storage counter) internal {

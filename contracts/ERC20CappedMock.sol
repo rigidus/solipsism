@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-/* import "../token/ERC20/extensions/ERC20Capped.sol"; */
+import "../token/ERC20/extensions/ERC20Capped.sol";
 
 contract ERC20CappedMock is ERC20Capped {
     /* constructor( */

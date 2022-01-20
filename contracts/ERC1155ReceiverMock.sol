@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-/* import "../token/ERC1155/IERC1155Receiver.sol"; */
-/* import "../utils/introspection/ERC165.sol"; */
+import "../token/ERC1155/IERC1155Receiver.sol";
+import "../utils/introspection/ERC165.sol";
 
 contract ERC1155ReceiverMock is ERC165, IERC1155Receiver {
     bytes4 private _recRetval;
@@ -33,7 +33,7 @@ contract ERC1155ReceiverMock is ERC165, IERC1155Receiver {
         uint256 value,
         bytes calldata data
     ) external override returns (bytes4) {
-        /* require(!_recReverts, "ERC1155ReceiverMock: reverting on receive"); */
+        require(!_recReverts, "ERC1155ReceiverMock: reverting on receive");
         emit Received(operator, from, id, value, data, gasleft());
         return _recRetval;
     }
@@ -45,7 +45,7 @@ contract ERC1155ReceiverMock is ERC165, IERC1155Receiver {
         uint256[] calldata values,
         bytes calldata data
     ) external override returns (bytes4) {
-        /* require(!_batReverts, "ERC1155ReceiverMock: reverting on batch receive"); */
+        require(!_batReverts, "ERC1155ReceiverMock: reverting on batch receive");
         emit BatchReceived(operator, from, ids, values, data, gasleft());
         return _batRetval;
     }

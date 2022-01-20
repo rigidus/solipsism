@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-/* import "../utils/Checkpoints.sol"; */
+import "../utils/Checkpoints.sol";
 
 contract CheckpointsImpl {
     using Checkpoints for Checkpoints.History;

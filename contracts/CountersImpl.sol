@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-/* import "../utils/Counters.sol"; */
+import "../utils/Counters.sol";
 
 contract CountersImpl {
     using Counters for Counters.Counter;

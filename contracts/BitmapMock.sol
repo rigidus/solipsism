@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-/* import "../utils/structs/BitMaps.sol"; */
+import "../utils/structs/BitMaps.sol";
 
 contract BitMapMock {
     using BitMaps for BitMaps.BitMap;

@@ -14,12 +14,12 @@ contract MyGovernor is
     GovernorVotes,
     GovernorVotesQuorumFraction
 {
-    constructor(IVotes _token, TimelockController _timelock)
-        Governor("MyGovernor")
-        GovernorVotes(_token)
-        GovernorVotesQuorumFraction(4)
-        GovernorTimelockControl(_timelock)
-    {}
+    /* constructor(IVotes _token, TimelockController _timelock) */
+    /*     Governor("MyGovernor") */
+    /*     GovernorVotes(_token) */
+    /*     GovernorVotesQuorumFraction(4) */
+    /*     GovernorTimelockControl(_timelock) */
+    /* {} */
 
     function votingDelay() public pure override returns (uint256) {
         return 1; // 1 block

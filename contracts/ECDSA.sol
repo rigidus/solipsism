@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.0;
 
-/* import "../Strings.sol"; */
+import "../Strings.sol";
 
 /**
  * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
@@ -20,20 +20,20 @@ library ECDSA {
         InvalidSignatureV
     }
 
-    /* function _throwError(RecoverError error) private pure { */
-    /*     if (error == RecoverError.NoError) { */
-    /*         return; // no error: do nothing */
-    /*     } else if (error == RecoverError.InvalidSignature) { */
-    /*         /\* revert("ECDSA: invalid signature"); *\/ */
-    /*         smth; */
-    /*     } else if (error == RecoverError.InvalidSignatureLength) { */
-    /*         /\* revert("ECDSA: invalid signature length"); *\/ */
-    /*     } else if (error == RecoverError.InvalidSignatureS) { */
-    /*         /\* revert("ECDSA: invalid signature 's' value"); *\/ */
-    /*     } else if (error == RecoverError.InvalidSignatureV) { */
-    /*         /\* revert("ECDSA: invalid signature 'v' value"); *\/ */
-    /*     } */
-    /* } */
+    function _throwError(RecoverError error) private pure {
+        if (error == RecoverError.NoError) {
+            return; // no error: do nothing
+        } else if (error == RecoverError.InvalidSignature) {
+            revert("ECDSA: invalid signature");
+            smth;
+        } else if (error == RecoverError.InvalidSignatureLength) {
+            revert("ECDSA: invalid signature length");
+        } else if (error == RecoverError.InvalidSignatureS) {
+            revert("ECDSA: invalid signature 's' value");
+        } else if (error == RecoverError.InvalidSignatureV) {
+            revert("ECDSA: invalid signature 'v' value");
+        }
+    }
 
     /**
      * @dev Returns the address that signed a hashed message (`hash`) with
@@ -101,8 +101,8 @@ library ECDSA {
      * be too long), and then calling {toEthSignedMessageHash} on it.
      */
     function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
-        /* (address recovered, RecoverError error) = tryRecover(hash, signature); */
-        /* _throwError(error); */
+        (address recovered, RecoverError error) = tryRecover(hash, signature);
+        _throwError(error);
         return recovered;
     }
 
@@ -118,7 +118,7 @@ library ECDSA {
         bytes32 r,
         bytes32 vs
     ) internal pure returns (address, RecoverError) {
-        /* bytes32 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff); */
+        bytes32 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
         uint8 v = uint8((uint256(vs) >> 255) + 27);
         return tryRecover(hash, v, r, s);
     }
@@ -133,8 +133,8 @@ library ECDSA {
         bytes32 r,
         bytes32 vs
     ) internal pure returns (address) {
-        /* (address recovered, RecoverError error) = tryRecover(hash, r, vs); */
-        /* _throwError(error); */
+        (address recovered, RecoverError error) = tryRecover(hash, r, vs);
+        _throwError(error);
         return recovered;
     }
 
@@ -185,8 +185,8 @@ library ECDSA {
         bytes32 r,
         bytes32 s
     ) internal pure returns (address) {
-        /* (address recovered, RecoverError error) = tryRecover(hash, v, r, s); */
-        /* _throwError(error); */
+        (address recovered, RecoverError error) = tryRecover(hash, v, r, s);
+        _throwError(error);
         return recovered;
     }
 
