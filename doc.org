@@ -374,7 +374,10 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-contract-file #P"./test_dbg.sol")
   ;; (test-contract-file #P"./tests/test_dbg2.sol")
 
-  ;; (test-all "./contracts")
+  ;; (test-contract-file #P"./sushi-swap-contracts/BentoBoxV1.sol")
+  ;; (test-contract-file #P"./tests/test_dbg_sushi.sol")
+
+  ;; (test-all "./sushi-swap-contracts")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
