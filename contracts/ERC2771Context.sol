@@ -25,7 +25,7 @@ abstract contract ERC2771Context is Context {
         if (isTrustedForwarder(msg.sender)) {
             // The assembly code is more direct than the Solidity version using `abi.decode`.
             assembly {
-            sender := shr(96, calldataload(sub(calldatasize(), 20)))
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
             }
         } else {
             return super._msgSender();
