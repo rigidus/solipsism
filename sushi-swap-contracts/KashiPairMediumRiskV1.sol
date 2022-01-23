@@ -125,7 +125,7 @@ contract BoringOwnable is BoringOwnableData {
         pendingOwner = address(0);
     }
 
-    /// @notice Only allows the `owner` to execute the function.
+    /* @notice Only allows the `owner` to execute the function. */
     modifier onlyOwner() {
         require(msg.sender == owner, "Ownable: caller is not the owner");
         _;
@@ -259,7 +259,7 @@ contract ERC20 is ERC20Data, Domain {
         return true;
     }
 
-    // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+    /* keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"); */
     bytes32 private constant PERMIT_SIGNATURE_HASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
     /// @notice Approves `value` from `owner_` to be spend by `spender`.
@@ -688,7 +688,7 @@ interface IOracle {
     /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
     /// @return success if no valid (recent) rate is available, return false else true.
     /// @return rate The rate of the requested asset / pair / pool.
-    function get(bytes calldata data) external returns (bool success, uint256 rate);
+    /* function get(bytes calldata data) external returns (bool success, uint256 rate); */
 
     /// @notice Check the last exchange rate without any state changes.
     /// @param data Usually abi encoded, implementation specific data that contains information and arguments to & about the oracle.
@@ -702,7 +702,7 @@ interface IOracle {
     /// @param data Usually abi encoded, implementation specific data that contains information and arguments to & about the oracle.
     /// For example:
     /// (string memory collateralSymbol, string memory assetSymbol, uint256 division) = abi.decode(data, (string, string, uint256));
-    /// @return rate The rate of the requested asset / pair / pool.
+    /* @return rate The rate of the requested asset / pair / pool. */
     function peekSpot(bytes calldata data) external view returns (uint256 rate);
 
     /// @notice Returns a human readable (short) name about this oracle.
@@ -855,7 +855,7 @@ contract KashiPairMediumRiskV1 is ERC20, BoringOwnable, IMasterContract {
     uint256 private constant LIQUIDATION_MULTIPLIER = 112000; // add 12%
     uint256 private constant LIQUIDATION_MULTIPLIER_PRECISION = 1e5;
 
-    // Fees
+    /* // Fees */
     uint256 private constant PROTOCOL_FEE = 10000; // 10%
     uint256 private constant PROTOCOL_FEE_DIVISOR = 1e5;
     uint256 private constant BORROW_OPENING_FEE = 50; // 0.05%
@@ -878,7 +878,7 @@ contract KashiPairMediumRiskV1 is ERC20, BoringOwnable, IMasterContract {
         accrueInfo.interestPerSecond = uint64(STARTING_INTEREST_PER_SECOND); // 1% APR, with 1e18 being 100%
     }
 
-    /// @notice Accrues the interest on the borrowed tokens and handles the accumulation of fees.
+    /* /// @notice Accrues the interest on the borrowed tokens and handles the accumulation of fees. */
     function accrue() public {
         AccrueInfo memory _accrueInfo = accrueInfo;
         // Number of seconds since accrue was called
@@ -938,8 +938,8 @@ contract KashiPairMediumRiskV1 is ERC20, BoringOwnable, IMasterContract {
         accrueInfo = _accrueInfo;
     }
 
-    /// @notice Concrete implementation of `isSolvent`. Includes a third parameter to allow caching `exchangeRate`.
-    /// @param _exchangeRate The exchange rate. Used to cache the `exchangeRate` between calls.
+    /* /// @notice Concrete implementation of `isSolvent`. Includes a third parameter to allow caching `exchangeRate`. */
+    /* /// @param _exchangeRate The exchange rate. Used to cache the `exchangeRate` between calls. */
     function _isSolvent(
         address user,
         bool open,
@@ -1355,83 +1355,83 @@ contract KashiPairMediumRiskV1 is ERC20, BoringOwnable, IMasterContract {
                     userBorrowPart[user] = availableBorrowPart.sub(borrowPart);
                 }
                 uint256 borrowAmount = _totalBorrow.toElastic(borrowPart, false);
-                uint256 collateralShare =
-                    bentoBoxTotals.toBase(
-                        borrowAmount.mul(LIQUIDATION_MULTIPLIER).mul(_exchangeRate) /
-                            (LIQUIDATION_MULTIPLIER_PRECISION * EXCHANGE_RATE_PRECISION),
-                        false
-                    );
+                /* uint256 collateralShare = */
+                /*     bentoBoxTotals.toBase( */
+                /*         borrowAmount.mul(LIQUIDATION_MULTIPLIER).mul(_exchangeRate) / */
+                /*             (LIQUIDATION_MULTIPLIER_PRECISION * EXCHANGE_RATE_PRECISION), */
+                /*         false */
+                /*     ); */
 
-                userCollateralShare[user] = userCollateralShare[user].sub(collateralShare);
-                emit LogRemoveCollateral(user, swapper == ISwapper(0) ? to : address(swapper), collateralShare);
-                emit LogRepay(swapper == ISwapper(0) ? msg.sender : address(swapper), user, borrowAmount, borrowPart);
+        /*         userCollateralShare[user] = userCollateralShare[user].sub(collateralShare); */
+        /*         emit LogRemoveCollateral(user, swapper == ISwapper(0) ? to : address(swapper), collateralShare); */
+        /*         emit LogRepay(swapper == ISwapper(0) ? msg.sender : address(swapper), user, borrowAmount, borrowPart); */
 
-                // Keep totals
-                allCollateralShare = allCollateralShare.add(collateralShare);
-                allBorrowAmount = allBorrowAmount.add(borrowAmount);
-                allBorrowPart = allBorrowPart.add(borrowPart);
+        /*         // Keep totals */
+        /*         allCollateralShare = allCollateralShare.add(collateralShare); */
+        /*         allBorrowAmount = allBorrowAmount.add(borrowAmount); */
+        /*         allBorrowPart = allBorrowPart.add(borrowPart); */
             }
         }
-        require(allBorrowAmount != 0, "KashiPair: all are solvent");
-        _totalBorrow.elastic = _totalBorrow.elastic.sub(allBorrowAmount.to128());
-        _totalBorrow.base = _totalBorrow.base.sub(allBorrowPart.to128());
-        totalBorrow = _totalBorrow;
-        totalCollateralShare = totalCollateralShare.sub(allCollateralShare);
+        /* require(allBorrowAmount != 0, "KashiPair: all are solvent"); */
+        /* _totalBorrow.elastic = _totalBorrow.elastic.sub(allBorrowAmount.to128()); */
+        /* _totalBorrow.base = _totalBorrow.base.sub(allBorrowPart.to128()); */
+        /* totalBorrow = _totalBorrow; */
+        /* totalCollateralShare = totalCollateralShare.sub(allCollateralShare); */
 
-        uint256 allBorrowShare = bentoBox.toShare(asset, allBorrowAmount, true);
+        /* uint256 allBorrowShare = bentoBox.toShare(asset, allBorrowAmount, true); */
 
-        if (!open) {
-            // Closed liquidation using a pre-approved swapper for the benefit of the LPs
-            require(masterContract.swappers(swapper), "KashiPair: Invalid swapper");
+    /*     if (!open) { */
+    /*         // Closed liquidation using a pre-approved swapper for the benefit of the LPs */
+    /*         require(masterContract.swappers(swapper), "KashiPair: Invalid swapper"); */
 
-            // Swaps the users' collateral for the borrowed asset
-            bentoBox.transfer(collateral, address(this), address(swapper), allCollateralShare);
-            swapper.swap(collateral, asset, address(this), allBorrowShare, allCollateralShare);
+    /*         // Swaps the users' collateral for the borrowed asset */
+    /*         bentoBox.transfer(collateral, address(this), address(swapper), allCollateralShare); */
+    /*         swapper.swap(collateral, asset, address(this), allBorrowShare, allCollateralShare); */
 
-            uint256 returnedShare = bentoBox.balanceOf(asset, address(this)).sub(uint256(totalAsset.elastic));
-            uint256 extraShare = returnedShare.sub(allBorrowShare);
-            uint256 feeShare = extraShare.mul(PROTOCOL_FEE) / PROTOCOL_FEE_DIVISOR; // % of profit goes to fee
-            // solhint-disable-next-line reentrancy
-            bentoBox.transfer(asset, address(this), masterContract.feeTo(), feeShare);
-            totalAsset.elastic = totalAsset.elastic.add(returnedShare.sub(feeShare).to128());
-            emit LogAddAsset(address(swapper), address(this), extraShare.sub(feeShare), 0);
-        } else {
-            // Swap using a swapper freely chosen by the caller
-            // Open (flash) liquidation: get proceeds first and provide the borrow after
-            bentoBox.transfer(collateral, address(this), swapper == ISwapper(0) ? to : address(swapper), allCollateralShare);
-            if (swapper != ISwapper(0)) {
-                swapper.swap(collateral, asset, msg.sender, allBorrowShare, allCollateralShare);
-            }
+    /*         uint256 returnedShare = bentoBox.balanceOf(asset, address(this)).sub(uint256(totalAsset.elastic)); */
+    /*         uint256 extraShare = returnedShare.sub(allBorrowShare); */
+    /*         uint256 feeShare = extraShare.mul(PROTOCOL_FEE) / PROTOCOL_FEE_DIVISOR; // % of profit goes to fee */
+    /*         // solhint-disable-next-line reentrancy */
+    /*         bentoBox.transfer(asset, address(this), masterContract.feeTo(), feeShare); */
+    /*         totalAsset.elastic = totalAsset.elastic.add(returnedShare.sub(feeShare).to128()); */
+    /*         emit LogAddAsset(address(swapper), address(this), extraShare.sub(feeShare), 0); */
+    /*     } else { */
+    /*         // Swap using a swapper freely chosen by the caller */
+    /*         // Open (flash) liquidation: get proceeds first and provide the borrow after */
+    /*         bentoBox.transfer(collateral, address(this), swapper == ISwapper(0) ? to : address(swapper), allCollateralShare); */
+    /*         if (swapper != ISwapper(0)) { */
+    /*             swapper.swap(collateral, asset, msg.sender, allBorrowShare, allCollateralShare); */
+    /*         } */
 
-            bentoBox.transfer(asset, msg.sender, address(this), allBorrowShare);
-            totalAsset.elastic = totalAsset.elastic.add(allBorrowShare.to128());
-        }
-    }
+    /*         bentoBox.transfer(asset, msg.sender, address(this), allBorrowShare); */
+    /*         totalAsset.elastic = totalAsset.elastic.add(allBorrowShare.to128()); */
+    /*     } */
+    /* } */
 
     /// @notice Withdraws the fees accumulated.
-    function withdrawFees() public {
-        accrue();
-        address _feeTo = masterContract.feeTo();
-        uint256 _feesEarnedFraction = accrueInfo.feesEarnedFraction;
-        balanceOf[_feeTo] = balanceOf[_feeTo].add(_feesEarnedFraction);
-        accrueInfo.feesEarnedFraction = 0;
+    /* function withdrawFees() public { */
+    /*     accrue(); */
+    /*     address _feeTo = masterContract.feeTo(); */
+    /*     uint256 _feesEarnedFraction = accrueInfo.feesEarnedFraction; */
+    /*     balanceOf[_feeTo] = balanceOf[_feeTo].add(_feesEarnedFraction); */
+    /*     accrueInfo.feesEarnedFraction = 0; */
 
-        emit LogWithdrawFees(_feeTo, _feesEarnedFraction);
-    }
+    /*     emit LogWithdrawFees(_feeTo, _feesEarnedFraction); */
+    /* } */
 
-    /// @notice Used to register and enable or disable swapper contracts used in closed liquidations.
-    /// MasterContract Only Admin function.
-    /// @param swapper The address of the swapper contract that conforms to `ISwapper`.
-    /// @param enable True to enable the swapper. To disable use False.
-    function setSwapper(ISwapper swapper, bool enable) public onlyOwner {
-        swappers[swapper] = enable;
-    }
+    /* /// @notice Used to register and enable or disable swapper contracts used in closed liquidations. */
+    /* /// MasterContract Only Admin function. */
+    /* /// @param swapper The address of the swapper contract that conforms to `ISwapper`. */
+    /* /// @param enable True to enable the swapper. To disable use False. */
+    /* function setSwapper(ISwapper swapper, bool enable) public onlyOwner { */
+    /*     swappers[swapper] = enable; */
+    /* } */
 
-    /// @notice Sets the beneficiary of fees accrued in liquidations.
-    /// MasterContract Only Admin function.
-    /// @param newFeeTo The address of the receiver.
-    function setFeeTo(address newFeeTo) public onlyOwner {
-        feeTo = newFeeTo;
-        emit LogFeeTo(newFeeTo);
+    /* /// @notice Sets the beneficiary of fees accrued in liquidations. */
+    /* /// MasterContract Only Admin function. */
+    /* /// @param newFeeTo The address of the receiver. */
+    /* function setFeeTo(address newFeeTo) public onlyOwner { */
+    /*     feeTo = newFeeTo; */
+    /*     emit LogFeeTo(newFeeTo); */
     }
 }

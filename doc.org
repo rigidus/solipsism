@@ -374,10 +374,10 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-contract-file #P"./test_dbg.sol")
   ;; (test-contract-file #P"./tests/test_dbg2.sol")
 
-  ;; (test-contract-file #P"./sushi-swap-contracts/BentoBoxV1.sol")
   ;; (test-contract-file #P"./tests/test_dbg_sushi.sol")
 
   ;; (test-all "./sushi-swap-contracts")
+  ;; (test-all "./oppen-zeepeline-contracts")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
@@ -609,7 +609,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.constantV
    )
 #+END_SRC
 
-[[TODO:gmm]] добавить
 
 #+BEGIN_SRC solidity :tangle tests/test_const_def.sol :mkdirp yes :noweb yes
   contract test_const_def
@@ -2116,7 +2115,7 @@ Block может быть:
 #+NAME: cmeta-combination
 #+BEGIN_SRC elisp :results output
   (require 'cl)
-  (gen-accmd '(%modifier-invocation %payable %internal %public))
+  (gen-accmd '(%modifier-invocation %payable %visibility))
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_constructor.sol :mkdirp yes :noweb yes
@@ -3875,6 +3874,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    )
   (%tuple-expression
    (|%(| %expr-comma-list |%)| #'(lambda (lb ecl rb) `(:tuple ,ecl)))
+   (|%(| |%,| %expr-comma-list |%)| #'(lambda (lb comma ecl rb) `(:tuple ,ecl)))
    )
 #+END_SRC
 
@@ -4172,12 +4172,14 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 К сожалению я получаю "invalid named register", поэтому придется сделать что-то более простое.
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ("\'[\u0020-\u0026\u0028-\u005B\u005D-\u007E:\s]+\'" '%single-quoted-printable $@)
+  ;; ("\'[\u0020-\u0026\u0028-\u005B\u005D-\u007E:\\.\s]+'" '%single-quoted-printable $@)
   ("[\"](.)*[\"]" '%double-quoted-printable $@)
+  ("[\'](.)*[\']" '%single-quoted-printable $@)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %single-quoted-printable %double-quoted-printable
+  %single-quoted-printable
+  %double-quoted-printable
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
@@ -4231,18 +4233,20 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
   %dec_num_v1
+  %dec_num_v2
+  %dec_num_v3
 #+END_SRC
 
 Там же можно построить пару этих наборов, разделенную точкой:
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ;; ("\\b[0-9_]+\\\\.[0-9_]+\\b" '%dec_num_v2 $@)
+  ("\\b[0-9_]+\\\\.[0-9_]+\\b" '%dec_num_v2 $@)
 #+END_SRC
 
 Теперь построим набор с последующий экспонециальной частью
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ;; ("\\b[0-9_]+[eE]+[-]*[0-9_]+\\b" '%dec_num_v3 $@)
+  ("\\b[0-9_]+[eE]+[-]*[0-9_]+\\b" '%dec_num_v3 $@)
 #+END_SRC
 
 И то самое, но для двух наборов, разделенных точкой:
@@ -4254,6 +4258,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%dec-num
    (%dec_num_v1 #'(lambda (dn) `(:dec-num ,dn)))
+   (%dec_num_v2 #'(lambda (dn) `(:dec-num ,dn)))
+   (%dec_num_v3 #'(lambda (dn) `(:dec-num ,dn)))
+
    ;; (%dec-num %num-unit #'(lambda (lt nu)
    ;;                         `(:dec-num ,lt :num-unit ,nu)))
    ;; (%hex-num #'(lambda (lt) `(:hex-number ,lt)))
