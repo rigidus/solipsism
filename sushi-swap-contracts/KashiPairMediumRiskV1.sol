@@ -1355,83 +1355,83 @@ contract KashiPairMediumRiskV1 is ERC20, BoringOwnable, IMasterContract {
                     userBorrowPart[user] = availableBorrowPart.sub(borrowPart);
                 }
                 uint256 borrowAmount = _totalBorrow.toElastic(borrowPart, false);
-                /* uint256 collateralShare = */
-                /*     bentoBoxTotals.toBase( */
-                /*         borrowAmount.mul(LIQUIDATION_MULTIPLIER).mul(_exchangeRate) / */
-                /*             (LIQUIDATION_MULTIPLIER_PRECISION * EXCHANGE_RATE_PRECISION), */
-                /*         false */
-                /*     ); */
+                uint256 collateralShare =
+                    bentoBoxTotals.toBase(
+                        borrowAmount.mul(LIQUIDATION_MULTIPLIER).mul(_exchangeRate) /
+                            (LIQUIDATION_MULTIPLIER_PRECISION * EXCHANGE_RATE_PRECISION),
+                        false
+                    );
 
-        /*         userCollateralShare[user] = userCollateralShare[user].sub(collateralShare); */
-        /*         emit LogRemoveCollateral(user, swapper == ISwapper(0) ? to : address(swapper), collateralShare); */
-        /*         emit LogRepay(swapper == ISwapper(0) ? msg.sender : address(swapper), user, borrowAmount, borrowPart); */
+                userCollateralShare[user] = userCollateralShare[user].sub(collateralShare);
+                emit LogRemoveCollateral(user, swapper == ISwapper(0) ? to : address(swapper), collateralShare);
+                emit LogRepay(swapper == ISwapper(0) ? msg.sender : address(swapper), user, borrowAmount, borrowPart);
 
-        /*         // Keep totals */
-        /*         allCollateralShare = allCollateralShare.add(collateralShare); */
-        /*         allBorrowAmount = allBorrowAmount.add(borrowAmount); */
-        /*         allBorrowPart = allBorrowPart.add(borrowPart); */
+                // Keep totals
+                allCollateralShare = allCollateralShare.add(collateralShare);
+                allBorrowAmount = allBorrowAmount.add(borrowAmount);
+                allBorrowPart = allBorrowPart.add(borrowPart);
             }
         }
-        /* require(allBorrowAmount != 0, "KashiPair: all are solvent"); */
-        /* _totalBorrow.elastic = _totalBorrow.elastic.sub(allBorrowAmount.to128()); */
-        /* _totalBorrow.base = _totalBorrow.base.sub(allBorrowPart.to128()); */
-        /* totalBorrow = _totalBorrow; */
-        /* totalCollateralShare = totalCollateralShare.sub(allCollateralShare); */
+        require(allBorrowAmount != 0, "KashiPair: all are solvent");
+        _totalBorrow.elastic = _totalBorrow.elastic.sub(allBorrowAmount.to128());
+        _totalBorrow.base = _totalBorrow.base.sub(allBorrowPart.to128());
+        totalBorrow = _totalBorrow;
+        totalCollateralShare = totalCollateralShare.sub(allCollateralShare);
 
-        /* uint256 allBorrowShare = bentoBox.toShare(asset, allBorrowAmount, true); */
+        uint256 allBorrowShare = bentoBox.toShare(asset, allBorrowAmount, true);
 
-    /*     if (!open) { */
-    /*         // Closed liquidation using a pre-approved swapper for the benefit of the LPs */
-    /*         require(masterContract.swappers(swapper), "KashiPair: Invalid swapper"); */
+        if (!open) {
+            // Closed liquidation using a pre-approved swapper for the benefit of the LPs
+            require(masterContract.swappers(swapper), "KashiPair: Invalid swapper");
 
-    /*         // Swaps the users' collateral for the borrowed asset */
-    /*         bentoBox.transfer(collateral, address(this), address(swapper), allCollateralShare); */
-    /*         swapper.swap(collateral, asset, address(this), allBorrowShare, allCollateralShare); */
+            // Swaps the users' collateral for the borrowed asset
+            bentoBox.transfer(collateral, address(this), address(swapper), allCollateralShare);
+            swapper.swap(collateral, asset, address(this), allBorrowShare, allCollateralShare);
 
-    /*         uint256 returnedShare = bentoBox.balanceOf(asset, address(this)).sub(uint256(totalAsset.elastic)); */
-    /*         uint256 extraShare = returnedShare.sub(allBorrowShare); */
-    /*         uint256 feeShare = extraShare.mul(PROTOCOL_FEE) / PROTOCOL_FEE_DIVISOR; // % of profit goes to fee */
-    /*         // solhint-disable-next-line reentrancy */
-    /*         bentoBox.transfer(asset, address(this), masterContract.feeTo(), feeShare); */
-    /*         totalAsset.elastic = totalAsset.elastic.add(returnedShare.sub(feeShare).to128()); */
-    /*         emit LogAddAsset(address(swapper), address(this), extraShare.sub(feeShare), 0); */
-    /*     } else { */
-    /*         // Swap using a swapper freely chosen by the caller */
-    /*         // Open (flash) liquidation: get proceeds first and provide the borrow after */
-    /*         bentoBox.transfer(collateral, address(this), swapper == ISwapper(0) ? to : address(swapper), allCollateralShare); */
-    /*         if (swapper != ISwapper(0)) { */
-    /*             swapper.swap(collateral, asset, msg.sender, allBorrowShare, allCollateralShare); */
-    /*         } */
+            uint256 returnedShare = bentoBox.balanceOf(asset, address(this)).sub(uint256(totalAsset.elastic));
+            uint256 extraShare = returnedShare.sub(allBorrowShare);
+            uint256 feeShare = extraShare.mul(PROTOCOL_FEE) / PROTOCOL_FEE_DIVISOR; // % of profit goes to fee
+            // solhint-disable-next-line reentrancy
+            bentoBox.transfer(asset, address(this), masterContract.feeTo(), feeShare);
+            totalAsset.elastic = totalAsset.elastic.add(returnedShare.sub(feeShare).to128());
+            emit LogAddAsset(address(swapper), address(this), extraShare.sub(feeShare), 0);
+        } else {
+            // Swap using a swapper freely chosen by the caller
+            // Open (flash) liquidation: get proceeds first and provide the borrow after
+            bentoBox.transfer(collateral, address(this), swapper == ISwapper(0) ? to : address(swapper), allCollateralShare);
+            if (swapper != ISwapper(0)) {
+                swapper.swap(collateral, asset, msg.sender, allBorrowShare, allCollateralShare);
+            }
 
-    /*         bentoBox.transfer(asset, msg.sender, address(this), allBorrowShare); */
-    /*         totalAsset.elastic = totalAsset.elastic.add(allBorrowShare.to128()); */
-    /*     } */
-    /* } */
+            bentoBox.transfer(asset, msg.sender, address(this), allBorrowShare);
+            totalAsset.elastic = totalAsset.elastic.add(allBorrowShare.to128());
+        }
+    }
 
-    /// @notice Withdraws the fees accumulated.
-    /* function withdrawFees() public { */
-    /*     accrue(); */
-    /*     address _feeTo = masterContract.feeTo(); */
-    /*     uint256 _feesEarnedFraction = accrueInfo.feesEarnedFraction; */
-    /*     balanceOf[_feeTo] = balanceOf[_feeTo].add(_feesEarnedFraction); */
-    /*     accrueInfo.feesEarnedFraction = 0; */
+    @notice Withdraws the fees accumulated.
+    function withdrawFees() public {
+        accrue();
+        address _feeTo = masterContract.feeTo();
+        uint256 _feesEarnedFraction = accrueInfo.feesEarnedFraction;
+        balanceOf[_feeTo] = balanceOf[_feeTo].add(_feesEarnedFraction);
+        accrueInfo.feesEarnedFraction = 0;
 
-    /*     emit LogWithdrawFees(_feeTo, _feesEarnedFraction); */
-    /* } */
+        emit LogWithdrawFees(_feeTo, _feesEarnedFraction);
+    }
 
-    /* /// @notice Used to register and enable or disable swapper contracts used in closed liquidations. */
-    /* /// MasterContract Only Admin function. */
-    /* /// @param swapper The address of the swapper contract that conforms to `ISwapper`. */
-    /* /// @param enable True to enable the swapper. To disable use False. */
-    /* function setSwapper(ISwapper swapper, bool enable) public onlyOwner { */
-    /*     swappers[swapper] = enable; */
-    /* } */
+    /// @notice Used to register and enable or disable swapper contracts used in closed liquidations.
+    /// MasterContract Only Admin function.
+    /// @param swapper The address of the swapper contract that conforms to `ISwapper`.
+    /// @param enable True to enable the swapper. To disable use False.
+    function setSwapper(ISwapper swapper, bool enable) public onlyOwner {
+        swappers[swapper] = enable;
+    }
 
-    /* /// @notice Sets the beneficiary of fees accrued in liquidations. */
-    /* /// MasterContract Only Admin function. */
-    /* /// @param newFeeTo The address of the receiver. */
-    /* function setFeeTo(address newFeeTo) public onlyOwner { */
-    /*     feeTo = newFeeTo; */
-    /*     emit LogFeeTo(newFeeTo); */
+    /// @notice Sets the beneficiary of fees accrued in liquidations.
+    /// MasterContract Only Admin function.
+    /// @param newFeeTo The address of the receiver.
+    function setFeeTo(address newFeeTo) public onlyOwner {
+        feeTo = newFeeTo;
+        emit LogFeeTo(newFeeTo);
     }
 }

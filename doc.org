@@ -2489,6 +2489,13 @@ a source unit or within a contract, library or interface.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%stmnt
+   (%stmnt-contents #'(lambda (last) `(:src (,last))))
+   (%stmnt-contents %stmnt
+                       #'(lambda (head rest)
+                           `(:src ,(append (list head) (cadr rest)))))
+   )
+
+  (%stmnt-contents
    (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
 
    (%var-decl-stmnt #'(lambda (last) `(:var-decl-stmnt (,last))))
