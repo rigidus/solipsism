@@ -1408,7 +1408,7 @@ contract KashiPairMediumRiskV1 is ERC20, BoringOwnable, IMasterContract {
         }
     }
 
-    @notice Withdraws the fees accumulated.
+    /* @notice Withdraws the fees accumulated. */
     function withdrawFees() public {
         accrue();
         address _feeTo = masterContract.feeTo();

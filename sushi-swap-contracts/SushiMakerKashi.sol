@@ -37,7 +37,7 @@ contract SushiMakerKashi is Ownable {
     address private immutable bar;
     //0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272
     IBentoBoxWithdraw private immutable bentoBox;
-    //0xF5BCE5077908a1b7370B9ae04AdC565EBd643966 
+    //0xF5BCE5077908a1b7370B9ae04AdC565EBd643966
     address private immutable sushi;
     //0x6B3595068778DD592e39A122f4f5a5cF09C90fE2
     address private immutable weth;
@@ -142,28 +142,24 @@ contract SushiMakerKashi is Ownable {
         address to
     ) private returns (uint256 amountOut) {
         (address token0, address token1) = fromToken < toToken ? (fromToken, toToken) : (toToken, fromToken);
-        IUniswapV2Pair pair =
-            IUniswapV2Pair(
-                uint256(
-                    keccak256(abi.encodePacked(hex"ff", factory, keccak256(abi.encodePacked(token0, token1)), pairCodeHash))
-                )
-            );
-        
-        (uint256 reserve0, uint256 reserve1, ) = pair.getReserves();
-        uint256 amountInWithFee = amountIn.mul(997);
-        
-        if (toToken > fromToken) {
-            amountOut =
-                amountInWithFee.mul(reserve1) /
-                reserve0.mul(1000).add(amountInWithFee);
-            IERC20(fromToken).safeTransfer(address(pair), amountIn);
-            pair.swap(0, amountOut, to, "");
-        } else {
-            amountOut =
-                amountInWithFee.mul(reserve0) /
-                reserve1.mul(1000).add(amountInWithFee);
-            IERC20(fromToken).safeTransfer(address(pair), amountIn);
-            pair.swap(amountOut, 0, to, "");
-        }
+        IUniswapV2Pair pair = IUniswapV2Pair(uint256( keccak256(abi.encodePacked(hex"ff", factory, keccak256(abi.encodePacked(token0, token1)), pairCodeHash))));
+        /* IUniswapV2Pair pair = IUniswapV2Pair(uint256( keccak256(abi.encodePacked(hex"ff")))); */
+
+        /* (uint256 reserve0, uint256 reserve1, ) = pair.getReserves(); */
+        /* uint256 amountInWithFee = amountIn.mul(997); */
+
+        /* if (toToken > fromToken) { */
+        /*     amountOut = */
+        /*         amountInWithFee.mul(reserve1) / */
+        /*         reserve0.mul(1000).add(amountInWithFee); */
+        /*     IERC20(fromToken).safeTransfer(address(pair), amountIn); */
+        /*     pair.swap(0, amountOut, to, ""); */
+        /* } else { */
+        /*     amountOut = */
+        /*         amountInWithFee.mul(reserve0) / */
+        /*         reserve1.mul(1000).add(amountInWithFee); */
+        /*     IERC20(fromToken).safeTransfer(address(pair), amountIn); */
+        /*     pair.swap(amountOut, 0, to, ""); */
+        /* } */
     }
 }
