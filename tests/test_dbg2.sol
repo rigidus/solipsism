@@ -30,6 +30,7 @@ contract CompTimelock {
 function test1(History storage self, uint256 blockNumber) internal view returns (uint256) {
 
     require(blockNumber < block.number, "Checkpoints: block not yet mined");
+
     Checkpoint({_blockNumber: SafeCast.toUint32(block.number), _value: SafeCast.toUint224(value)});
     return high == 0 ? 0 : self._checkpoints[high - 1]._value;
 }

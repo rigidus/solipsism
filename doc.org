@@ -378,6 +378,9 @@ solidity-конструкциями и ожидаю получить дерев�
 
   ;; (test-all "./sushi-swap-contracts")
   ;; (test-all "./oppen-zeepeline-contracts")
+  ;; (test-all "./tests")
+  ;; (test-all "./sushi-bentobox-contracts")
+  (test-contract-file #P"./sushi-bentobox-contracts/CToken.sol")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
@@ -2603,6 +2606,17 @@ a source unit or within a contract, library or interface.
    (%type-name %data-location %identifier
                #'(lambda (vt dl vn)
                    `(:var-type ,vt :data-location ,dl :name ,vn)))
+
+   (%identifier #'(lambda (vt)
+                    `(:var-type ,vt )))
+   (%identifier %identifier #'(lambda (vt vn)
+                               `(:var-type ,vt :name ,vn)))
+   (%identifier %error #'(lambda (vt vn)
+                          `(:var-type ,vt )))
+   (%identifier %data-location %identifier
+               #'(lambda (vt dl vn)
+                   `(:var-type ,vt :data-location ,dl :name ,vn)))
+
    )
 #+END_SRC
 
@@ -2640,8 +2654,8 @@ a source unit or within a contract, library or interface.
              `(one-more-var-decl ,vd :rest ,om)))
    (|%,| %one-more-var-decl
          #'(lambda (cm om)
-             `(one-more-comma ,cm :rest ,om)))
-   )
+             `(one-more-comma ,cm :rest ,om))))
+
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_var_decl_typle.sol :mkdirp yes :noweb yes
@@ -3825,6 +3839,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (%delete  %expr #'(lambda (op ex) `(:expr-delete ,ex)))
    (|%-|  %expr #'(lambda (op ex) `(:expr-unary-minus ,ex)))
    (%expr |%++| #'(lambda (ex op) `(:expr-post-inc ,ex)))
+   (%expr |%,| #'(lambda (ex op) `(:expr-post-inc ,ex)))
+   (%expr |%,| %expr #'(lambda (ex1 op ex2) `(:expr-post-inc ,ex1 :expr-post-inc ,ex2)))
    (%expr |%--| #'(lambda (ex op) `(:expr-post-dec ,ex)))
    (%expr |%**| %expr #'(lambda (e1 op e2) `(:expr-power ,e1 :arg ,e2)))
    (%expr |%*|  %expr #'(lambda (e1 op e2) `(:expr-mul   ,e1 :arg ,e2)))
@@ -3882,6 +3898,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
   (%tuple-expression
    (|%(| %expr-comma-list |%)| #'(lambda (lb ecl rb) `(:tuple ,ecl)))
    (|%(| |%,| %expr-comma-list |%)| #'(lambda (lb comma ecl rb) `(:tuple ,ecl)))
+   (|%(| %expr-comma-list |%,| |%)| #'(lambda (lb ecl comma rb) `(:tuple ,ecl)))
    )
 #+END_SRC
 

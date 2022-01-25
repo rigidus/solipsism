@@ -28,4 +28,17 @@ contract BoringOwnableData {
             uint256 borrowAmount = _totalBorrow.toElastic(borrowPart, false);
         }
     }
+
+    function _addReservesInternal(uint addAmount) internal nonReentrant returns (uint) {
+        uint error = accrueInterest();
+        if (error != uint(Error.NO_ERROR)) {
+            // accrueInterest emits logs on errors, but on top of that we want to log the fact that an attempted reduce reserves failed.
+            return fail(Error(error), FailureInfo.ADD_RESERVES_ACCRUE_INTEREST_FAILED);
+        }
+
+        // _addReservesFresh emits reserve-addition-specific logs on errors, so we don't need to.
+        (abc, ) = _addReservesFresh(addAmount);
+        return error;
+    }
+
 }
