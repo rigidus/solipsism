@@ -40,10 +40,7 @@ solidity-конструкциями и ожидаю получить дерев�
   (eval-when (:compile-toplevel :load-toplevel :execute)
     (ql:quickload '(:yacc :cl-lex :alexandria :anaphora)))
 
-  (defpackage :sol-parser
-    (:use :cl :yacc :cl-lex :alexandria :anaphora))
-
-  (in-package :sol-parser)
+  (use-package '(:cl :yacc :cl-lex :alexandria :anaphora))
 
   (defmacro bprint (var)
     `(subseq (with-output-to-string (*standard-output*)
@@ -112,8 +109,6 @@ solidity-конструкциями и ожидаю получить дерев�
   (load "result.lisp")
 
   (ql:quickload "unix-opts")
-
-  (in-package :sol-parser)
 
   (defun parse-filename (str)
     str)
@@ -210,8 +205,6 @@ solidity-конструкциями и ожидаю получить дерев�
 * Deleting comments
 
 #+BEGIN_SRC lisp :noweb-ref deleting_comments
-  (in-package :sol-parser)
-
   (defun get-filtered-file-content (file filter)
     (let ((output (make-string-output-stream)))
       (with-open-file (input file)
@@ -280,8 +273,6 @@ solidity-конструкциями и ожидаю получить дерев�
 
 #+NAME: tests
 #+BEGIN_SRC lisp
-  (in-package :sol-parser)
-
   (defun map-subdir (test-dir test-fn)
     (let ((test-subdirs))
       (uiop:collect-sub*directories
@@ -4354,8 +4345,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.booleanLi
 
 #+NAME: dbgout
 #+BEGIN_SRC lisp
-  (in-package :sol-parser)
-
   (defparameter *dbg-enable* t)
   (defparameter *dbg-indent* 1)
 
