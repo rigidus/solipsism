@@ -139,13 +139,14 @@ solidity-конструкциями и ожидаю получить дерев�
      ;; :required t
      :arg-parser #'parse-filename
      :meta-var "<filename>")
-    (:name :base
-     :description "Base contract"
-     :short #\b
-     :long "base"
+    (:name :compare
+     :description "Compare contract"
+     :short #\c
+     :long "compare"
      ;; :required t
      :arg-parser #'parse-filename
      :meta-var "<filename>")
+    ;; -------------------------------------
     (:name :check
      :description "Contract for checking"
      :short #\c
@@ -181,21 +182,45 @@ solidity-конструкциями и ожидаю получить дерев�
             (opts:exit 1)))
       (if (null options)
           (setf options '(:usage t)))
-      (when-option (options :usage)
-        (opts:describe
-         :prefix "Solidity checker. Usage:"
-         :suffix "To find differences between the base contract and the checked one, use: solcheck -b base.sol -c checked.sol"
-         :usage-of "./solcheck"
-         ;; :args "[keywords]"
-         ))
-      (when-option (options :parse)
-        (format t "Solidity checker. Parse file: ~A ~%" it)
-        (test-contract-file it))
-      (when-option (options :test)
-        (format t "Solidity checker. Test directory: ~A ~%" it)
-        (test-all it))
-      ;; ...
-      ))
+      (let ((actions)
+            (parse-file)
+            (overbox))
+        (when-option (options :usage)
+          (opts:describe
+           :prefix "Solidity checker. Usage:"
+           :suffix "To find differences between the base contract and the checked one, use: solcheck -p base.sol -c checked.sol"
+           :usage-of "./solcheck"
+           ;; :args "[keywords]"
+           ))
+        (when-option (options :parse)
+          (format t "Solidity checker. Parse file: ~A ~%" it)
+          (setf parse-file it) ;; save parse file
+          (push #'(lambda ()
+                    (test-contract-file it))
+                actions))
+        (when-option (options :test)
+          (format t "Solidity checker. Test directory: ~A ~%" it)
+          (push #'(lambda ()
+                    (test-all it))
+                actions))
+        (when-option (options :output)
+          (format t "Solidity checker. Output: ~A ~%" it)
+          (setf overbox it))
+        (when-option (options :compare)
+          (format t "Solidity checker. Compare with: ~A ~%" it)
+          ;; TODO:HERE
+          )
+        (if overbox
+            (let ((to-file (with-output-to-string (*standard-output*)
+                             (mapcar #'(lambda (lmbd)
+                                         (funcall lmbd))
+                                     actions))))
+              (alexandria:write-string-into-file to-file overbox :if-exists :supersede))
+            ;; else
+            (mapcar #'(lambda (lmbd)
+                        (funcall lmbd))
+                    actions))
+        )))
 
   (export 'main)
 

@@ -1,6 +1,6 @@
 #+STARTUP: showall indent hidestars
 
-* Prepare
+* Подготовка
 
   - Собрать бинарник
 
@@ -19,17 +19,31 @@
   - Показать пример кода (минимальный контракт)
 
     #+BEGIN_SRC sh
-      emacs -nw test_min_contract.sol
+      emacs -nw test_min.sol
     #+END_SRC
 
   - Выполнить разбор в файл
-  - Показать дерево
+
+    #+BEGIN_SRC sh
+      ./solcheck -p test_min.sol -o test_min.el
+    #+END_SRC
+
+  - Показать дерево разбора
+
+    #+BEGIN_SRC sh
+      emacs -nw test_min.el
+    #+END_SRC
 
 * Сравнение контрактов
 
   - Показать предыдущий пример и изменный пример
-  - Объяснить различия
+    - Открыть test_min.sol
+    - Открыть test_change.sol
+  - Показать различия
   - Выполнить сравнение с выводом в файл
+    #+BEGIN_SRC sh
+      ./solcheck -p test_min.sol -c test_change.sol -o test_diff.el
+    #+END_SRC
   - Показать результат
 
 * Поиск похожих
