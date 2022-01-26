@@ -120,7 +120,7 @@ solidity-конструкциями и ожидаю получить дерев�
 
   (opts:define-opts
     (:name :usage
-     :description "Usage solidity checher."
+     :description "Usage solidity checker."
      :short #\u
      :long "usage")
     (:name :parse
@@ -130,6 +130,13 @@ solidity-конструкциями и ожидаю получить дерев�
      ;; :required t
      :arg-parser #'parse-filename
      :meta-var "<filename>")
+    (:name :test
+     :description "Parse all files in test directory"
+     :short #\t
+     :long "test"
+     ;; :required t
+     :arg-parser #'parse-filename
+     :meta-var "<directory>")
     (:name :output
      :description "Output file"
      :short #\o
@@ -188,9 +195,16 @@ solidity-конструкциями и ожидаю получить дерев�
          ))
       (when-option (options :parse)
         (format t "Solidity checker. Parse file: ~A ~%" it)
-        (test-contract-file it))))
+        (test-contract-file it))
+      (when-option (options :test)
+        (format t "Solidity checker. Test directory: ~A ~%" it)
+        (test-all it))
+      ;; ...
+      ))
 
-  (sb-ext:save-lisp-and-die #P"solcheck" :toplevel #'sol-parser::main :executable t)
+  (export 'main)
+
+  (sb-ext:save-lisp-and-die #P"solcheck" :toplevel #'main :executable t)
 #+END_SRC
 
 * Deleting comments
@@ -1351,7 +1365,7 @@ Retlist представляет из себя два возможных вар�
 Все эти комбинации генерируются в tangle-time:
 
 #+NAME: fmeta-combination
-#+BEGIN_SRC elisp :results output
+#+BEGIN_SRC elisp :results output :tangle generator.el
   (require 'cl)
 
   (defun accommodations (in)
@@ -1738,7 +1752,6 @@ reduce-reduce конфликт.
   }
 #+END_SRC
 
-
 *** FunctionTypeName
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
@@ -2076,7 +2089,7 @@ Block может быть:
 - modifier-invocation
 - payable
 - internal
-- public
+- public (visibility)
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%ctor-def
@@ -2106,7 +2119,7 @@ Block может быть:
 #+NAME: cmeta-combination
 #+BEGIN_SRC elisp :results output
   (require 'cl)
-  (gen-accmd '(%modifier-invocation %payable %internal %public))
+  (gen-accmd '(%modifier-invocation %payable %internal %visibility))
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_constructor.sol :mkdirp yes :noweb yes
