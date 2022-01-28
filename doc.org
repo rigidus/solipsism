@@ -403,6 +403,9 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-all "./tests")
   ;; (test-all "./sushi-bentobox-contracts")
   ;; (test-all "./sushi-shoyu-contracts")
+  ;; (test-all "./rainbow-bridge-contracts")
+  ;; (test-all "./1inch-contracts")
+
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
@@ -4092,6 +4095,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (|%[| %expr-comma-list |%]| #'(lambda (lb ex rb) `(:inline-array-expr ,ex)))
    (|%[| |%]| #'(lambda (lb rb) `(:inline-array-expr nil)))
    (|%[| |%:| %expr |%]| #'(lambda (lb colon ex rb) `(:inline-array-expr ,ex)))
+   (|%[| %expr |%:| |%]| #'(lambda (lb colon ex rb) `(:inline-array-expr ,ex)))
    )
 #+END_SRC
 
