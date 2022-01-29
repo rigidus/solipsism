@@ -405,7 +405,18 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-all "./sushi-shoyu-contracts")
   ;; (test-all "./rainbow-bridge-contracts")
   ;; (test-all "./1inch-contracts")
+  ;; (test-all "./synthetix-contracts")
 
+  ;; (test-all "/home/ss/personal/solipsism/sushi-swap-contracts")
+  ;; (test-all "/home/ss/personal/solipsism/oppen-zeepeline-contracts")
+  ;; (test-all "/home/ss/personal/solipsism/tests")
+  ;; (test-all "/home/ss/personal/solipsism/sushi-bentobox-contracts")
+  ;; (test-all "/home/ss/personal/solipsism/sushi-shoyu-contracts")
+  ;; (test-all "/home/ss/personal/solipsism/rainbow-bridge-contracts")
+  ;; (test-all "/home/ss/personal/solipsism/1inch-contracts")
+  ;; (test-all "/home/ss/personal/solipsism/synthetix-contracts")
+
+  (test-all "/home/ss/personal/solipsism/synthetix-contracts")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
@@ -2649,6 +2660,8 @@ a source unit or within a contract, library or interface.
                #'(lambda (vt dl vn)
                    `(:var-type ,vt :data-location ,dl :name ,vn)))
 
+   (%expr #'(lambda (vt)
+              `(:var-exp ,vt)))
    )
 #+END_SRC
 
@@ -2675,7 +2688,11 @@ a source unit or within a contract, library or interface.
    (|%(| %var-decl %one-more-var-decl |%)|
          #'(lambda (lb vd om rb)
              `(:var-decl-tuple ,vd :rest ,om)))
+   (|%(| %one-more-var-decl |%)| #'(lambda (lb vd rb)
+                            `(:var-decl-tuple ,vd)))
+
    )
+
   (%one-more-var-decl
    (|%,| %var-decl #'(lambda (cm vd)
                        `(one-more-var-decl ,vd)))
@@ -3933,7 +3950,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    )
   (%tuple-expression
    (|%(| %expr-comma-list |%)| #'(lambda (lb ecl rb) `(:tuple ,ecl)))
-   (|%(| |%,| %expr-comma-list |%)| #'(lambda (lb comma ecl rb) `(:tuple ,ecl)))
+   ;; (%var-decl-tuple |%=| %expr #'(lambda (vd eq ex)
+   ;;                                 `(var-decl-tuple ,vd :init ,ex)))
+
    )
 #+END_SRC
 
@@ -3942,7 +3961,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 раздела.
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ;; ("0x[a-fA-F0-9]{40}" '%addr $@)
+  ;; ("0x[a-fA-F0-9]{40}\s" '%addr $@)
+
   ("0x[a-fA-F0-9]+" '%addr $@)
   ("\\btype\\b" '%type 'type)
   ("\\bdelete\\b" '%delete '%delete)
@@ -4233,8 +4253,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
   ;; ("\'[\u0020-\u0026\u0028-\u005B\u005D-\u007E:\\.\s]+'" '%single-quoted-printable $@)
-  ("[\"](.)*[\"]" '%double-quoted-printable $@)
-  ("[\'](.)*[\']" '%single-quoted-printable $@)
+  ("[\"](.)[^\\\"]*[\"]" '%double-quoted-printable $@)
+  ("[\'](.)[^\\\']*[\']" '%single-quoted-printable $@)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
@@ -4343,6 +4363,10 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.HexString
   ("\\b0x[0-9A-Fa-f_]+\\b" '%hex_num_v1 $@)
   ("\"\b0x[0-9A-Fa-f_]+\"\b" '%hex_num_v2 $@)
   ("\'\b0x[0-9A-Fa-f_]+\'\b" '%hex_num_v3 $@)
+
+  ;; ("\\b0x[0-9A-Fa-f_]{1-39}{41-}\s\\b" '%hex_num_v1 $@)
+  ;; ("\"\b0x[0-9A-Fa-f_]{1-39}{41-}\s\"b" '%hex_num_v2 $@)
+  ;; ("\'\b0x[0-9A-Fa-f_]{1-39}{41-}\s\'\b" '%hex_num_v3 $@)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
