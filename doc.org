@@ -407,17 +407,6 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-all "./1inch-contracts")
   ;; (test-all "./synthetix-contracts")
 
-  ;; (test-all "/home/ss/personal/solipsism/sushi-swap-contracts")
-  ;; (test-all "/home/ss/personal/solipsism/oppen-zeepeline-contracts")
-  ;; (test-all "/home/ss/personal/solipsism/tests")
-  ;; (test-all "/home/ss/personal/solipsism/sushi-bentobox-contracts")
-  ;; (test-all "/home/ss/personal/solipsism/sushi-shoyu-contracts")
-  ;; (test-all "/home/ss/personal/solipsism/rainbow-bridge-contracts")
-  ;; (test-all "/home/ss/personal/solipsism/1inch-contracts")
-  ;; (test-all "/home/ss/personal/solipsism/synthetix-contracts")
-
-  (test-all "/home/ss/personal/solipsism/synthetix-contracts")
-
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
   ;;        (contents (read-file-into-string file))
@@ -1104,15 +1093,8 @@ NB: есть варианты типа такого
 простой вариант функции разбирается так (но нам еще нужно доопределить
 parlist):
 
-#+BEGIN_SRC lisp :noweb-ref grammar_rules
-  (%func-name
-   (%identifier #'(lambda (name) `(:func-name ,name)))
-   (%error #'(lambda (name) `(:func-name ,name)))
-   (%leave #'(lambda (name) `(:func-name ,name))))
-#+END_SRC
-
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%function %func-name %parlist %block
+  (%function %ident %parlist %block
              #'(lambda (fun id parlist blk)
                  `(:fun ,id :parlist ,parlist :block ,blk)))
 
@@ -1333,7 +1315,7 @@ returns, которое надо добавить в лексер:
 Теперь нам необходимо расширить ~func-def~ с помощью retlist:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%function %func-name %parlist %retlist %block
+  (%function %ident %parlist %retlist %block
              #'(lambda (fn id pl rl blk)
                  `(:fun ,id :parlist ,pl :retlist ,rl :block ,blk)))
 #+END_SRC
@@ -1376,12 +1358,12 @@ Retlist представляет из себя два возможных вар�
 необязательны, поэтому лучше их вынести в отдельное мета-правило:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%function %func-name %parlist %fmeta %retlist %block
+  (%function %ident %parlist %fmeta %retlist %block
              #'(lambda (fun id parlist fmeta retlist blk)
                  `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
                    :block ,blk)))
 
-  (%function %func-name %parlist %fmeta %block
+  (%function %ident %parlist %fmeta %block
              #'(lambda (fun id parlist fmeta blk)
                  `(:fun ,id :parlist ,parlist :fmeta ,fmeta :block ,blk)))
 
@@ -3821,12 +3803,12 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 Пока что не проходят тесты, хз почему
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-func-def
-   (%function %func-name |%(| |%)| |%->|
+   (%function %ident |%(| |%)| |%->|
               %multi-ident-path %yul-block
-        #'(lambda (func y-id lsc rsc thfr m-id fbody)
-            `(:func-y-id ,y-id :multi-id ,m-id :y-fbody ,fbody)))
+              #'(lambda (func y-id lsc rsc thfr m-id fbody)
+                  `(:func-y-id ,y-id :multi-id ,m-id :y-fbody ,fbody)))
 
-   (%function %func-name |%(| %multi-ident-path |%)| |%->|
+   (%function %ident |%(| %multi-ident-path |%)| |%->|
               %multi-ident-path %yul-block
               #'(lambda (func y-id lsc m-id1 rsc thfr m-id2 fbody)
                   `(:func-y-id ,y-id :multi-id1 ,m-id1
@@ -3950,9 +3932,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    )
   (%tuple-expression
    (|%(| %expr-comma-list |%)| #'(lambda (lb ecl rb) `(:tuple ,ecl)))
-   ;; (%var-decl-tuple |%=| %expr #'(lambda (vd eq ex)
-   ;;                                 `(var-decl-tuple ,vd :init ,ex)))
-
    )
 #+END_SRC
 
@@ -3961,9 +3940,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 раздела.
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ;; ("0x[a-fA-F0-9]{40}\s" '%addr $@)
-
+  ;; ("0x[a-fA-F0-9]{40}\s+" '%addr $@)
   ("0x[a-fA-F0-9]+" '%addr $@)
+
   ("\\btype\\b" '%type 'type)
   ("\\bdelete\\b" '%delete '%delete)
 
@@ -4364,9 +4343,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.HexString
   ("\"\b0x[0-9A-Fa-f_]+\"\b" '%hex_num_v2 $@)
   ("\'\b0x[0-9A-Fa-f_]+\'\b" '%hex_num_v3 $@)
 
-  ;; ("\\b0x[0-9A-Fa-f_]{1-39}{41-}\s\\b" '%hex_num_v1 $@)
-  ;; ("\"\b0x[0-9A-Fa-f_]{1-39}{41-}\s\"b" '%hex_num_v2 $@)
-  ;; ("\'\b0x[0-9A-Fa-f_]{1-39}{41-}\s\'\b" '%hex_num_v3 $@)
+  ;; ("\\b0x[0-9A-Fa-f_]{1,39}{41,\}\s\\b" '%hex_num_v1 $@)
+  ;; ("\"\b0x[0-9A-Fa-f_]{1,39}{41,\}\s\"b" '%hex_num_v2 $@)
+  ;; ("\'\b0x[0-9A-Fa-f_]{1,39}{41,\}\s\'\b" '%hex_num_v3 $@)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
