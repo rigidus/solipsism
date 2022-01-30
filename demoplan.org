@@ -52,3 +52,15 @@
 - Показать пример похожего контракта
 - Выполнить поиск похожих
 - Показать результат
+
+* Что тестить
+
+Все контракты, находящиеся в папках:
+- sushi-swap-contracts
+- sushi-bentobox-contracts
+- sushi-shoyu-contracts
+- oppen-zeepeline-contracts
+- tests
+- rainbow-bridge-contracts
+- 1inch-contracts
+- synthetix-contracts
