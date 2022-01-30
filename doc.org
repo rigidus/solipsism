@@ -3764,7 +3764,18 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulAssign
    (%case %yul-lit %yul-block %switch-body
           #'(lambda (op swlit swblock swbody-rec)
               `(:y-swlit ,swlit :swbody-swblock-head ,swblock
-                         :swbody-swblock-last ,swbody-rec))))
+                :swbody-swblock-last ,swbody-rec)))
+
+
+   (%case %addr %yul-block
+          #'(lambda (op swlit swblock)
+              `(:y-swlit ,swlit :swbody-swblock-head ,swblock)))
+
+   (%case %addr %yul-block %switch-body
+          #'(lambda (op swlit swblock swbody-rec)
+              `(:y-swlit ,swlit :swbody-swblock-head ,swblock
+                :swbody-swblock-last ,swbody-rec))))
+
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals

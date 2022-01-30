@@ -61,9 +61,9 @@ contract WrapperFactory is Owned, MixinResolver, IWrapperFactory {
     /**
      * @notice Fallback function
      */
-    function() external payable {
-        revert("Contract is not payable");
-    }
+    /* function() external payable { */
+    /*     revert("Contract is not payable"); */
+    /* } */
 
     /* ========== MUTATIVE FUNCTIONS ========== */
     function createWrapper(
