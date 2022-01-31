@@ -151,14 +151,6 @@ solidity-конструкциями и ожидаю получить дерев�
      ;; :required t
      :arg-parser #'parse-filename
      :meta-var "<filename>")
-    ;; -------------------------------------
-    (:name :check
-     :description "Contract for checking"
-     :short #\c
-     :long "check"
-     ;; :required t
-     :arg-parser #'parse-filename
-     :meta-var "<filename>")
     )
 
   (defun unknown-option (condition)

@@ -14,6 +14,11 @@
 
 * Как разбирается код
 
+- Показать usages
+  #+BEGIN_SRC sh
+    ./solcheck
+  #+END_SRC
+
 - Показать пример кода (минимальный контракт)
   #+BEGIN_SRC sh
     emacs -nw test_min.sol
