@@ -53,11 +53,24 @@
 * Показать успешный разбор контрактов в папках
 
 #+BEGIN_SRC sh
-  # http:// ...
+  # http:// https://github.com/OpenZeppelin/openzeppelin-contracts
   ./solcheck -t openzeppelin-contracts -o openzeppelin-contracts.el
+
+  # https://github.com/aurora-is-near/rainbow-bridge
   ./solcheck -t rainbow-bridge-contracts/ -o rainbow-bridge-contracts.el
-  ./solcheck -t sushi-bentobox-contracts/ -o sushi-bentobox-contracts.el
+
+  # https://github.com/sushiswap/bentobox
+  ./solcheck -t sushi-bentobox-contracts/ -o sushi-bentobox-contracts.e
+
+  # https://github.com/sushiswap/shoyu
   ./solcheck -t sushi-shoyu-contracts/ -o sushi-shoyu-contracts.el
+
+  # https://github.com/sushiswap/sushiswap
   ./solcheck -t sushi-swap-contracts/ -o sushi-swap-contracts.el
+
+  # https://github.com/Synthetixio/synthetix
   ./solcheck -t synthetix-contracts/ -o synthetix-contracts.el
+
+  # https://github.com/1inch/limit-order-protocol
+  ./solcheck -t 1inch-contracts/ -o 1inch-contracts.el
 #+END_SRC
