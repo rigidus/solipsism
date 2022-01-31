@@ -50,14 +50,14 @@
 - Открыть test.el
 - Показать результат :|+new| и :|-new|
 
-* Что тестить
+* Показать успешный разбор контрактов в папках
 
-Все контракты, находящиеся в папках:
-- sushi-swap-contracts
-- sushi-bentobox-contracts
-- sushi-shoyu-contracts
-- oppen-zeepeline-contracts
-- tests
-- rainbow-bridge-contracts
-- 1inch-contracts
-- synthetix-contracts
+#+BEGIN_SRC sh
+  # http:// ...
+  ./solcheck -t openzeppelin-contracts -o openzeppelin-contracts.el
+  ./solcheck -t rainbow-bridge-contracts/ -o rainbow-bridge-contracts.el
+  ./solcheck -t sushi-bentobox-contracts/ -o sushi-bentobox-contracts.el
+  ./solcheck -t sushi-shoyu-contracts/ -o sushi-shoyu-contracts.el
+  ./solcheck -t sushi-swap-contracts/ -o sushi-swap-contracts.el
+  ./solcheck -t synthetix-contracts/ -o synthetix-contracts.el
+#+END_SRC
