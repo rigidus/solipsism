@@ -193,7 +193,7 @@ solidity-конструкциями и ожидаю получить дерев�
           (setf parsed (test-contract-file it)))
         (when-option (options :test)
           (format t "Solidity checker. Test in directory: ~A ~%" it)
-          (test-all it))
+          (setf parsed (test-all-contracts it)))
         (when-option (options :output)
           (format t "Solidity checker. Output: ~A ~%" it)
           (setf overbox it))
@@ -305,13 +305,23 @@ solidity-конструкциями и ожидаю получить дерев�
               (reverse test-files))))
 
   ;; run-tests
-  (defun test-all ( dir )
+  (defun test-all (dir)
     (map-subdir-files
      dir
      #'(lambda (file)
          (print file)
          (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
            (print (parse-with-lexer clj-lex *sol-parser*))))))
+
+  (defun test-all-contracts (dir)
+    (let ((result))
+      (map-subdir-files
+       dir
+       #'(lambda (file)
+           (push `(:file ,file) result)
+           (let* ((clj-lex (sol-lexer (get-filtered-comments-file-contents file))))
+             (push (parse-with-lexer clj-lex *sol-parser*) result))))
+      (reverse result)))
 
   ;; Вариант для тестирования конкретного файла
   (defun test-file (pathname)
