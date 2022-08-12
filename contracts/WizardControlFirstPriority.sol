@@ -8,7 +8,7 @@ import "../munged/governance/extensions/GovernorVotesQuorumFraction.sol";
 import "../munged/governance/extensions/GovernorTimelockControl.sol";
 import "../munged/governance/extensions/GovernorProposalThreshold.sol";
 
-/*
+/* 
 Wizard options:
 ProposalThreshhold = 10
 ERC20Votes
@@ -16,19 +16,19 @@ TimelockController
 */
 
 contract WizardControlFirstPriority is Governor, GovernorProposalThreshold, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
-    /* constructor(ERC20Votes _token, TimelockController _timelock, string memory name, uint256 quorumFraction) */
-    /*     Governor(name) */
-    /*     GovernorVotes(_token) */
-    /*     GovernorVotesQuorumFraction(quorumFraction) */
-    /*     GovernorTimelockControl(_timelock) */
-    /* {} */
+    constructor(ERC20Votes _token, TimelockController _timelock, string memory name, uint256 quorumFraction)
+        Governor(name)
+        GovernorVotes(_token)
+        GovernorVotesQuorumFraction(quorumFraction)
+        GovernorTimelockControl(_timelock)
+    {}
 
     //HARNESS
 
     function isExecuted(uint256 proposalId) public view returns (bool) {
         return _proposals[proposalId].executed;
     }
-
+    
     function isCanceled(uint256 proposalId) public view returns (bool) {
         return _proposals[proposalId].canceled;
     }
@@ -47,13 +47,13 @@ contract WizardControlFirstPriority is Governor, GovernorProposalThreshold, Gove
         uint8 support,
         string memory reason
     ) internal override virtual returns (uint256) {
-
+        
         uint256 deltaWeight = super._castVote(proposalId, account, support, reason);  //HARNESS
         ghost_sum_vote_power_by_id[proposalId] += deltaWeight;
 
-        return deltaWeight;
+        return deltaWeight;        
     }
-
+    
     function snapshot(uint256 proposalId) public view returns (uint64) {
         return _proposals[proposalId].voteStart._deadline;
     }

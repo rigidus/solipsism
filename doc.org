@@ -151,14 +151,6 @@ solidity-конструкциями и ожидаю получить дерев�
      ;; :required t
      :arg-parser #'parse-filename
      :meta-var "<filename>")
-    ;; -------------------------------------
-    (:name :check
-     :description "Contract for checking"
-     :short #\c
-     :long "check"
-     ;; :required t
-     :arg-parser #'parse-filename
-     :meta-var "<filename>")
     )
 
   (defun unknown-option (condition)
@@ -406,7 +398,16 @@ solidity-конструкциями и ожидаю получить дерев�
   ;; (test-contract-file #P"./test_dbg.sol")
   ;; (test-contract-file #P"./tests/test_dbg2.sol")
 
-  ;; (test-all "./contracts")
+  ;; (test-contract-file #P"./tests/test_dbg_sushi.sol")
+
+  ;; (test-all "./sushi-swap-contracts")
+  ;; (test-all "./oppen-zeepeline-contracts")
+  ;; (test-all "./tests")
+  ;; (test-all "./sushi-bentobox-contracts")
+  ;; (test-all "./sushi-shoyu-contracts")
+  ;; (test-all "./rainbow-bridge-contracts")
+  ;; (test-all "./1inch-contracts")
+  ;; (test-all "./synthetix-contracts")
 
   ;;; Вариант для получения списка всех лексем конкретного файла
   ;; (let* ((file #P"./tests/test_fn_mod_inv.sol")
@@ -638,7 +639,6 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.constantV
    )
 #+END_SRC
 
-[[TODO:gmm]] добавить
 
 #+BEGIN_SRC solidity :tangle tests/test_const_def.sol :mkdirp yes :noweb yes
   contract test_const_def
@@ -822,6 +822,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.eventPara
                #'(lambda (tn ix) `(:type-name ,tn :indexed ,ix)))
    (%type-name %identifier
                #'(lambda (tn id) `(:type-name ,tn :id ,id)))
+   (%type-name %error
+               #'(lambda (tn err) `(:type-name ,tn :err ,err)))
    (%type-name %indexed %identifier
                #'(lambda (tn ix id) `(:type-name ,tn :indexed ,ix :id ,id)))
    )
@@ -935,8 +937,8 @@ NB: Правило IndentifierPath вынесено в параграф [[*Ident
    )
   (%inher-spec
    (%ident-path #'(lambda (ip) `(:ident-path ,ip)))
-   ;; (%ident-path %call-arg-list ;; NB: call-arg-list
-   ;;              #'(lambda (ip al) `(:identifier-path ,ip :call-arg-list ,al)))
+   (%ident-path %call-arg-list ;; NB: call-arg-list
+                #'(lambda (ip al) `(:identifier-path ,ip :call-arg-list ,al)))
    )
 #+END_SRC
 
@@ -1025,8 +1027,6 @@ NB: есть варианты типа такого
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%call-arg-list
    (|%(| |%)| #'(lambda (lb rb) `(:call-arg-list nil)))
-   (|%(| %identifier %non-empty-str |%)|
-         #'(lambda (lb ident str rb) `(:call-arg-id ,ident :call-arg-str ,str )))
    (|%(| %expr-comma-list |%)| #'(lambda (lb ex rb) `(:call-arg-list ,ex)))
    (|%(| |%{|  |%}| |%)|
          #'(lambda (lb lc rc rb) `(:call-arg-list-empty nil)))
@@ -1096,9 +1096,10 @@ NB: есть варианты типа такого
 parlist):
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%function %identifier %parlist %block
+  (%function %ident %parlist %block
              #'(lambda (fun id parlist blk)
                  `(:fun ,id :parlist ,parlist :block ,blk)))
+
 #+END_SRC
 
 Тут же parlist и доопределим, пока для случая с пустым списком
@@ -1316,10 +1317,9 @@ returns, которое надо добавить в лексер:
 Теперь нам необходимо расширить ~func-def~ с помощью retlist:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%function %identifier %parlist %retlist %block
+  (%function %ident %parlist %retlist %block
              #'(lambda (fn id pl rl blk)
                  `(:fun ,id :parlist ,pl :retlist ,rl :block ,blk)))
-
 #+END_SRC
 
 Retlist представляет из себя два возможных варианта - с пустым списком
@@ -1360,12 +1360,12 @@ Retlist представляет из себя два возможных вар�
 необязательны, поэтому лучше их вынести в отдельное мета-правило:
 
 #+BEGIN_SRC lisp :noweb-ref func_def_contents
-  (%function %identifier %parlist %fmeta %retlist %block
+  (%function %ident %parlist %fmeta %retlist %block
              #'(lambda (fun id parlist fmeta retlist blk)
                  `(:fun ,id :parlist ,parlist :fmeta ,fmeta :retlist ,retlist
                    :block ,blk)))
 
-  (%function %identifier %parlist %fmeta %block
+  (%function %ident %parlist %fmeta %block
              #'(lambda (fun id parlist fmeta blk)
                  `(:fun ,id :parlist ,parlist :fmeta ,fmeta :block ,blk)))
 
@@ -1523,10 +1523,17 @@ call-argument-list, поэтому нам понадобится раскрыв�
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%modifier-invocation
+   (%modifier-invocation-contens #'(lambda (last) `(:src (,last))))
+   (%modifier-invocation-contens %modifier-invocation
+                       #'(lambda (head rest)
+                           `(:src ,(append (list head) (cadr rest))))))
+
+
+  (%modifier-invocation-contens
    (%ident-path #'(lambda (ip) `(:ident-path ,ip)))
    (%ident-path %call-arg-list
-                #'(lambda (ip args) `(:id-path ,ip :args ,args)))
-   )
+                #'(lambda (ip args) `(:id-path ,ip :args ,args))))
+
 #+END_SRC
 
 Тест:
@@ -1591,8 +1598,9 @@ multi-identifier-path, поэтому нам понадобится раскры
   (%ident
    (%identifier #'(lambda (id) `(:id ,id)))
    (%from #'(lambda (fr) `(:from ,fr)))
-   ;; (%error #'(lambda (er) `(:error ,er)))
-   ;; (%revert #'(lambda (rv) `(:revert ,rv)))
+   (%error #'(lambda (er) `(:error ,er)))
+   (%revert #'(lambda (rv) `(:revert ,rv)))
+   (%leave #'(lambda (last) `(:ident (,last))))
    )
   (%multi-ident-path
    (%ident-path #'(lambda (id) `(:id ,id)))
@@ -2136,8 +2144,8 @@ Block может быть:
 
 #+NAME: cmeta-combination
 #+BEGIN_SRC elisp :results output
-  (require 'cl)
-  (gen-accmd '(%modifier-invocation %payable %internal %visibility))
+    (require 'cl)
+    (gen-accmd '(%modifier-invocation %payable %internal %visibility))
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_constructor.sol :mkdirp yes :noweb yes
@@ -2511,6 +2519,13 @@ a source unit or within a contract, library or interface.
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%stmnt
+   (%stmnt-contents #'(lambda (last) `(:src (,last))))
+   (%stmnt-contents %stmnt
+                       #'(lambda (head rest)
+                           `(:src ,(append (list head) (cadr rest)))))
+   )
+
+  (%stmnt-contents
    (%block #'(lambda (blk) `(:stmnt-blk ,blk)))
 
    (%var-decl-stmnt #'(lambda (last) `(:var-decl-stmnt (,last))))
@@ -2618,6 +2633,19 @@ a source unit or within a contract, library or interface.
    (%type-name %data-location %identifier
                #'(lambda (vt dl vn)
                    `(:var-type ,vt :data-location ,dl :name ,vn)))
+
+   (%identifier #'(lambda (vt)
+                    `(:var-type ,vt )))
+   (%identifier %identifier #'(lambda (vt vn)
+                               `(:var-type ,vt :name ,vn)))
+   (%identifier %error #'(lambda (vt vn)
+                          `(:var-type ,vt )))
+   (%identifier %data-location %identifier
+               #'(lambda (vt dl vn)
+                   `(:var-type ,vt :data-location ,dl :name ,vn)))
+
+   (%expr #'(lambda (vt)
+              `(:var-exp ,vt)))
    )
 #+END_SRC
 
@@ -2644,7 +2672,11 @@ a source unit or within a contract, library or interface.
    (|%(| %var-decl %one-more-var-decl |%)|
          #'(lambda (lb vd om rb)
              `(:var-decl-tuple ,vd :rest ,om)))
+   (|%(| %one-more-var-decl |%)| #'(lambda (lb vd rb)
+                            `(:var-decl-tuple ,vd)))
+
    )
+
   (%one-more-var-decl
    (|%,| %var-decl #'(lambda (cm vd)
                        `(one-more-var-decl ,vd)))
@@ -2655,8 +2687,8 @@ a source unit or within a contract, library or interface.
              `(one-more-var-decl ,vd :rest ,om)))
    (|%,| %one-more-var-decl
          #'(lambda (cm om)
-             `(one-more-comma ,cm :rest ,om)))
-   )
+             `(one-more-comma ,cm :rest ,om))))
+
 #+END_SRC
 
 #+BEGIN_SRC solidity :tangle tests/test_var_decl_typle.sol :mkdirp yes :noweb yes
@@ -3734,7 +3766,18 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulAssign
    (%case %yul-lit %yul-block %switch-body
           #'(lambda (op swlit swblock swbody-rec)
               `(:y-swlit ,swlit :swbody-swblock-head ,swblock
-                         :swbody-swblock-last ,swbody-rec))))
+                :swbody-swblock-last ,swbody-rec)))
+
+
+   (%case %addr %yul-block
+          #'(lambda (op swlit swblock)
+              `(:y-swlit ,swlit :swbody-swblock-head ,swblock)))
+
+   (%case %addr %yul-block %switch-body
+          #'(lambda (op swlit swblock swbody-rec)
+              `(:y-swlit ,swlit :swbody-swblock-head ,swblock
+                :swbody-swblock-last ,swbody-rec))))
+
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
@@ -3773,12 +3816,12 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 Пока что не проходят тесты, хз почему
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%yul-func-def
-   (%function %identifier |%(| |%)| |%->|
+   (%function %ident |%(| |%)| |%->|
               %multi-ident-path %yul-block
-        #'(lambda (func y-id lsc rsc thfr m-id fbody)
-            `(:func-y-id ,y-id :multi-id ,m-id :y-fbody ,fbody)))
+              #'(lambda (func y-id lsc rsc thfr m-id fbody)
+                  `(:func-y-id ,y-id :multi-id ,m-id :y-fbody ,fbody)))
 
-   (%function %identifier |%(| %multi-ident-path |%)| |%->|
+   (%function %ident |%(| %multi-ident-path |%)| |%->|
               %multi-ident-path %yul-block
               #'(lambda (func y-id lsc m-id1 rsc thfr m-id2 fbody)
                   `(:func-y-id ,y-id :multi-id1 ,m-id1
@@ -3823,6 +3866,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    ;; member access
    (%expr |%.| %identifier #'(lambda (ex dt id) `(:expr-identifier ,ex :id ,id)))
    (%expr |%.| %addr       #'(lambda (ex dt ad) `(:expr-addr       ,ex :add ,ad)))
+
+   (%expr |%.| %lit       #'(lambda (ex dt lit) `(:expr-addr        ,ex :lit ,lit)))
    ;; idex
    (%expr |%{| |%}| #'(lambda (ex lb rb) `(:expr-idex-empty nil)))
    (%expr |%{| %idex-contents |%}| #'(lambda (ex lb idex rb) `(:expr-idex ,idex)))
@@ -3840,6 +3885,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (%delete  %expr #'(lambda (op ex) `(:expr-delete ,ex)))
    (|%-|  %expr #'(lambda (op ex) `(:expr-unary-minus ,ex)))
    (%expr |%++| #'(lambda (ex op) `(:expr-post-inc ,ex)))
+   (%expr |%,| #'(lambda (ex op) `(:expr-post-inc ,ex)))
+   (%expr |%,| %expr #'(lambda (ex1 op ex2) `(:expr-post-inc ,ex1 :expr-post-inc ,ex2)))
    (%expr |%--| #'(lambda (ex op) `(:expr-post-dec ,ex)))
    (%expr |%**| %expr #'(lambda (e1 op e2) `(:expr-power ,e1 :arg ,e2)))
    (%expr |%*|  %expr #'(lambda (e1 op e2) `(:expr-mul   ,e1 :arg ,e2)))
@@ -3877,6 +3924,8 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (%expr |%%=|    %expr #'(lambda (e1 op e2) `(:expr-mod-eq   ,e1 :arg ,e2)))
    (%expr %identifier #'(lambda (e1 id) `(:expr1 , e1 :expr-ident ,id)))
    (%error #'(lambda (err) `(:expr-err nil)))
+   (%identifier %non-empty-str
+                #'(lambda (ident str) `(:expr-call-arg-id ,ident :expr-call-arg-str ,str )))
    (%new %type-name #'(lambda (new tn) `(:new ,tn)))
    (%tuple-expression #'(lambda (te) `(:expr-tuple ,te)))
    (%inline-array-expr #'(lambda (ia) `(:expr-inline-array ,ia)))
@@ -3904,8 +3953,9 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 раздела.
 
 #+BEGIN_SRC lisp :noweb-ref lexer_tokens
-  ;; ("0x[a-fA-F0-9]{40}" '%addr $@)
+  ;; ("0x[a-fA-F0-9]{40}\s+" '%addr $@)
   ("0x[a-fA-F0-9]+" '%addr $@)
+
   ("\\btype\\b" '%type 'type)
   ("\\bdelete\\b" '%delete '%delete)
 
@@ -4057,6 +4107,7 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
    (|%[| %expr-comma-list |%]| #'(lambda (lb ex rb) `(:inline-array-expr ,ex)))
    (|%[| |%]| #'(lambda (lb rb) `(:inline-array-expr nil)))
    (|%[| |%:| %expr |%]| #'(lambda (lb colon ex rb) `(:inline-array-expr ,ex)))
+   (|%[| %expr |%:| |%]| #'(lambda (lb colon ex rb) `(:inline-array-expr ,ex)))
    )
 #+END_SRC
 
@@ -4193,12 +4244,14 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 К сожалению я получаю "invalid named register", поэтому придется сделать что-то более простое.
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ("\'[\u0020-\u0026\u0028-\u005B\u005D-\u007E:\s]+\'" '%single-quoted-printable $@)
-  ("[\"](.)*[\"]" '%double-quoted-printable $@)
+  ;; ("\'[\u0020-\u0026\u0028-\u005B\u005D-\u007E:\\.\s]+'" '%single-quoted-printable $@)
+  ("[\"](.)[^\\\"]*[\"]" '%double-quoted-printable $@)
+  ("[\'](.)[^\\\']*[\']" '%single-quoted-printable $@)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
-  %single-quoted-printable %double-quoted-printable
+  %single-quoted-printable
+  %double-quoted-printable
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
@@ -4252,18 +4305,21 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals
   %dec_num_v1
+  %dec_num_v2
+  %dec_num_v3
+  ;; %dec_num_v4
 #+END_SRC
 
 Там же можно построить пару этих наборов, разделенную точкой:
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ;; ("\\b[0-9_]+\\\\.[0-9_]+\\b" '%dec_num_v2 $@)
+  ("\\b[0-9_]+\\\\.[0-9_]+\\b" '%dec_num_v2 $@)
 #+END_SRC
 
 Теперь построим набор с последующий экспонециальной частью
 
 #+BEGIN_SRC lisp :noweb-ref last_lexer_tokens
-  ;; ("\\b[0-9_]+[eE]+[-]*[0-9_]+\\b" '%dec_num_v3 $@)
+  ("\\b[0-9_]+[eE]+[-]*[0-9_]+\\b" '%dec_num_v3 $@)
 #+END_SRC
 
 И то самое, но для двух наборов, разделенных точкой:
@@ -4275,6 +4331,11 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityParser.yulFuncti
 #+BEGIN_SRC lisp :noweb-ref grammar_rules
   (%dec-num
    (%dec_num_v1 #'(lambda (dn) `(:dec-num ,dn)))
+   (%dec_num_v2 #'(lambda (dn) `(:dec-num ,dn)))
+   (%dec_num_v3 #'(lambda (dn) `(:dec-num ,dn)))
+   ;; (%dec_num_v4 #'(lambda (dn) `(:dec-num ,dn)))
+   ;; (%dec_num |%.| %dec_num #'(lambda (dn1 pt dn2) `(:dec-num-head ,dn1 :dec-num-last ,dn2)))
+
    ;; (%dec-num %num-unit #'(lambda (lt nu)
    ;;                         `(:dec-num ,lt :num-unit ,nu)))
    ;; (%hex-num #'(lambda (lt) `(:hex-number ,lt)))
@@ -4294,6 +4355,10 @@ https://docs.soliditylang.org/en/latest/grammar.html#a4.SolidityLexer.HexString
   ("\\b0x[0-9A-Fa-f_]+\\b" '%hex_num_v1 $@)
   ("\"\b0x[0-9A-Fa-f_]+\"\b" '%hex_num_v2 $@)
   ("\'\b0x[0-9A-Fa-f_]+\'\b" '%hex_num_v3 $@)
+
+  ;; ("\\b0x[0-9A-Fa-f_]{1,39}{41,\}\s\\b" '%hex_num_v1 $@)
+  ;; ("\"\b0x[0-9A-Fa-f_]{1,39}{41,\}\s\"b" '%hex_num_v2 $@)
+  ;; ("\'\b0x[0-9A-Fa-f_]{1,39}{41,\}\s\'\b" '%hex_num_v3 $@)
 #+END_SRC
 
 #+BEGIN_SRC lisp :noweb-ref grammar_terminals

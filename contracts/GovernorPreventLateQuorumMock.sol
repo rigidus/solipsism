@@ -15,21 +15,21 @@ contract GovernorPreventLateQuorumMock is
 {
     uint256 private _quorum;
 
-    /* constructor( */
-    /*     string memory name_, */
-    /*     IVotes token_, */
-    /*     uint256 votingDelay_, */
-    /*     uint256 votingPeriod_, */
-    /*     uint256 quorum_, */
-    /*     uint64 voteExtension_ */
-    /* ) */
-    /*     Governor(name_) */
-    /*     GovernorSettings(votingDelay_, votingPeriod_, 0) */
-    /*     GovernorVotes(token_) */
-    /*     GovernorPreventLateQuorum(voteExtension_) */
-    /* { */
-    /*     _quorum = quorum_; */
-    /* } */
+    constructor(
+        string memory name_,
+        IVotes token_,
+        uint256 votingDelay_,
+        uint256 votingPeriod_,
+        uint256 quorum_,
+        uint64 voteExtension_
+    )
+        Governor(name_)
+        GovernorSettings(votingDelay_, votingPeriod_, 0)
+        GovernorVotes(token_)
+        GovernorPreventLateQuorum(voteExtension_)
+    {
+        _quorum = quorum_;
+    }
 
     function quorum(uint256) public view virtual override returns (uint256) {
         return _quorum;
